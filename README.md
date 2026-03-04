@@ -1,4 +1,4 @@
-# Integrated Hessians: Integrated Hessians Implementation for Feature Interaction Attribution with Pytorch Models  
+# Integrated_Hessians: IntegratedHessians Implementation for Feature Interaction Attribution with Pytorch Models  
 
 ## Caution: This repository is work in progress (WIP).
 
