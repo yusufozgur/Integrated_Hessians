@@ -1,7 +1,17 @@
 [project]
 name = "integrated-hessians"
 version = "0.1.0"
-description = "Add your description here"
+description = "Integrated hessians explains feature interactions in pytorch models."
 readme = "README.md"
+authors = [
+    { name = "Yusuf Turhan", email = "yusufozgurtr@gmail.com" }
+]
 requires-python = ">=3.13"
-dependencies = []
+
+dependencies = [
+    "marimo>=0.20.4",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.7,<0.10.0"]
+build-backend = "uv_build"
