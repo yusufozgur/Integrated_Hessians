@@ -13,7 +13,7 @@ def main():
     sequences_dict = [x.to_dict() for x in sequences]
     OUTPUT.parent.mkdir(exist_ok=True, parents=True)
     with open(OUTPUT, "w") as f:
-        json.dump(sequences_dict, f)
+        json.dump(sequences_dict, f, indent = 4)
 
 if __name__ == "__main__":
     main()

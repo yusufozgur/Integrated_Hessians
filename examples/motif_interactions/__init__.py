@@ -214,7 +214,7 @@ class SimulatedSequence:
         # Convert to dict first
         data = asdict(self)
         # Convert numpy array to list
-        data["one_hot"] = self.one_hot.tolist()
+        del data["one_hot"]
         # Convert Enum members to their names (strings)
         data["motif_types"] = [mt.name for mt in self.motif_types]
         return data
@@ -222,7 +222,7 @@ class SimulatedSequence:
     @staticmethod
     def from_dict(data: dict) -> SimulatedSequence:
         data = data.copy()
-        data["one_hot"] = np.array(data["one_hot"])
+        data["one_hot"] = SimulatedSequence.encode_one_hot(data["nucleotides"])
         data["motif_names"] = tuple(data["motif_names"])
         # Convert strings back to Enum members using the name
         data["motif_types"] = tuple(MotifType[mt] for mt in data["motif_types"])
