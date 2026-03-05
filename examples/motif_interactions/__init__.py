@@ -3,12 +3,12 @@ from __future__ import annotations
 
 from pathlib import Path
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from numpy.typing import NDArray
 from enum import Enum, auto
 import random
 from typing import NewType, Tuple
-
+from copy import copy
 
 Nucleotide_Sequence = NewType("Nucleotide_Sequence", str)
 NUCLEOTIDE_ORDER = ["A", "C", "G", "T"]
@@ -209,3 +209,21 @@ class SimulatedSequence:
         one_hot = np.zeros((len(seqn), 4))
         one_hot[np.arange(len(seqn)), indices] = 1
         return one_hot
+
+    def to_dict(self) -> dict:
+        # Convert to dict first
+        data = asdict(self)
+        # Convert numpy array to list
+        data["one_hot"] = self.one_hot.tolist()
+        # Convert Enum members to their names (strings)
+        data["motif_types"] = [mt.name for mt in self.motif_types]
+        return data
+
+    @staticmethod
+    def from_dict(data: dict) -> SimulatedSequence:
+        data = data.copy()
+        data["one_hot"] = np.array(data["one_hot"])
+        data["motif_names"] = tuple(data["motif_names"])
+        # Convert strings back to Enum members using the name
+        data["motif_types"] = tuple(MotifType[mt] for mt in data["motif_types"])
+        return SimulatedSequence(**data)
