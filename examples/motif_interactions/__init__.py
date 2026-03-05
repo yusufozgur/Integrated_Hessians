@@ -133,13 +133,12 @@ class SimulatedSequence:
     motif_mask_2: str
 
     @staticmethod
-    def from_motifs(motif_pool: list[Motif], length=100):
+    def from_motifs(motif_pool: list[SimulationMotif], length=100):
 
         nucleotides = "".join(random.choices(NUCLEOTIDE_ORDER, k=length))
 
         MOTIF_COUNT = 2
         motifs = random.choices(motif_pool, k=MOTIF_COUNT)
-        motifs = [SimulationMotif.from_motif(m) for m in motifs]
 
         phenotype = 0.0
         nucleotides, motif_mask_1 = SimulatedSequence.insert_motif(

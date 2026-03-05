@@ -1,5 +1,5 @@
 #run via uv run python -m examples.motif_interactions.run_simulation
-from examples.motif_interactions import extract_motifs_from_jaspar_psm_file, SimulatedSequence
+from examples.motif_interactions import SimulationMotif, extract_motifs_from_jaspar_psm_file, SimulatedSequence
 from pathlib import Path
 import json
 
@@ -9,6 +9,8 @@ def main():
     OUTPUT = Path("data/1k.json")
 
     motifs = extract_motifs_from_jaspar_psm_file(Path(MOTIFS_FILE))
+    motifs = [SimulationMotif.from_motif(m) for m in motifs]
+    
     sequences = [SimulatedSequence.from_motifs(motifs) for _ in range(NUM_OF_SEQUENCES)]
     sequences_dict = [x.to_dict() for x in sequences]
     OUTPUT.parent.mkdir(exist_ok=True, parents=True)
