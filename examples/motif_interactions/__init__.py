@@ -8,7 +8,6 @@ from numpy.typing import NDArray
 from enum import Enum, auto
 import random
 from typing import NewType, Tuple
-from copy import copy
 
 Nucleotide_Sequence = NewType("Nucleotide_Sequence", str)
 NUCLEOTIDE_ORDER = ["A", "C", "G", "T"]
