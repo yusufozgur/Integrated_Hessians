@@ -32,47 +32,48 @@ class MotifInteractionsDataset(Dataset):
 
 class CNNEmbedding(nn.Module):
     """
-    Two convolutional layers that embed a one-hot encoded sequence into a
-    dense feature representation.
+    A stack of num_cnn_layers convolutional layers that embed a one-hot
+    encoded sequence into a dense feature representation.
 
     Input shape:  (B, seq_len, 4)   — one-hot over 4 nucleotides
     Output shape: (B, embed_dim)    — flat feature vector
 
-    The first conv layer learns local motif detectors (receptive field = kernel_size1).
-    The second conv layer combines those motifs over a larger window (kernel_size2).
-    Global average pooling then collapses the position dimension so the MLP
-    receives a fixed-size vector regardless of sequence length.
+    All CNN layers share the same number of filters (cnn_out) and kernel size
+    (kernel_size). The first layer accepts in_channels (4); all subsequent
+    layers accept cnn_out channels. Global average pooling collapses the
+    position dimension so the MLP receives a fixed-size vector regardless of
+    sequence length.
     """
 
     def __init__(
         self,
         in_channels: int = 4,
-        conv1_out: int = 64,
-        conv2_out: int = 128,
-        kernel_size1: int = 8,
-        kernel_size2: int = 4,
+        cnn_out: int = 128,
+        kernel_size: int = 8,
+        num_cnn_layers: int = 2,
         dropout: float = 0.1,
     ):
         super().__init__()
-        self.cnn = nn.Sequential(
-            # Conv 1 — motif detection
-            nn.Conv1d(in_channels, conv1_out, kernel_size=kernel_size1, padding=kernel_size1 // 2),
-            nn.BatchNorm1d(conv1_out),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            # Conv 2 — motif combination
-            nn.Conv1d(conv1_out, conv2_out, kernel_size=kernel_size2, padding=kernel_size2 // 2),
-            nn.BatchNorm1d(conv2_out),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-        )
-        self.embed_dim = conv2_out
+        assert num_cnn_layers >= 1, "num_cnn_layers must be at least 1"
+
+        layers: list[nn.Module] = []
+        for i in range(num_cnn_layers):
+            in_ch = in_channels if i == 0 else cnn_out
+            layers += [
+                nn.Conv1d(in_ch, cnn_out, kernel_size=kernel_size, padding=kernel_size // 2),
+                nn.BatchNorm1d(cnn_out),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+            ]
+
+        self.cnn = nn.Sequential(*layers)
+        self.embed_dim = cnn_out
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: (B, seq_len, 4)  ->  (B, 4, seq_len)  for Conv1d
         x = x.permute(0, 2, 1)
-        x = self.cnn(x)          # (B, conv2_out, seq_len')
-        x = x.mean(dim=-1)       # global average pool -> (B, conv2_out)
+        x = self.cnn(x)       # (B, cnn_out, seq_len')
+        x = x.mean(dim=-1)    # global average pool -> (B, cnn_out)
         return x
 
 
@@ -81,29 +82,27 @@ class SimpleModel(nn.Module):
     CNN embedding followed by a depth-adjustable MLP.
 
     Args:
-        seq_len:      Length of the input sequence (default 100).
-        in_channels:  Alphabet size / one-hot width (default 4).
-        conv1_out:    Filters in the first CNN layer.
-        conv2_out:    Filters in the second CNN layer (= MLP input size).
-        kernel_size1: Kernel size for the first CNN layer.
-        kernel_size2: Kernel size for the second CNN layer.
-        hidden_dim:   Width of every hidden MLP layer.
-        num_layers:   Number of hidden Linear→ReLU blocks in the MLP.
-                      Set to 0 for a single linear projection (embed → output).
-        output_dim:   Number of output units (1 for scalar regression).
-        dropout:      Dropout rate applied inside the CNN and between MLP layers.
+        seq_len:        Length of the input sequence (default 100).
+        in_channels:    Alphabet size / one-hot width (default 4).
+        cnn_out:        Number of filters in every CNN layer.
+        kernel_size:    Kernel size shared across all CNN layers.
+        num_cnn_layers: Number of Conv→BN→ReLU→Dropout blocks.
+        hidden_dim:     Width of every hidden MLP layer.
+        num_mlp_layers: Number of hidden Linear→LN→ReLU→Dropout blocks.
+                        Set to 0 for a single linear projection (embed → output).
+        output_dim:     Number of output units (1 for scalar regression).
+        dropout:        Dropout rate applied inside CNN and between MLP layers.
     """
 
     def __init__(
         self,
         seq_len: int = 100,
         in_channels: int = 4,
-        conv1_out: int = 64,
-        conv2_out: int = 128,
-        kernel_size1: int = 8,
-        kernel_size2: int = 4,
+        cnn_out: int = 128,
+        kernel_size: int = 8,
+        num_cnn_layers: int = 2,
         hidden_dim: int = 512,
-        num_layers: int = 4,
+        num_mlp_layers: int = 4,
         output_dim: int = 1,
         dropout: float = 0.1,
     ):
@@ -112,18 +111,17 @@ class SimpleModel(nn.Module):
         # --- CNN embedding ---
         self.embedding = CNNEmbedding(
             in_channels=in_channels,
-            conv1_out=conv1_out,
-            conv2_out=conv2_out,
-            kernel_size1=kernel_size1,
-            kernel_size2=kernel_size2,
+            cnn_out=cnn_out,
+            kernel_size=kernel_size,
+            num_cnn_layers=num_cnn_layers,
             dropout=dropout,
         )
-        embed_dim = self.embedding.embed_dim  # = conv2_out
+        embed_dim = self.embedding.embed_dim  # = cnn_out
 
         # --- MLP with adjustable depth ---
         layers: list[nn.Module] = []
         in_dim = embed_dim
-        for _ in range(num_layers):
+        for _ in range(num_mlp_layers):
             layers += [
                 nn.Linear(in_dim, hidden_dim),
                 nn.LayerNorm(hidden_dim),
@@ -203,18 +201,20 @@ def evaluate(model, loader, criterion, device):
 if __name__ == "__main__":
     # --- Config ---
     BATCH_SIZE = 1000
-    EPOCHS     = 200
+    EPOCHS     = 20
     LR         = 1e-4
     INPUT      = Path("data/100k.json")
 
-    # Model hyperparameters — tweak freely
-    CONV1_OUT    = 100     # filters in CNN layer 1
-    CONV2_OUT    = 200    # filters in CNN layer 2  (= MLP input size)
-    KERNEL1      = 10      # kernel size for CNN layer 1
-    KERNEL2      = 10      # kernel size for CNN layer 2
-    HIDDEN_DIM   = 1000    # width of each MLP hidden layer
-    NUM_LAYERS   = 8      # number of hidden MLP blocks  ← adjust depth here
-    DROPOUT      = 0.1
+    # CNN hyperparameters
+    CNN_OUT        = 128   # filters shared across all CNN layers
+    KERNEL_SIZE    = 10    # kernel size shared across all CNN layers
+    NUM_CNN_LAYERS = 8     # number of Conv→BN→ReLU→Dropout blocks  ← adjust depth here
+
+    # MLP hyperparameters
+    HIDDEN_DIM      = 1000  # width of each MLP hidden layer
+    NUM_MLP_LAYERS  = 6     # number of hidden MLP blocks  ← adjust depth here
+
+    DROPOUT = 0.1
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
@@ -231,12 +231,11 @@ if __name__ == "__main__":
     model = SimpleModel(
         seq_len=100,
         in_channels=4,
-        conv1_out=CONV1_OUT,
-        conv2_out=CONV2_OUT,
-        kernel_size1=KERNEL1,
-        kernel_size2=KERNEL2,
+        cnn_out=CNN_OUT,
+        kernel_size=KERNEL_SIZE,
+        num_cnn_layers=NUM_CNN_LAYERS,
         hidden_dim=HIDDEN_DIM,
-        num_layers=NUM_LAYERS,
+        num_mlp_layers=NUM_MLP_LAYERS,
         output_dim=1,
         dropout=DROPOUT,
     ).to(device)
@@ -253,11 +252,6 @@ if __name__ == "__main__":
         train_loss = train(model, train_loader, optimizer, criterion, device)
         val_loss, val_r2, val_mae = evaluate(model, val_loader, criterion, device)
 
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            torch.save(model.state_dict(), "data/model_best.pth")
-            print(f"New best model saved (val_loss={val_loss:.4f})")
-
         print(
             f"Epoch {epoch:02d}/{EPOCHS} | "
             f"Train Loss: {train_loss:.4f} | "
@@ -265,7 +259,23 @@ if __name__ == "__main__":
             f"Val R²: {val_r2:.4f} | "
             f"Val MAE: {val_mae:.4f}"
         )
+        
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            best_metrics = {
+                "epoch":      epoch,
+                "train_loss": round(train_loss, 4),
+                "val_loss":   round(val_loss,   4),
+                "val_r2":     round(val_r2,     4),
+                "val_mae":    round(val_mae,     4),
+            }
+            torch.save(model.state_dict(), "data/model_best.pth")
+            with open("data/model_best_evaluation.json", "w") as f:
+                json.dump(best_metrics, f, indent=2)
+            print(f"New best model saved (val_loss={val_loss:.4f})")
+
 
     model.load_state_dict(torch.load("data/model_best.pth"))
     torch.save(model.state_dict(), "data/model.pth")
     print(f"\nBest model (val_loss={best_val_loss:.4f}) saved to data/model.pth")
+    print(f"Best metrics: {best_metrics}")
