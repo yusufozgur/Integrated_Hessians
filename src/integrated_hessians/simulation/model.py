@@ -1,7 +1,6 @@
 import math
 import torch
 from torch import nn
-from torch.nn import functional as F
 from typing import Literal
 
 
@@ -38,9 +37,9 @@ class TransformerEncoder(nn.Module):
         self,
         rna_length=100,
         alphabet_size=4,  # ACGT
-        d_model=256,
+        d_model=512,
         nhead=8,
-        num_layers=4,
+        num_layers=8,
         dropout: float = 0.1,
         mode: Literal[
             "predict_phenotype", "return_latent_representations"
@@ -66,6 +65,27 @@ class TransformerEncoder(nn.Module):
             nn.Conv1d(alphabet_size, d_model, 15, padding=7, padding_mode="reflect"),
             nn.ReLU(),
             nn.Dropout(p=dropout),
+
+            nn.Conv1d(d_model, d_model, 15, padding=7, padding_mode="reflect"),
+            nn.BatchNorm1d(d_model),
+            nn.ReLU(),
+            nn.Dropout(p=dropout),
+
+            nn.Conv1d(d_model, d_model, 15, padding=7, padding_mode="reflect"),
+            nn.BatchNorm1d(d_model),
+            nn.ReLU(),
+            nn.Dropout(p=dropout),
+
+            nn.Conv1d(d_model, d_model, 15, padding=7, padding_mode="reflect"),
+            nn.BatchNorm1d(d_model),
+            nn.ReLU(),
+            nn.Dropout(p=dropout),
+            
+            nn.Conv1d(d_model, d_model, 15, padding=7, padding_mode="reflect"),
+            nn.BatchNorm1d(d_model),
+            nn.ReLU(),
+            nn.Dropout(p=dropout),
+            # no relu for rich embedding
             nn.Conv1d(d_model, d_model, 9, padding=4, padding_mode="reflect"),
             nn.BatchNorm1d(d_model),
             nn.Dropout(p=dropout),
@@ -84,7 +104,6 @@ class TransformerEncoder(nn.Module):
         # x.shape = (batchsize, d_model, rna_length)
         x = x.permute(0, 2, 1)
         # x.shape = (batchsize, rna_length, d_model)
-
         x = self.pos_dropout(x + self.positional_encoding)
         x = self.transformer_encoder(x)
         # x.shape = (batchsize, rna_length, d_model)
@@ -101,5 +120,19 @@ class TransformerEncoder(nn.Module):
         return x
 
 
-def get_model(dropout: float = 0.1) -> TransformerEncoder:
-    return TransformerEncoder(dropout=dropout)
+def get_model(
+        rna_length=100,
+        alphabet_size=4,
+        d_model=512,
+        nhead=8,
+        num_layers=6,
+        dropout = 0.2,
+        ) -> TransformerEncoder:
+    return TransformerEncoder(
+        rna_length=rna_length,
+        alphabet_size=alphabet_size,
+        d_model=d_model,
+        nhead=nhead,
+        num_layers=num_layers,
+        dropout=dropout,
+    )
