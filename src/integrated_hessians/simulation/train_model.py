@@ -139,9 +139,6 @@ class SimpleModel(nn.Module):
         return self.mlp(embed)      # (B, output_dim)
 
 
-# ---------------------------------------------------------------------------
-# Training loop
-# ---------------------------------------------------------------------------
 def train(model, loader, optimizer, criterion, device):
     model.train()
     total_loss = 0.0
@@ -161,9 +158,6 @@ def train(model, loader, optimizer, criterion, device):
     return total_loss / len(loader.dataset)
 
 
-# ---------------------------------------------------------------------------
-# Validation loop
-# ---------------------------------------------------------------------------
 def evaluate(model, loader, criterion, device):
     model.eval()
     total_loss = 0.0
@@ -195,16 +189,7 @@ def evaluate(model, loader, criterion, device):
     return avg_loss, r2, mae
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
-if __name__ == "__main__":
-    # --- Config ---
-    BATCH_SIZE = 1000
-    EPOCHS     = 20
-    LR         = 1e-4
-    INPUT      = Path("data/100k.json")
-
+def get_model()->SimpleModel:
     # CNN hyperparameters
     CNN_OUT        = 128   # filters shared across all CNN layers
     KERNEL_SIZE    = 10    # kernel size shared across all CNN layers
@@ -215,6 +200,26 @@ if __name__ == "__main__":
     NUM_MLP_LAYERS  = 6     # number of hidden MLP blocks  ← adjust depth here
 
     DROPOUT = 0.1
+
+    return SimpleModel(
+        seq_len=100,
+        in_channels=4,
+        cnn_out=CNN_OUT,
+        kernel_size=KERNEL_SIZE,
+        num_cnn_layers=NUM_CNN_LAYERS,
+        hidden_dim=HIDDEN_DIM,
+        num_mlp_layers=NUM_MLP_LAYERS,
+        output_dim=1,
+        dropout=DROPOUT,
+    )
+
+if __name__ == "__main__":
+    # --- Config ---
+    BATCH_SIZE = 1000
+    EPOCHS     = 20
+    LR         = 1e-4
+    INPUT      = Path("data/1M.json")
+
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
@@ -228,17 +233,8 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
     val_loader   = DataLoader(val_dataset,   batch_size=BATCH_SIZE)
 
-    model = SimpleModel(
-        seq_len=100,
-        in_channels=4,
-        cnn_out=CNN_OUT,
-        kernel_size=KERNEL_SIZE,
-        num_cnn_layers=NUM_CNN_LAYERS,
-        hidden_dim=HIDDEN_DIM,
-        num_mlp_layers=NUM_MLP_LAYERS,
-        output_dim=1,
-        dropout=DROPOUT,
-    ).to(device)
+    model = get_model()
+    model = model.to(device)
 
     total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Trainable parameters: {total_params:,}")
@@ -276,6 +272,5 @@ if __name__ == "__main__":
 
 
     model.load_state_dict(torch.load("data/model_best.pth"))
-    torch.save(model.state_dict(), "data/model.pth")
-    print(f"\nBest model (val_loss={best_val_loss:.4f}) saved to data/model.pth")
+    print(f"\nBest model (val_loss={best_val_loss:.4f}) saved to data/model_best.pth")
     print(f"Best metrics: {best_metrics}")
