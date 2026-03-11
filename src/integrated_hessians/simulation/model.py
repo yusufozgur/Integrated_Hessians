@@ -1,135 +1,116 @@
+import math
 import torch
-import torch.nn as nn
+from torch import nn
+from torch.nn import functional as F
+from typing import Literal
 
-class CNNEmbedding(nn.Module):
+
+# from https://github.com/wzlxjtu/PositionalEncoding2D/blob/master/positionalembedding2d.py
+def positionalencoding1d(d_model, length):
     """
-    A stack of num_cnn_layers convolutional layers that embed a one-hot
-    encoded sequence into a dense feature representation.
-
-    Input shape:  (B, seq_len, 4)   — one-hot over 4 nucleotides
-    Output shape: (B, embed_dim)    — flat feature vector
-
-    All CNN layers share the same number of filters (cnn_out) and kernel size
-    (kernel_size). The first layer accepts in_channels (4); all subsequent
-    layers accept cnn_out channels. Global average pooling collapses the
-    position dimension so the MLP receives a fixed-size vector regardless of
-    sequence length.
+    :param d_model: dimension of the model
+    :param length: length of positions
+    :return: length*d_model position matrix
     """
+    if d_model % 2 != 0:
+        raise ValueError(
+            "Cannot use sin/cos positional encoding with odd dim (got dim={:d})".format(
+                d_model
+            )
+        )
+    pe = torch.zeros(length, d_model)
+    position = torch.arange(0, length).unsqueeze(1)
+    div_term = torch.exp(
+        (
+            torch.arange(0, d_model, 2, dtype=torch.float)
+            * -(math.log(10000.0) / d_model)
+        )
+    )
+    pe[:, 0::2] = torch.sin(position.float() * div_term)
+    pe[:, 1::2] = torch.cos(position.float() * div_term)
+
+    return pe
+
+
+class TransformerEncoder(nn.Module):
+    """ """
 
     def __init__(
         self,
-        in_channels: int = 4,
-        cnn_out: int = 128,
-        kernel_size: int = 8,
-        num_cnn_layers: int = 2,
-        dropout: float = 0.1,
+        rna_length=100,
+        alphabet_size=4,  # ACGT
+        d_model=1024,
+        nhead=16,
+        num_layers=5,
+        mode: Literal[
+            "predict_phenotype", "return_latent_representations"
+        ] = "predict_phenotype",
     ):
         super().__init__()
-        assert num_cnn_layers >= 1, "num_cnn_layers must be at least 1"
+        # RNA size is assumed 100
 
-        layers: list[nn.Module] = []
-        for i in range(num_cnn_layers):
-            in_ch = in_channels if i == 0 else cnn_out
-            layers += [
-                nn.Conv1d(in_ch, cnn_out, kernel_size=kernel_size, padding=kernel_size // 2),
-                nn.BatchNorm1d(cnn_out),
-                nn.ReLU(),
-                nn.Dropout(dropout),
-            ]
+        assert d_model % nhead == 0
 
-        self.cnn = nn.Sequential(*layers)
-        self.embed_dim = cnn_out
+        self.mode = mode
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # x: (B, seq_len, 4)  ->  (B, 4, seq_len)  for Conv1d
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model, nhead=nhead, batch_first=True
+        )
+        self.transformer_encoder = nn.TransformerEncoder(
+            encoder_layer, num_layers=num_layers
+        )
+        positional_encoding = positionalencoding1d(d_model, rna_length)
+        # you need to register positional encodings as buffer(non-trainable) for
+        #   automatic moving into device
+        self.register_buffer(
+            "positional_encoding", positional_encoding, persistent=False
+        )
+
+        self.embedding = nn.Sequential(
+            nn.Conv1d(alphabet_size, d_model, 15, padding=7, padding_mode="reflect"),
+            nn.ReLU(),
+            nn.Conv1d(d_model, d_model, 9, padding=4, padding_mode="reflect"),
+            nn.BatchNorm1d(d_model),
+        )
+
+        # this is equivalent to 1x1 conv as we are passing a 3D tensor
+        self.head = nn.Linear(d_model, 1)
+
+    def forward(self, x):
+        # x.shape = (batchsize, alphabet_size, rna_length)
+
+        # embedder projects local information into higher dimensional representations
+        x = self.embedding(x)
+        # x.shape = (batchsize, d_model, rna_length)
+
+        # we change dimensional order as transformer expects to have latent dimension at the end
         x = x.permute(0, 2, 1)
-        x = self.cnn(x)       # (B, cnn_out, seq_len')
-        x = x.mean(dim=-1)    # global average pool -> (B, cnn_out)
+        # x.shape = (batchsize, rna_length, d_model)
+
+        # add positional encodings
+        # you may ask why add instead of concat: https://stats.stackexchange.com/questions/586813/intuitive-explanation-for-summing-the-embedding-and-positional-encoding-in-the-t
+        x = x + self.positional_encoding
+
+        # encoder learns to output latent representations
+        x = self.transformer_encoder(x)
+        # x.shape = (batchsize, rna_length, d_model)
+
+        if self.mode == "return_latent_representations":
+            return x
+
+        # the head learns to extract phenotype values from latent representations
+        x = self.head(x)
+        # x.shape = (batchsize, rna_length, 1)
+
+        x = x[:, :, 0]
+        # x.shape = (batchsize, rna_length)
+
+        # as our data should be between 0-1 (or even narrower)
+        x = F.sigmoid(x)
+
         return x
 
 
-class SimpleModel(nn.Module):
-    """
-    CNN embedding followed by a depth-adjustable MLP.
+def get_model() -> TransformerEncoder:
 
-    Args:
-        seq_len:        Length of the input sequence (default 100).
-        in_channels:    Alphabet size / one-hot width (default 4).
-        cnn_out:        Number of filters in every CNN layer.
-        kernel_size:    Kernel size shared across all CNN layers.
-        num_cnn_layers: Number of Conv→BN→ReLU→Dropout blocks.
-        hidden_dim:     Width of every hidden MLP layer.
-        num_mlp_layers: Number of hidden Linear→LN→ReLU→Dropout blocks.
-                        Set to 0 for a single linear projection (embed → output).
-        output_dim:     Number of output units (1 for scalar regression).
-        dropout:        Dropout rate applied inside CNN and between MLP layers.
-    """
-
-    def __init__(
-        self,
-        seq_len: int = 100,
-        in_channels: int = 4,
-        cnn_out: int = 128,
-        kernel_size: int = 8,
-        num_cnn_layers: int = 2,
-        hidden_dim: int = 512,
-        num_mlp_layers: int = 4,
-        output_dim: int = 1,
-        dropout: float = 0.1,
-    ):
-        super().__init__()
-
-        # --- CNN embedding ---
-        self.embedding = CNNEmbedding(
-            in_channels=in_channels,
-            cnn_out=cnn_out,
-            kernel_size=kernel_size,
-            num_cnn_layers=num_cnn_layers,
-            dropout=dropout,
-        )
-        embed_dim = self.embedding.embed_dim  # = cnn_out
-
-        # --- MLP with adjustable depth ---
-        layers: list[nn.Module] = []
-        in_dim = embed_dim
-        for _ in range(num_mlp_layers):
-            layers += [
-                nn.Linear(in_dim, hidden_dim),
-                nn.LayerNorm(hidden_dim),
-                nn.ReLU(),
-                nn.Dropout(dropout),
-            ]
-            in_dim = hidden_dim
-        layers.append(nn.Linear(in_dim, output_dim))
-
-        self.mlp = nn.Sequential(*layers)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # x: (B, seq_len, 4)
-        embed = self.embedding(x)   # (B, embed_dim)
-        return self.mlp(embed)      # (B, output_dim)
-
-
-def get_model()->SimpleModel:
-    # CNN hyperparameters
-    CNN_OUT        = 128   # filters shared across all CNN layers
-    KERNEL_SIZE    = 10    # kernel size shared across all CNN layers
-    NUM_CNN_LAYERS = 8     # number of Conv→BN→ReLU→Dropout blocks  ← adjust depth here
-
-    # MLP hyperparameters
-    HIDDEN_DIM      = 1000  # width of each MLP hidden layer
-    NUM_MLP_LAYERS  = 6     # number of hidden MLP blocks  ← adjust depth here
-
-    DROPOUT = 0.1
-
-    return SimpleModel(
-        seq_len=100,
-        in_channels=4,
-        cnn_out=CNN_OUT,
-        kernel_size=KERNEL_SIZE,
-        num_cnn_layers=NUM_CNN_LAYERS,
-        hidden_dim=HIDDEN_DIM,
-        num_mlp_layers=NUM_MLP_LAYERS,
-        output_dim=1,
-        dropout=DROPOUT,
-    )
+    return TransformerEncoder()
