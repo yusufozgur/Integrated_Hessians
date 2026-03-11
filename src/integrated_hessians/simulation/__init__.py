@@ -7,7 +7,7 @@ from dataclasses import dataclass, asdict
 from numpy.typing import NDArray
 from enum import Enum, auto
 import random
-from typing import NewType, Tuple
+from typing import NewType, Tuple, Optional
 
 Nucleotide_Sequence = NewType("Nucleotide_Sequence", str)
 NUCLEOTIDE_ORDER = ["A", "C", "G", "T"]
@@ -82,6 +82,14 @@ class MotifType(Enum):
     NEUTRAL = auto()
 
 
+    def to_json(self):
+        return self.name
+
+    @classmethod
+    def from_json(cls, value):
+        return cls[value]
+
+
 @dataclass
 class SimulationMotif(Motif):
     """
@@ -91,12 +99,14 @@ class SimulationMotif(Motif):
     role: MotifType
 
     @staticmethod
-    def from_motif(motif: Motif) -> SimulationMotif:
+    def from_motif(motif: Motif, role: Optional[MotifType] = None) -> SimulationMotif:
+        if not role:
+            role = random.choice(list(MotifType))
         return SimulationMotif(
             name=motif.name,
             count_matrix=motif.count_matrix,
             probability_matrix=motif.probability_matrix,
-            role=random.choice(list(MotifType)),
+            role=role,
         )
 
     def get_phenotype_contribution(
@@ -143,6 +153,7 @@ class SimulatedSequence:
         nucleotides, motif_mask_1 = SimulatedSequence.insert_motif(
             nucleotides, motifs[0]
         )
+        
         phenotype += motifs[0].get_phenotype_contribution(motifs[1])
 
         nucleotides, motif_mask_2 = SimulatedSequence.insert_motif(
