@@ -50,6 +50,12 @@ def _(
     return
 
 
+@app.cell
+def _(h, plt):
+    plt.imshow(h)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -146,14 +152,27 @@ def _(baseline, model):
 
 
 @app.cell
-def _(hess, torch):
-    torch.max(hess.reshape(200, 200))
-    return
+def _(hess, seq, torch):
+    # Get indices where one_hot == 1
+    idx = torch.Tensor(seq.one_hot).bool()  # shape: [50, 4]
+
+    # Subset hessian: index both (50,4) dimensions
+    # Result shape: [1, N, 1, N] where N = number of 1s (= 50, one per row)
+    h = hess[0]               # drop batch dim → [50, 4, 1, 50, 4]
+    h = h[idx]                   # index rows → [50, 1, 50, 4]
+    h = h[:, :, :, :]            
+    h = h.permute(0, 1, 2, 3)    
+
+    # Cleaner approach in one go:
+    h = hess[0][idx]          # [50, 1, 50, 4]
+    h = h[:, 0, :, :]            # drop the middle batch dim → [50, 50, 4]
+    h = h[:, idx]                # index second (50,4) block → [50, 50]
+    return (h,)
 
 
 @app.cell
-def _(hess, plt):
-    plt.imshow(hess.reshape(200, 200))
+def _(h):
+    h.shape
     return
 
 
