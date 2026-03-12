@@ -20,8 +20,17 @@ def _(mo):
 
 
 @app.cell
+def _(mo):
+    baseline_to_input_alpha = mo.ui.slider(0,1,.1, show_value=True, label="Baseline to input alpha")
+    baseline_to_input_alpha
+    return (baseline_to_input_alpha,)
+
+
+@app.cell
 def _(
     attributions_permuted,
+    h,
+    interpolation_pred,
     onehot_permuted,
     plot_binary_string,
     plot_heatmap,
@@ -32,17 +41,26 @@ def _(
     seq,
 ):
     fig, axes = plt.subplots(
-        nrows=5,
-        figsize=(12, 6),
+        nrows=6,
+        figsize=(10, 10),
         sharex=True,                          # guarantees column alignment
-        gridspec_kw={'height_ratios': [4, 1, 1, 4, 1]} # optional: scale row heights by number of rows
+        gridspec_kw={'height_ratios': [4, 1, 1, 4, 1, 20]} # optional: scale row heights by number of rows
     )
 
     plot_onehot(seq.nucleotides, onehot_permuted, axes[0], title=f"Phen: {seq.phenotype} Pred: {pred: .2}")
     plot_binary_string(seq.motif_mask_1, axes[1], title=seq.motif_types[0])
     plot_binary_string(seq.motif_mask_2, axes[2], title=seq.motif_types[1])
-    plot_onehot(seq.nucleotides, attributions_permuted, axes[3], title="Integrated Gradients (Multiplied by Input)")
-    plot_heatmap(real_attributions, row_labels=["Real base"], col_labels=list(seq.nucleotides), ax=axes[4], cmap='Blues', title="Real Attributions")
+    plot_onehot(seq.nucleotides, attributions_permuted, axes[3], title="Integrated Gradients (Multiplied input true)")
+    plot_heatmap(real_attributions, row_labels=["Real base"], col_labels=list(seq.nucleotides), ax=axes[4], cmap='bwr', title="Real Attributions")
+
+    import matplotlib.colors as mcolors
+    norm = mcolors.TwoSlopeNorm(vmin=h.min(), vcenter=0, vmax=h.max())
+    im = axes[5].imshow(h, aspect='auto', cmap='bwr', norm=norm)
+    axes[5].set_title(f"Interpolation phenotype: {interpolation_pred: .2f}")
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+    divider = make_axes_locatable(axes[5])
+    cax = divider.append_axes("right", size="3%", pad=0.05)
+    plt.colorbar(im, cax=cax)
 
     axes[0].set_xlabel("")  # remove redundant x-label from top plot
     plt.tight_layout()
@@ -51,8 +69,20 @@ def _(
 
 
 @app.cell
-def _(h, plt):
-    plt.imshow(h)
+def _(hess):
+    hess.reshape(50,4,50,4).permute(1,0,3,2).reshape(200,200).shape
+    return
+
+
+@app.cell
+def _(hess, plt):
+    plt.imshow(hess.reshape(50,4,50,4).permute(1,0,3,2).reshape(200,200),cmap='Blues')
+    return
+
+
+@app.cell
+def _(hess, plt):
+    plt.imshow(hess.reshape(200,200),cmap='Blues')
     return
 
 
@@ -124,13 +154,13 @@ def _(model, seq, torch):
 
 @app.cell
 def _(IntegratedGradients, model, seq, torch):
-    #Calculate Attributions
+    #Calculate Attributions via Integrated Gradients
     input = torch.tensor(seq.one_hot).unsqueeze(0).type(torch.float)
-    baseline = torch.full_like(input, 0.25)
+    baseline = torch.full_like(input, 0)
     ig = IntegratedGradients(model, multiply_by_inputs=True)
     attributions, delta = ig.attribute(input, baseline, return_convergence_delta=True)
     f"Delta: {float(delta): .2}"
-    return attributions, baseline
+    return attributions, input
 
 
 @app.cell
@@ -143,30 +173,54 @@ def _(attributions, np, seq):
 
 
 @app.cell
-def _(baseline, model):
+def _(baseline_to_input_interpolation, model):
     # Calculate Hessian
     from integrated_hessians.hessian import hessian
-    hess = hessian(model, baseline, target=0)
+    hess = hessian(model, baseline_to_input_interpolation, target=0)
     hess.shape
     return (hess,)
 
 
 @app.cell
+def _(baseline_to_input_alpha, input, interpolate_onehot, model, torch):
+    baseline_to_input_interpolation = interpolate_onehot(input, baseline_to_input_alpha.value)
+    with torch.no_grad():
+        interpolation_pred = model(baseline_to_input_interpolation)
+    interpolation_pred = float(interpolation_pred[0,0])
+    return baseline_to_input_interpolation, interpolation_pred
+
+
+@app.cell
+def _(torch):
+    def interpolate_onehot(onehot_tensor, alpha):
+        """
+        Interpolate between uniform (0.25) and one-hot encoded tensor.
+
+        Args:
+            onehot_tensor: shape (50, 4) one-hot encoded tensor
+            alpha: float in [0, 1], where 0 = uniform, 1 = one-hot
+
+        Returns:
+            Interpolated tensor of shape (50, 4)
+        """
+        uniform = torch.full_like(onehot_tensor, 0.)
+        return (1 - alpha) * uniform + alpha * onehot_tensor
+
+    return (interpolate_onehot,)
+
+
+@app.cell
 def _(hess, seq, torch):
-    # Get indices where one_hot == 1
-    idx = torch.Tensor(seq.one_hot).bool()  # shape: [50, 4]
+    idx = torch.tensor(seq.one_hot).bool()          # [50, 4]
+    flat_idx = idx.nonzero(as_tuple=False)[:, 1]    # [50] — which of the 4 cols is hot, per row
 
-    # Subset hessian: index both (50,4) dimensions
-    # Result shape: [1, N, 1, N] where N = number of 1s (= 50, one per row)
-    h = hess[0]               # drop batch dim → [50, 4, 1, 50, 4]
-    h = h[idx]                   # index rows → [50, 1, 50, 4]
-    h = h[:, :, :, :]            
-    h = h.permute(0, 1, 2, 3)    
+    h = hess[0]                    # [50, 4, 1, 50, 4]
+    h = h[idx]                     # [50, 1, 50, 4]
+    h = h[:, 0, :, :]              # [50, 50, 4]
 
-    # Cleaner approach in one go:
-    h = hess[0][idx]          # [50, 1, 50, 4]
-    h = h[:, 0, :, :]            # drop the middle batch dim → [50, 50, 4]
-    h = h[:, idx]                # index second (50,4) block → [50, 50]
+    # For each of the 50 rows in the last dim, pick the hot column
+    h = h[torch.arange(50), :, :]                   # still [50, 50, 4]
+    h = h[:, torch.arange(50), flat_idx]            # [50, 50] ✓
     return (h,)
 
 

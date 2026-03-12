@@ -4,7 +4,7 @@ from numpy.typing import NDArray
 from integrated_hessians.simulation import NUCLEOTIDE_ORDER
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-def plot_heatmap(matrix: np.ndarray, col_labels: list, row_labels: list, title: str, ax=None, cmap='Blues', text = False, add_colorbar=True):
+def plot_heatmap(matrix: np.ndarray, col_labels: list, row_labels: list, title: str, ax=None, cmap='bwr', text = False, add_colorbar=True):
     """Generic heatmap with borders. matrix shape: (n_rows x n_cols)."""
     if ax is None:
         fig, ax = plt.subplots(figsize=(max(6, len(col_labels) * 0.4), 3))
@@ -48,7 +48,7 @@ def plot_onehot(sequence: str, one_hot: NDArray, ax=None, title="One-Hot Encoded
         row_labels=NUCLEOTIDE_ORDER,
         title=title,
         ax=ax,
-        cmap='Blues',
+        cmap='bwr',
         text=text
     )
 
@@ -63,5 +63,5 @@ def plot_binary_string(binary: str, ax=None, title="Binary String"):
         row_labels=[''],
         title=title,
         ax=ax,
-        cmap='Blues'
+        cmap='bwr'
     )
