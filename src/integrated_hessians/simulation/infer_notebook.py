@@ -19,14 +19,14 @@ def _():
 @app.cell
 def _():
     from integrated_hessians.simulation.train_model import MotifInteractionsDataset
-    from integrated_hessians.simulation.model import get_model
+    from integrated_hessians.simulation.simple_simulation.model import CNNDense
     from integrated_hessians.simulation.plot import plot_onehot, plot_binary_string, plot_heatmap
     from integrated_hessians.simulation import MotifType
 
     return (
+        CNNDense,
         MotifInteractionsDataset,
         MotifType,
-        get_model,
         plot_binary_string,
         plot_heatmap,
         plot_onehot,
@@ -35,7 +35,7 @@ def _():
 
 @app.cell
 def _(MotifInteractionsDataset, Path):
-    seqs = MotifInteractionsDataset(Path("data/1k_test.json")).data
+    seqs = MotifInteractionsDataset(Path("data/simple_simulation/1k_test.json")).data
     return (seqs,)
 
 
@@ -46,10 +46,9 @@ def _(row, seqs):
 
 
 @app.cell
-def _(get_model, torch):
-    model = get_model(
-    )
-    model.load_state_dict(torch.load("data/model_best.pth"))
+def _(CNNDense, torch):
+    model = CNNDense()
+    model.load_state_dict(torch.load("data/simple_simulation/model_best.pth"))
     model.eval()
     return (model,)
 

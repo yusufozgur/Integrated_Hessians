@@ -6,8 +6,9 @@ from torch.utils.data import Dataset, DataLoader
 import json
 from integrated_hessians.simulation import SimulatedSequence
 from torch.utils.data import random_split
-from integrated_hessians.simulation.model import get_model
+from integrated_hessians.simulation.simple_simulation.model import CNNDense
 from tqdm import tqdm
+from integrated_hessians.simulation.simple_simulation.create_simulation import SEQLEN
 
 
 class MotifInteractionsDataset(Dataset):
@@ -22,7 +23,7 @@ class MotifInteractionsDataset(Dataset):
             SimulatedSequence.from_dict(x) for x in json_content
         ]
         self.data = data
-        assert self.data[0].one_hot.shape == (100, 4)
+        assert self.data[0].one_hot.shape == (SEQLEN, 4)
 
     def __getitem__(self, idx):
         datapoint = self.data[idx]
@@ -86,10 +87,12 @@ def evaluate(model, loader, criterion, device):
 
 if __name__ == "__main__":
     # --- Config ---
-    BATCH_SIZE = 100
-    EPOCHS = 5
+    BATCH_SIZE = 1000
+    EPOCHS = 200
     LR = 1e-4
-    INPUT = Path("data/1M.json")
+    INPUT = Path("data/simple_simulation/100k.json")
+    OUT_BEST_MODEL = "data/simple_simulation/model_best.pth"
+    OUT_BEST_MODEL_EVAL = "data/simple_simulation/model_best_evaluation.json"
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
@@ -103,7 +106,7 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
 
-    model = get_model()
+    model = CNNDense(sequence_length = SEQLEN)
     model = model.to(device)
 
     total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -141,13 +144,13 @@ if __name__ == "__main__":
                 "train_losses": train_losses,
                 "val_losses": val_losses,
             }
-            torch.save(model.state_dict(), "data/model_best.pth")
-            with open("data/model_best_evaluation.json", "w") as f:
+            torch.save(model.state_dict(), OUT_BEST_MODEL)
+            with open(OUT_BEST_MODEL_EVAL, "w") as f:
                 json.dump(best_metrics, f, indent=2)
             print(f"New best model saved (val_loss={val_loss:.4f})")
 
-    model.load_state_dict(torch.load("data/model_best.pth"))
-    print(f"\nBest model (val_loss={best_val_loss:.4f}) saved to data/model_best.pth")
-    with open("data/model_best_evaluation.json", "w") as f:
+    model.load_state_dict(torch.load(OUT_BEST_MODEL))
+    print(f"\nBest model (val_loss={best_val_loss:.4f}) saved to {OUT_BEST_MODEL}")
+    with open(OUT_BEST_MODEL_EVAL, "w") as f:
         json.dump(best_metrics, f, indent=2)
     print(f"Best metrics: {best_metrics}")
