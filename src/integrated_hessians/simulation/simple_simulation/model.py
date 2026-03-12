@@ -3,7 +3,8 @@ import torch
 from torch import nn
 from typing import Literal, Annotated
 from torch import Tensor
-
+from jaxtyping import Float, jaxtyped
+from beartype import beartype
 
 class CNNDense(nn.Module):
     """ """
@@ -51,7 +52,8 @@ class CNNDense(nn.Module):
             nn.Linear(width_multiplier, 1),
         )
 
-    def forward(self, x: Annotated[Tensor, "batchsize rna_length alphabet_size"]):
-        x: Annotated[Tensor, "batchsize alphabet_size rna_length"] = x.permute(0, 2, 1)
-        x: Annotated[Tensor, "batchsize 1"] = self.embedding(x)
+    @jaxtyped(typechecker=beartype)
+    def forward(self, x: Float[Tensor, "batchsize rna_length alphabet_size"])-> Float[Tensor, "batchsize 1"]:
+        x: Float[Tensor, "batchsize alphabet_size rna_length"] = x.permute(0, 2, 1)
+        x: Float[Tensor, "batchsize 1"] = self.embedding(x)
         return x

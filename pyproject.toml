@@ -9,8 +9,10 @@ authors = [
 requires-python = ">=3.13"
 
 dependencies = [
+    "beartype>=0.22.9",
     "captum>=0.7.0",
     "dacite>=1.9.2",
+    "jaxtyping>=0.3.9",
     "lightning>=2.6.1",
     "marimo>=0.20.4",
     "numpy>=2.4.2",
@@ -25,3 +27,6 @@ dependencies = [
 [build-system]
 requires = ["uv_build>=0.9.7,<0.10.0"]
 build-backend = "uv_build"
+
+[tool.ruff.lint]
+ignore = ["F722"]
