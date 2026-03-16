@@ -6,7 +6,7 @@ from torch.utils.data import Dataset, DataLoader
 import json
 from integrated_hessians.simulation import SimulatedSequence
 from torch.utils.data import random_split
-from integrated_hessians.simulation.simple_simulation.model import CNNDense
+from integrated_hessians.simulation.simple_simulation.model import CNNMLP
 from tqdm import tqdm
 from integrated_hessians.simulation.simple_simulation.create_simulation import SEQLEN
 
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     BATCH_SIZE = 1000
     EPOCHS = 100
     LR = 1e-3
-    L2_WEIGHT_DECAY=1e-5
+    L2_WEIGHT_DECAY = 1e-5
     INPUT = Path("data/simple_simulation/100k.json")
     OUT_BEST_MODEL = "data/simple_simulation/model_best.pth"
     OUT_BEST_MODEL_EVAL = "data/simple_simulation/model_best_evaluation.json"
@@ -107,14 +107,16 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
 
-    model = CNNDense(sequence_length = SEQLEN)
+    model = CNNMLP(sequence_length=SEQLEN)
     model = model.to(device)
 
     total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Trainable parameters: {total_params:,}")
 
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=L2_WEIGHT_DECAY)
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=LR, weight_decay=L2_WEIGHT_DECAY
+    )
 
     best_val_loss = float("inf")
     train_losses = []

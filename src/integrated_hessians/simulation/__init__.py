@@ -8,8 +8,9 @@ from numpy.typing import NDArray
 from enum import Enum, auto
 import random
 from typing import NewType, Tuple, Optional
+import jaxtyping as jx
 
-Nucleotide_Sequence = NewType("Nucleotide_Sequence", str)
+Nucleotide_Sequence = str
 NUCLEOTIDE_ORDER = ["A", "C", "G", "T"]
 
 
@@ -81,7 +82,6 @@ class MotifType(Enum):
     PURE_INTERACTION = auto()
     NEUTRAL = auto()
 
-
     def to_json(self):
         return self.name
 
@@ -134,7 +134,7 @@ class SimulationMotif(Motif):
 class SimulatedSequence:
     length: int
     nucleotides: Nucleotide_Sequence
-    one_hot: NDArray
+    one_hot: jx.Float[NDArray[np.float32], "sequence_length alphabet_length"]
     phenotype: float
     motif_names: Tuple[str, str]
     motif_types: Tuple[MotifType, MotifType]
@@ -153,7 +153,7 @@ class SimulatedSequence:
         nucleotides, motif_mask_1 = SimulatedSequence.insert_motif(
             nucleotides, motifs[0]
         )
-        
+
         phenotype += motifs[0].get_phenotype_contribution(motifs[1])
 
         nucleotides, motif_mask_2 = SimulatedSequence.insert_motif(

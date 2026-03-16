@@ -97,12 +97,12 @@ def _():
 @app.cell
 def _():
     from integrated_hessians.simulation.train_model import MotifInteractionsDataset
-    from integrated_hessians.simulation.simple_simulation.model import CNNDense
+    from integrated_hessians.simulation.simple_simulation.model import CNNMLP
     from integrated_hessians.simulation.plot import plot_onehot, plot_binary_string, plot_heatmap
     from integrated_hessians.simulation import MotifType
 
     return (
-        CNNDense,
+        CNNMLP,
         MotifInteractionsDataset,
         MotifType,
         plot_binary_string,
@@ -124,8 +124,8 @@ def _(row, seqs):
 
 
 @app.cell
-def _(CNNDense, torch):
-    model = CNNDense()
+def _(CNNMLP, torch):
+    model = CNNMLP()
     model.load_state_dict(torch.load("data/simple_simulation/model_best.pth"))
     model.eval()
     return (model,)
