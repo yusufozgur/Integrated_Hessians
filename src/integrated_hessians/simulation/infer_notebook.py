@@ -69,20 +69,8 @@ def _(
 
 
 @app.cell
-def _(hess):
-    hess.reshape(50,4,50,4).permute(1,0,3,2).reshape(200,200).shape
-    return
-
-
-@app.cell
 def _(hess, plt):
-    plt.imshow(hess.reshape(50,4,50,4).permute(1,0,3,2).reshape(200,200),cmap='Blues')
-    return
-
-
-@app.cell
-def _(hess, plt):
-    plt.imshow(hess.reshape(200,200),cmap='Blues')
+    plt.imshow(hess.reshape(200,200),cmap='bwr')
     return
 
 

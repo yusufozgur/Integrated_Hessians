@@ -14,7 +14,7 @@ class CNNDense(nn.Module):
         sequence_length=50,
         alphabet_size=4,  # ACGT
         dropout: float = 0.2,
-        width_multiplier = 200,
+        width_multiplier = 300,
         kernel_size = 15,
         padding = 7
     ):
@@ -38,16 +38,21 @@ class CNNDense(nn.Module):
             nn.MaxPool1d(2),
 
             # 12
-            nn.Conv1d(width_multiplier*2, width_multiplier*4, kernel_size, padding=padding, padding_mode="reflect"),
-            nn.BatchNorm1d(width_multiplier*4),
-            nn.ReLU(),
-            nn.Dropout(p=dropout),
-            nn.MaxPool1d(2),
-
-            # 6
             nn.Flatten(),
             # 6*width_multiplier*4
-            nn.Linear(6*width_multiplier*4, width_multiplier*4),
+            nn.Linear(12*width_multiplier*2, width_multiplier*4),
+            nn.Linear(width_multiplier*4, width_multiplier*4),
+            nn.Linear(width_multiplier*4, width_multiplier*4),
+            nn.Linear(width_multiplier*4, width_multiplier*4),
+            nn.Linear(width_multiplier*4, width_multiplier*4),
+            nn.Linear(width_multiplier*4, width_multiplier*4),
+            nn.Linear(width_multiplier*4, width_multiplier*4),
+            nn.Linear(width_multiplier*4, width_multiplier*4),
+            nn.Linear(width_multiplier*4, width_multiplier*4),
+            nn.Linear(width_multiplier*4, width_multiplier*4),
+            nn.Linear(width_multiplier*4, width_multiplier*4),
+            nn.Linear(width_multiplier*4, width_multiplier*4),
+            nn.Linear(width_multiplier*4, width_multiplier*4),
             nn.Linear(width_multiplier*4, width_multiplier),
             nn.Linear(width_multiplier, 1),
         )

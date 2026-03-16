@@ -21,10 +21,10 @@ def main():
     ):
         motifs = extract_motifs_from_jaspar_psm_file(MOTIFS_FILE)
         roles = {
-            "SM1": MotifType.PURE_INTERACTION,
-            "SM4": MotifType.PURE_INTERACTION,
-            "SM2": MotifType.NEUTRAL,
-            "SM3": MotifType.NEUTRAL,
+            "Interactive1": MotifType.PURE_INTERACTION,
+            "Interactive2": MotifType.PURE_INTERACTION,
+            "Random1": MotifType.NEUTRAL,
+            "Random2": MotifType.NEUTRAL,
         }
         motifs = [SimulationMotif.from_motif(m, role=roles[m.name]) for m in motifs]
         sequences = [
