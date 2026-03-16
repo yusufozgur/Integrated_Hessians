@@ -88,8 +88,9 @@ def evaluate(model, loader, criterion, device):
 if __name__ == "__main__":
     # --- Config ---
     BATCH_SIZE = 1000
-    EPOCHS = 200
-    LR = 1e-4
+    EPOCHS = 100
+    LR = 1e-3
+    L2_WEIGHT_DECAY=1e-5
     INPUT = Path("data/simple_simulation/100k.json")
     OUT_BEST_MODEL = "data/simple_simulation/model_best.pth"
     OUT_BEST_MODEL_EVAL = "data/simple_simulation/model_best_evaluation.json"
@@ -113,7 +114,7 @@ if __name__ == "__main__":
     print(f"Trainable parameters: {total_params:,}")
 
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+    optimizer = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=L2_WEIGHT_DECAY)
 
     best_val_loss = float("inf")
     train_losses = []

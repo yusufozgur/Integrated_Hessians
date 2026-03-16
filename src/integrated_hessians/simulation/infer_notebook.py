@@ -179,6 +179,12 @@ def _(baseline_to_input_alpha, input, interpolate_onehot, model, torch):
 
 
 @app.cell
+def _(baseline_to_input_interpolation):
+    baseline_to_input_interpolation
+    return
+
+
+@app.cell
 def _(torch):
     def interpolate_onehot(onehot_tensor, alpha):
         """
@@ -191,7 +197,7 @@ def _(torch):
         Returns:
             Interpolated tensor of shape (50, 4)
         """
-        uniform = torch.full_like(onehot_tensor, 0.)
+        uniform = torch.full_like(onehot_tensor, 0.25)
         return (1 - alpha) * uniform + alpha * onehot_tensor
 
     return (interpolate_onehot,)
