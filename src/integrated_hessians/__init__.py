@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Callable, Annotated, Literal
+from typing import Callable, Annotated, Literal, Tuple
 from beartype import beartype
 from torch import Tensor
 import torch
@@ -87,7 +87,10 @@ def get_integrated_hessians(
     target: int,
     sampling_steps=50,
     multiply_by_inputs=True,  # return local(false) vs global(True) interactions, analagous to the option in integrated gradients
-) -> Annotated[Tensor, "batch_size *input_shape batch_size *input_shape"]:
+) -> Tuple[
+    Annotated[Tensor, "batch_size *input_shape batch_size *input_shape"],
+    Annotated[Tensor, "batch_size"],
+]:
 
     def forward_func(x):
         return model(x)[target]
@@ -118,9 +121,12 @@ def get_integrated_hessians(
     assert local_interaction.shape == (*inputs.shape, *inputs.shape)
     global_interaction = local_interaction * (inputs - baselines) * (inputs - baselines)
 
-    delta = None  # TODO
+    delta: Tensor = abs(
+        ((inputs - baselines).reshape(inputs.shape[0], -1).sum(1))
+        - (global_interaction.reshape(inputs.shape[0], -1).sum(1))
+    )
 
     if multiply_by_inputs:
-        return global_interaction
+        return global_interaction, delta
     else:
-        return local_interaction
+        return local_interaction, delta

@@ -193,7 +193,6 @@ def test_and_plot_selected_row(
     # TODO: Show unsubsetted epistasis
     plot_epistasis_subsetted(
         ax=axes[5],
-        one_hot=one_hot.transpose(1, 0),
         hessian_onehot_subsetted=subset_onehot_hessian(
             calculated_hessian=calculated_hessian,
             one_hot_mask=torch.tensor(one_hot).permute(1, 0),

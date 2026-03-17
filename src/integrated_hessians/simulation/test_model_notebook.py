@@ -181,7 +181,6 @@ def _(
     pred_interpolation = get_prediction(model, interpolation.numpy())
 
     plot_epistasis_subsetted(
-        one_hot=one_hot,
         hessian_onehot_subsetted=subset_onehot_hessian(
             calculated_hessian=interpolation_hessian,
             one_hot_mask=torch.tensor(one_hot),
@@ -212,7 +211,8 @@ def _(mo):
 
 @app.cell
 def _(get_integrated_hessians, model, one_hot_batched, sampling_steps, torch):
-    integ_hess_result = get_integrated_hessians(model,one_hot_batched,torch.full_like(one_hot_batched,.25),0, sampling_steps=sampling_steps.value)
+    integ_hess_result, ih_delta = get_integrated_hessians(model,torch.concat((one_hot_batched,one_hot_batched)),torch.full_like(torch.concat((one_hot_batched,one_hot_batched)),.25),0, sampling_steps=sampling_steps.value)
+    integ_hess_result.shape
     return (integ_hess_result,)
 
 
@@ -232,7 +232,6 @@ def _(
     torch,
 ):
     plot_epistasis_subsetted(
-        one_hot=one_hot,
         hessian_onehot_subsetted=subset_onehot_hessian(
             calculated_hessian=integ_hess_result.squeeze(0).squeeze(2),
             one_hot_mask=torch.tensor(one_hot),
