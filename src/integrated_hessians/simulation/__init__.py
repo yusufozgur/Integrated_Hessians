@@ -164,6 +164,10 @@ class SimulatedSequence:
         motif_names = [m.name for m in motifs]
         motif_types = [m.role for m in motifs]
         one_hot = SimulatedSequence.encode_one_hot(nucleotides)
+        assert len(motif_names) == 2
+        motif_names = (motif_names[0], motif_names[1])
+        assert len(motif_types) == 2
+        motif_types = (motif_types[0], motif_types[1])
 
         return SimulatedSequence(
             length=length,
