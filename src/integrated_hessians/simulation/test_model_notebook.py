@@ -212,7 +212,7 @@ def _(mo):
 
 @app.cell
 def _(get_integrated_hessians, model, one_hot_batched, sampling_steps, torch):
-    integ_hess_result, ih_delta = get_integrated_hessians(model,one_hot_batched,torch.full_like(one_hot_batched,.25),0, integration_steps=sampling_steps.value)
+    integ_hess_result, ih_delta = get_integrated_hessians(model,one_hot_batched,torch.full_like(one_hot_batched,.25),0, integration_steps=sampling_steps.value, multiply_by_inputs=True)
     integ_hess_result.shape
     return ih_delta, integ_hess_result
 
