@@ -9,7 +9,8 @@ Integrated Gradients is an interpretability method in deep learning, focused on 
 ## Motivation for this implementation
 
 - The authors have not provided a formal API in [path_explain](https://github.com/suinleelab/path_explain)
-- For high number of features, the naive implementation becomes memory and compute constrained, the API needs an option to subset/choose which featues should be incorporated into the analysis, reducing the computational load. This is especially useful for one-hot encoded features like those seen in genomic sequences (Also, as our implementation uses torch.autograd.functional.hessian, it could be faster.).
+- path_explain implementation only supports [2d input values](https://github.com/suinleelab/path_explain/blob/93c75a5e9b3caeb17408297ea564e2f579ea15e3/path_explain/explainers/path_explainer_torch.py#L226), our implementation supports any input shapes.
+- We use runtime type checking for tensors in this repo, using jaxtyping and beartype. This ensures operations involving false tensor shapes raises an error, preventing silent bugs or hard to debug errors.
 - Also, another ergonomic improvement we make is seamless ReLU to Softplus switching to take second order gradients in ReLU based models. path_explain repo requires changing the model architecture to use softplus, but in this project, we use monkey patching to replace every relu call with a call to softplus, this makes our api easier to use.
 - More plotting options, preferably those that incorporate the subsetting option would be desirable. For example, a hybrid plot with subsetted feature attributions on top, calculated with integrated gradients, and 45 degree rotated interaction half-matrix at the bottom, like those found in [squid-manuscript](https://github.com/evanseitz/squid-manuscript/blob/e3cbd567448a0db8cef0877702594d7d8c20484b/squid/figs_surrogate.py#L290)
 - [Janizek et al. (2021)](#references) tests this method with a language modelling example and a small XOR network. I believe there could be an interesting test case where a model learns interactions between genomic motifs, and then the user unravels the learned behaviour by looking at interactions attributions.
@@ -22,7 +23,9 @@ Integrated Gradients is an interpretability method in deep learning, focused on 
 **WIP**
 
 ## Performance comparison
-**WIP**
+I could not compare this implementation with path_explain, as path explain did not accept the input tensors of shape (batch_size, sequence_length, alphabet_size), which is the standard shape for genomics. One could change their model architecture to test the performance difference.
+
+## Pypi
 
 ## Test Case: Motif Interactions
 **WIP**
