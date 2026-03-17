@@ -13,8 +13,9 @@ def _():
     from numpy.typing import NDArray
     import torch
     import numpy as np
+    import matplotlib.pyplot as plt
 
-    return NDArray, Path, jx, mo, np, torch
+    return NDArray, Path, jx, mo, np, plt, torch
 
 
 @app.cell
@@ -29,16 +30,26 @@ def _():
         plot_binary_string,
         plot_heatmap,
     )
-    from integrated_hessians.hessian import hessian
-    from integrated_hessians.simulation.test_model import get_test_data, get_model, plot_training_metrics, plot_gif_hessians_from_baseline_to_real, get_prediction, get_attributions, test_and_plot_selected_row, interpolate_onehot, subset_onehot_hessian
+    from integrated_hessians import get_hessian
+    from integrated_hessians.simulation.test_model import (
+        get_test_data,
+        get_model,
+        plot_training_metrics,
+        plot_gif_hessians_from_baseline_to_real,
+        get_prediction,
+        get_attributions,
+        test_and_plot_selected_row,
+        interpolate_onehot,
+        subset_onehot_hessian,
+    )
 
     return (
         SimulatedSequence,
         get_attributions,
+        get_hessian,
         get_model,
         get_prediction,
         get_test_data,
-        hessian,
         interpolate_onehot,
         plot_epistasis_subsetted,
         plot_gif_hessians_from_baseline_to_real,
@@ -50,7 +61,7 @@ def _():
 
 @app.cell
 def _(mo):
-    row = mo.ui.number(0,1000,1, label="Choose Row")
+    row = mo.ui.number(0, 1000, 1, label="Choose Row")
     row
     return (row,)
 
@@ -61,10 +72,10 @@ def _(
     Path,
     SimulatedSequence,
     get_attributions,
+    get_hessian,
     get_model,
     get_prediction,
     get_test_data,
-    hessian,
     jx,
     np,
     plot_gif_hessians_from_baseline_to_real,
@@ -104,7 +115,7 @@ def _(
     calculated_hessian: jx.Float[
         torch.Tensor,
         "batch_size alphabet_length sequence_length batch_size alphabet_length sequence_length",
-    ] = hessian(model=model, input=one_hot_batched, target=0)
+    ] = get_hessian(model=model, input=one_hot_batched, target=0)
     # batch size is 1, so remove that dimension
     calculated_hessian: jx.Float[
         torch.Tensor,
@@ -125,15 +136,17 @@ def _(
     )
 
     test_row_plot_fig
-        # TODO
-        # get_integrated_hessian()
-        # plot_integrated_hessian()
+    # TODO
+    # get_integrated_hessian()
+    # plot_integrated_hessian()
     return model, one_hot
 
 
 @app.cell
 def _(mo):
-    baseline_to_input_alpha = mo.ui.slider(0,1,.1, show_value=True, label="Baseline to input alpha")
+    baseline_to_input_alpha = mo.ui.slider(
+        0, 1, 0.1, show_value=True, label="Baseline to input alpha"
+    )
     baseline_to_input_alpha
     return (baseline_to_input_alpha,)
 
@@ -141,8 +154,8 @@ def _(mo):
 @app.cell
 def _(
     baseline_to_input_alpha,
+    get_hessian,
     get_prediction,
-    hessian,
     interpolate_onehot,
     jx,
     model,
@@ -151,12 +164,16 @@ def _(
     subset_onehot_hessian,
     torch,
 ):
-    interpolation = interpolate_onehot(torch.tensor(one_hot), baseline_to_input_alpha.value)
+    interpolation = interpolate_onehot(
+        torch.tensor(one_hot), baseline_to_input_alpha.value
+    )
 
     interpolation_hessian: jx.Float[
         torch.Tensor,
         "alphabet_length sequence_length alphabet_length sequence_length",
-    ] = hessian(model=model, input=interpolation.unsqueeze(0).type(torch.float32), target=0)
+    ] = get_hessian(
+        model=model, input=interpolation.unsqueeze(0).type(torch.float32), target=0
+    )
 
     interpolation_hessian = interpolation_hessian.squeeze(0).squeeze(2)
     interpolation_hessian.shape
@@ -170,7 +187,16 @@ def _(
             one_hot_mask=torch.tensor(one_hot),
         ).numpy(),
         title=f"Hessian of input with prediction {pred_interpolation: .3f}",
-        )
+    )
+    return (interpolation_hessian,)
+
+
+@app.cell
+def _(
+    interpolation_hessian: "jx.Float[torch.Tensor, \"alphabet_length sequence_length alphabet_length sequence_length\"]",
+    plt,
+):
+    plt.imshow(interpolation_hessian.reshape(200, 200), cmap="bwr")
     return
 
 

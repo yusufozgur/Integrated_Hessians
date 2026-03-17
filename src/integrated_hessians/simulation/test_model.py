@@ -18,7 +18,7 @@ from integrated_hessians.simulation.plot import (
     plot_binary_string,
     plot_heatmap,
 )
-from integrated_hessians.hessian import hessian
+from integrated_hessians import get_hessian
 from beartype import beartype
 
 TEST_DATA = Path("data/simple_simulation/1k_test.json")
@@ -53,7 +53,7 @@ def main():
         calculated_hessian: jx.Float[
             torch.Tensor,
             "batch_size alphabet_length sequence_length batch_size alphabet_length sequence_length",
-        ] = hessian(model=model, input=one_hot_batched, target=0)
+        ] = get_hessian(model=model, input=one_hot_batched, target=0)
         # batch size is 1, so remove that dimension
         calculated_hessian: jx.Float[
             torch.Tensor,
