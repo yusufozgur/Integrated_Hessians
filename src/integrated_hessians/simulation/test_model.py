@@ -62,6 +62,7 @@ def main():
         test_row_plot_fig, _ = test_and_plot_selected_row(
             sequence=test_row.nucleotides,
             one_hot=one_hot_permuted,
+            integrated_gradients_delta=float(ig_delta),
             attributions=attributions_permuted,
             real_attributions=real_attributions,
             phenotype=test_row.phenotype,
@@ -134,6 +135,7 @@ def test_and_plot_selected_row(
     sequence: Nucleotide_Sequence,
     one_hot: jx.Float[NDArray[np.float32], "alphabet_length sequence_length"],
     attributions: jx.Float[NDArray[np.float32], "alphabet_length sequence_length"],
+    integrated_gradients_delta: float,
     real_attributions: jx.Float[NDArray[np.float32], "1 sequence_length"],
     phenotype: float,
     prediction: float,
@@ -179,7 +181,7 @@ def test_and_plot_selected_row(
         sequence=sequence,
         one_hot=attributions,
         ax=axes[3],
-        title="Integrated Gradients (Multiplied input true)",
+        title=f"Integrated Gradients (Multiplied input: true), delta: {integrated_gradients_delta: .3f}",
     )
     plot_heatmap(
         matrix=real_attributions,

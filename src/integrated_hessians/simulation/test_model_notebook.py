@@ -125,6 +125,7 @@ def _(
         sequence=test_row.nucleotides,
         one_hot=one_hot_permuted,
         attributions=attributions_permuted,
+        integrated_gradients_delta=float(ig_delta),
         real_attributions=real_attributions,
         phenotype=test_row.phenotype,
         prediction=row_prediction,
@@ -187,7 +188,7 @@ def _(
         ).numpy(),
         title=f"Hessian of input with prediction {pred_interpolation: .3f}",
     )
-    return (pred_interpolation,)
+    return
 
 
 @app.cell
@@ -211,23 +212,17 @@ def _(mo):
 
 @app.cell
 def _(get_integrated_hessians, model, one_hot_batched, sampling_steps, torch):
-    integ_hess_result, ih_delta = get_integrated_hessians(model,torch.concat((one_hot_batched,one_hot_batched)),torch.full_like(torch.concat((one_hot_batched,one_hot_batched)),.25),0, sampling_steps=sampling_steps.value)
+    integ_hess_result, ih_delta = get_integrated_hessians(model,one_hot_batched,torch.full_like(one_hot_batched,.25),0, integration_steps=sampling_steps.value)
     integ_hess_result.shape
-    return (integ_hess_result,)
-
-
-@app.cell
-def _(integ_hess_result, plt):
-    plt.imshow(integ_hess_result.reshape(200, 200), cmap="bwr")
-    return
+    return ih_delta, integ_hess_result
 
 
 @app.cell
 def _(
+    ih_delta,
     integ_hess_result,
     one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
     plot_epistasis_subsetted,
-    pred_interpolation,
     subset_onehot_hessian,
     torch,
 ):
@@ -236,8 +231,14 @@ def _(
             calculated_hessian=integ_hess_result.squeeze(0).squeeze(2),
             one_hot_mask=torch.tensor(one_hot),
         ).numpy(),
-        title=f"Hessian of input with prediction {pred_interpolation: .3f}",
+        title=f"Integrated hessians. delta: {ih_delta[0]: .3f}",
     )
+    return
+
+
+@app.cell
+def _(integ_hess_result, plt):
+    plt.imshow(integ_hess_result.reshape(200, 200), cmap="bwr")
     return
 
 

@@ -79,54 +79,106 @@ def get_hessian(
     return hessian_result
 
 
+def _get_integrated_hessian_for_single_sample(
+    input: jx.Float[Tensor, " 1 *input_shape"],
+    baseline: jx.Float[Tensor, " 1 *input_shape"],
+    model,
+    target,
+    integration_steps,
+) -> tuple[
+    jx.Float[Tensor, " *input_shape"],
+    jx.Float[Tensor, " *input_shape"],
+    jx.Float[Tensor, "1"],
+]:
+
+    batch_shape = input.shape[0]
+    input_shape = input.shape[1:]
+
+    def forward_func(x):
+        return model(x)[target]
+
+    k = integration_steps
+    m = integration_steps
+
+    local_interaction: jx.Float[Tensor, "*input_shape *input_shape"] = torch.zeros(
+        (*input.shape, *input.shape), dtype=torch.float64
+    )
+
+    for l in tqdm(range(1, k + 1)):  # noqa: E741
+        for p in range(1, m + 1):
+            # alpha is the interpolation coefficient. alpha=0: baseline, alpha=1:input
+            alpha = l / k * p / m
+            interpolation = baseline + alpha * (input - baseline)
+
+            local_interaction_step: jx.Float[
+                Tensor, "batch_size *input_shape batch_size *input_shape"
+            ] = torch.autograd.functional.hessian(
+                forward_func, interpolation, strict=True
+            )  # type: ignore
+
+            local_interaction_step = alpha * local_interaction_step * 1 / (k * m)
+
+            local_interaction += local_interaction_step
+
+    # jaxtyping does not support multiple variadic specifiers (*name,). So, instead, I am checking the output is correct shape via an assert statement
+    assert local_interaction.shape == (*input.shape, *input.shape)
+    global_interaction = local_interaction * (input - baseline) * (input - baseline)
+
+    local_interaction = local_interaction.reshape((*input_shape, *input_shape))
+    global_interaction = global_interaction.reshape((*input_shape, *input_shape))
+
+    delta = (forward_func(input) - forward_func(baseline)) - global_interaction.sum()
+
+    return (local_interaction, global_interaction, delta)
+
+
 @jx.jaxtyped(typechecker=beartype)
 def get_integrated_hessians(
     model: Callable,
     inputs: jx.Float[Tensor, " batch_size *input_shape"],
     baselines: jx.Float[Tensor, " batch_size *input_shape"],
     target: int,
-    sampling_steps=50,
+    integration_steps=50,
     multiply_by_inputs=True,  # return local(false) vs global(True) interactions, analagous to the option in integrated gradients
 ) -> Tuple[
-    Annotated[Tensor, "batch_size *input_shape batch_size *input_shape"],
+    Annotated[Tensor, "batch_size *input_shape"],
     Annotated[Tensor, "batch_size"],
 ]:
 
-    def forward_func(x):
-        return model(x)[target]
-
-    with replace_relu_with_softplus():
-        k = sampling_steps
-        m = sampling_steps
-
-        local_interaction = torch.zeros((*inputs.shape, *inputs.shape))
-
-        for l in tqdm(range(1, k + 1)):  # noqa: E741
-            for p in range(1, m + 1):
-                # alpha is the interpolation coefficient. alpha=0: baseline, alpha=1:input
-                alpha = l / k * p / m
-                interpolation = baselines + alpha * (inputs - baselines)
-
-                local_interaction: jx.Float[
-                    Tensor, "batch_size *input_shape batch_size *input_shape"
-                ] = torch.autograd.functional.hessian(
-                    forward_func, interpolation, strict=True
-                )  # type: ignore
-
-                local_interaction = alpha * local_interaction * 1 / (k * m)
-
-                local_interaction = local_interaction + local_interaction
-
-    # jaxtyping does not support multiple variadic specifiers (*name,). So, instead, I am checking the output is correct shape via an assert statement
-    assert local_interaction.shape == (*inputs.shape, *inputs.shape)
-    global_interaction = local_interaction * (inputs - baselines) * (inputs - baselines)
-
-    delta: Tensor = abs(
-        ((inputs - baselines).reshape(inputs.shape[0], -1).sum(1))
-        - (global_interaction.reshape(inputs.shape[0], -1).sum(1))
+    assert len(inputs.shape) > 2, (
+        "inputs must have at least two dimensions, one bath dimension and one or more input dimensions"
     )
 
+    batch_shape = inputs.shape[0]
+    input_shape = inputs.shape[1:]
+
+    assert baselines.shape == (batch_shape, *input_shape)
+
+    global_interactions: jx.Float[Tensor, " batch_size *input_shape"] = torch.zeros(
+        (batch_shape, *input_shape, *input_shape)
+    )
+    local_interactions: jx.Float[Tensor, " batch_size *input_shape"] = torch.zeros(
+        (batch_shape, *input_shape, *input_shape)
+    )
+    deltas: jx.Float[Tensor, " batch_size"] = torch.zeros(batch_shape)
+
+    with replace_relu_with_softplus():
+        for i, (sample_input, sample_baseline) in enumerate(zip(inputs, baselines)):
+            # re insert a batch dimension of size 1
+            sample_input: jx.Float[Tensor, ""] = sample_input.unsqueeze(0)
+            sample_baseline: jx.Float[Tensor, ""] = sample_baseline.unsqueeze(0)
+
+            local_interaction, global_interaction, delta = (
+                _get_integrated_hessian_for_single_sample(
+                    sample_input, sample_baseline, model, target, integration_steps
+                )
+            )
+
+            local_interactions[i] = local_interaction
+            global_interactions[i] = global_interaction
+            deltas[i] = delta
+
     if multiply_by_inputs:
-        return global_interaction, delta
+        return global_interactions, deltas
     else:
-        return local_interaction, delta
+        return local_interactions, deltas
