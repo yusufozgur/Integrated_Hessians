@@ -99,7 +99,6 @@ def plot_binary_string(binary: str, ax=None, title="Binary String") -> Axes:
 
 @jx.jaxtyped(typechecker=beartype)
 def plot_epistasis_subsetted(
-    one_hot: jx.Float[NDArray[np.float32], "sequence_length alphabet_length"],
     hessian_onehot_subsetted: jx.Float[
         NDArray,
         "sequence_length sequence_length",
