@@ -1,5 +1,6 @@
 from typing import Optional
 
+from beartype import beartype
 from matplotlib.axes import Axes
 import numpy as np
 import matplotlib.pyplot as plt
@@ -96,46 +97,34 @@ def plot_binary_string(binary: str, ax=None, title="Binary String") -> Axes:
     )
 
 
-def plot_epistasis(
-    ax: Axes,
+@jx.jaxtyped(typechecker=beartype)
+def plot_epistasis_subsetted(
     one_hot: jx.Float[NDArray[np.float32], "sequence_length alphabet_length"],
-    calculated_hessian: jx.Float[
-        torch.Tensor,
-        "alphabet_length sequence_length alphabet_length sequence_length",
+    hessian_onehot_subsetted: jx.Float[
+        NDArray,
+        "sequence_length sequence_length",
     ],
-    prediction: float,
+    ax: Optional[Axes] = None,
+    title="",
 ):
+    if ax is None:
+        _, ax = plt.subplots()
 
-    h: jx.Float[
-        np.ndarray,
-        "alphabet_length sequence_length alphabet_length sequence_length",
-    ] = calculated_hessian.numpy()
-
-    # h = h.reshape(200, 200)
-
-    # subset according to one hot
-
-    idx = torch.tensor(one_hot).bool()  # [50, 4]
-    flat_idx = idx.nonzero(as_tuple=False)[
-        :, 1
-    ]  # [50] — which of the 4 cols is hot, per row
-
-    h = h[0]  # [50, 4, 1, 50, 4]
-    h = h[idx]  # [50, 1, 50, 4]
-    h = h[:, 0, :, :]  # [50, 50, 4]
-
-    # For each of the 50 rows in the last dim, pick the hot column
-    h = h[torch.arange(50), :, :]  # still [50, 50, 4]
-    h = h[:, torch.arange(50), flat_idx]  # [50, 50] ✓
-
-    norm = mcolors.TwoSlopeNorm(vmin=h.min(), vcenter=0, vmax=h.max())
-    im = ax.imshow(h, aspect="auto", cmap="bwr", norm=norm)
-    ax.set_title(f"Interpolation phenotype: {prediction: .3f}")
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
+    norm = mcolors.TwoSlopeNorm(
+        vmin=hessian_onehot_subsetted.min(),
+        vcenter=0,
+        vmax=hessian_onehot_subsetted.max(),
+    )
+    im = ax.imshow(hessian_onehot_subsetted, aspect="auto", cmap="bwr", norm=norm)
+    ax.set_title(title)
 
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="3%", pad=0.05)
     plt.colorbar(im, cax=cax)
+    ax.set_xlabel("")
 
-    ax.set_xlabel("")  # remove redundant x-label from top plot
-    plt.gca()
+    return ax
+
+
+def plot_epistasis():
+    pass

@@ -1,5 +1,4 @@
 from pathlib import Path
-
 from captum.attr import IntegratedGradients
 import jaxtyping as jx
 from matplotlib import pyplot as plt
@@ -14,12 +13,13 @@ from integrated_hessians.simulation.simple_simulation.model import CNNMLP
 from integrated_hessians.simulation.train_model import MotifInteractionsDataset
 from integrated_hessians.simulation.plot import (
     plot_epistasis,
+    plot_epistasis_subsetted,
     plot_onehot,
     plot_binary_string,
     plot_heatmap,
 )
 from integrated_hessians.hessian import hessian
-
+from beartype import beartype
 
 TEST_DATA = Path("data/simple_simulation/1k_test.json")
 BEST_MODEL = Path("data/simple_simulation/model_best.pth")
@@ -35,10 +35,10 @@ def main():
         # TODO
         plot_training_metrics()
         plot_gif_hessians_from_baseline_to_real()
-        row_prediction = get_prediction(model=model, test_row=test_row)
         one_hot: jx.Float[NDArray[np.float32], "alphabet_length sequence_length"] = (
             test_row.one_hot
         )
+        row_prediction = get_prediction(model=model, one_hot=one_hot)
         attributions, ig_delta = get_attributions(model=model, one_hot=one_hot)
         one_hot_permuted: jx.Float[
             NDArray[np.float32], "alphabet_length sequence_length"
@@ -52,8 +52,13 @@ def main():
         one_hot_batched = torch.tensor(one_hot).type(torch.float32).unsqueeze(0)
         calculated_hessian: jx.Float[
             torch.Tensor,
-            "alphabet_length sequence_length alphabet_length sequence_length",
+            "batch_size alphabet_length sequence_length batch_size alphabet_length sequence_length",
         ] = hessian(model=model, input=one_hot_batched, target=0)
+        # batch size is 1, so remove that dimension
+        calculated_hessian: jx.Float[
+            torch.Tensor,
+            "alphabet_length sequence_length alphabet_length sequence_length",
+        ] = calculated_hessian.squeeze(0).squeeze(2)
         test_row_plot_fig, _ = test_and_plot_selected_row(
             sequence=test_row.nucleotides,
             one_hot=one_hot_permuted,
@@ -87,14 +92,19 @@ def get_model(best_model: Path) -> torch.nn.Module:
     return model
 
 
-def get_prediction(model: torch.nn.Module, test_row: SimulatedSequence) -> float:
-    batched_input = torch.tensor(test_row.one_hot).unsqueeze(0)
+@jx.jaxtyped(typechecker=beartype)
+def get_prediction(
+    model: torch.nn.Module,
+    one_hot: jx.Float[NDArray[np.float32], "sequence_length alphabet_length"],
+) -> float:
+    batched_input = torch.tensor(one_hot).unsqueeze(0)
     with torch.no_grad():
         pred = model(batched_input.type(torch.float))
     pred = float(pred[0, 0])
     return pred
 
 
+@jx.jaxtyped(typechecker=beartype)
 def get_attributions(
     model: torch.nn.Module,
     one_hot: jx.Float[NDArray[np.float32], "alphabet_length sequence_length"],
@@ -107,6 +117,11 @@ def get_attributions(
     return attributions, delta
 
 
+def interpolate_onehot(onehot_tensor, alpha):
+    uniform = torch.full_like(onehot_tensor, 0.25)
+    return (1 - alpha) * uniform + alpha * onehot_tensor
+
+
 def plot_training_metrics():
     """
     Plot test and validation losses, R2 vs epoch. Also plot phenotype vs predictions on test set alongisde R2.
@@ -114,6 +129,7 @@ def plot_training_metrics():
     pass
 
 
+@jx.jaxtyped(typechecker=beartype)
 def test_and_plot_selected_row(
     sequence: Nucleotide_Sequence,
     one_hot: jx.Float[NDArray[np.float32], "alphabet_length sequence_length"],
@@ -127,7 +143,7 @@ def test_and_plot_selected_row(
     motif_type_2: str,
     calculated_hessian: jx.Float[
         torch.Tensor,
-        "alphabet_length sequence_length alphabet_length sequence_length",
+        "sequence_length alphabet_length sequence_length alphabet_length",
     ],
 ) -> tuple[Figure, ndarray]:
     """
@@ -174,16 +190,49 @@ def test_and_plot_selected_row(
         title="Real Attributions",
     )
 
-    plot_epistasis(
+    # TODO: Show unsubsetted epistasis
+    plot_epistasis_subsetted(
         ax=axes[5],
         one_hot=one_hot.transpose(1, 0),
-        calculated_hessian=calculated_hessian,
-        prediction=prediction,
+        hessian_onehot_subsetted=subset_onehot_hessian(
+            calculated_hessian=calculated_hessian,
+            one_hot_mask=torch.tensor(one_hot).permute(1, 0),
+        ).numpy(),
+        title=f"Hessian of input with prediction {prediction: .3f}",
     )
 
     # plt.tight_layout() # alternative to layout='constrained'
 
     return fig, axes
+
+
+@jx.jaxtyped(typechecker=beartype)
+def subset_onehot_hessian(
+    calculated_hessian: jx.Float[
+        torch.Tensor,
+        "sequence_length alphabet_length sequence_length alphabet_length",
+    ],
+    one_hot_mask: jx.Float[
+        torch.Tensor,
+        "sequence_length alphabet_length",
+    ],
+) -> jx.Float[
+    torch.Tensor,
+    "sequence_length sequence_length",
+]:
+    second_order_onehot: jx.Float[
+        torch.Tensor,
+        "sequence_length alphabet_length sequence_length alphabet_length",
+    ] = one_hot_mask.reshape(1, 1, *one_hot_mask.shape) * one_hot_mask.reshape(
+        *one_hot_mask.shape, 1, 1
+    )
+
+    subsetted: jx.Float[
+        torch.Tensor,
+        "sequence_length sequence_length",
+    ] = (calculated_hessian * second_order_onehot).sum(1).sum(2)
+
+    return subsetted
 
 
 def plot_gif_hessians_from_baseline_to_real():
