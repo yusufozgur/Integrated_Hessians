@@ -5,6 +5,7 @@ from torch import Tensor
 import torch
 import torch.nn.functional as F
 import jaxtyping as jx
+from tqdm import tqdm
 
 
 @contextmanager
@@ -68,8 +69,58 @@ def get_hessian(
         return model(x)[target]
 
     with replace_relu_with_softplus():
-        hessian_result: Annotated[
+        hessian_result: jx.Float[
             Tensor, "batch_size *input_shape batch_size *input_shape"
         ] = torch.autograd.functional.hessian(forward_func, input, strict=True)
 
+    # jaxtyping does not support multiple variadic specifiers (*name,). So, instead, I am checking the output is correct shape via an assert statement
+    assert hessian_result.shape == (*input.shape, *input.shape)
+
     return hessian_result
+
+
+@jx.jaxtyped(typechecker=beartype)
+def get_integrated_hessians(
+    model: Callable,
+    inputs: jx.Float[Tensor, " batch_size *input_shape"],
+    baselines: jx.Float[Tensor, " batch_size *input_shape"],
+    target: int,
+    sampling_steps=50,
+    multiply_by_inputs=True,  # return local(false) vs global(True) interactions, analagous to the option in integrated gradients
+) -> Annotated[Tensor, "batch_size *input_shape batch_size *input_shape"]:
+
+    def forward_func(x):
+        return model(x)[target]
+
+    with replace_relu_with_softplus():
+        k = sampling_steps
+        m = sampling_steps
+
+        local_interaction = torch.zeros((*inputs.shape, *inputs.shape))
+
+        for l in tqdm(range(1, k + 1)):  # noqa: E741
+            for p in range(1, m + 1):
+                # alpha is the interpolation coefficient. alpha=0: baseline, alpha=1:input
+                alpha = l / k * p / m
+                interpolation = baselines + alpha * (inputs - baselines)
+
+                local_interaction: jx.Float[
+                    Tensor, "batch_size *input_shape batch_size *input_shape"
+                ] = torch.autograd.functional.hessian(
+                    forward_func, interpolation, strict=True
+                )  # type: ignore
+
+                local_interaction = alpha * local_interaction * 1 / (k * m)
+
+                local_interaction = local_interaction + local_interaction
+
+    # jaxtyping does not support multiple variadic specifiers (*name,). So, instead, I am checking the output is correct shape via an assert statement
+    assert local_interaction.shape == (*inputs.shape, *inputs.shape)
+    global_interaction = local_interaction * (inputs - baselines) * (inputs - baselines)
+
+    delta = None  # TODO
+
+    if multiply_by_inputs:
+        return global_interaction
+    else:
+        return local_interaction

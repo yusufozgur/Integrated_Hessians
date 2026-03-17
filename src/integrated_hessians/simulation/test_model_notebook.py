@@ -139,13 +139,13 @@ def _(
     # TODO
     # get_integrated_hessian()
     # plot_integrated_hessian()
-    return model, one_hot
+    return model, one_hot, one_hot_batched
 
 
 @app.cell
 def _(mo):
     baseline_to_input_alpha = mo.ui.slider(
-        0, 1, 0.1, show_value=True, label="Baseline to input alpha"
+        0, 1, 0.1, show_value=True, label="Baseline to input alpha", value=1
     )
     baseline_to_input_alpha
     return (baseline_to_input_alpha,)
@@ -188,15 +188,57 @@ def _(
         ).numpy(),
         title=f"Hessian of input with prediction {pred_interpolation: .3f}",
     )
-    return (interpolation_hessian,)
+    return (pred_interpolation,)
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _():
+    from integrated_hessians import get_integrated_hessians
+
+    return (get_integrated_hessians,)
+
+
+@app.cell
+def _(mo):
+    sampling_steps = mo.ui.number(0, 100, 1, label="Sampling steps", value=1)
+    sampling_steps
+    return (sampling_steps,)
+
+
+@app.cell
+def _(get_integrated_hessians, model, one_hot_batched, sampling_steps, torch):
+    integ_hess_result = get_integrated_hessians(model,one_hot_batched,torch.full_like(one_hot_batched,.25),0, sampling_steps=sampling_steps.value)
+    return (integ_hess_result,)
+
+
+@app.cell
+def _(integ_hess_result, plt):
+    plt.imshow(integ_hess_result.reshape(200, 200), cmap="bwr")
+    return
 
 
 @app.cell
 def _(
-    interpolation_hessian: "jx.Float[torch.Tensor, \"alphabet_length sequence_length alphabet_length sequence_length\"]",
-    plt,
+    integ_hess_result,
+    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
+    plot_epistasis_subsetted,
+    pred_interpolation,
+    subset_onehot_hessian,
+    torch,
 ):
-    plt.imshow(interpolation_hessian.reshape(200, 200), cmap="bwr")
+    plot_epistasis_subsetted(
+        one_hot=one_hot,
+        hessian_onehot_subsetted=subset_onehot_hessian(
+            calculated_hessian=integ_hess_result.squeeze(0).squeeze(2),
+            one_hot_mask=torch.tensor(one_hot),
+        ).numpy(),
+        title=f"Hessian of input with prediction {pred_interpolation: .3f}",
+    )
     return
 
 
