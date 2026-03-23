@@ -212,9 +212,22 @@ def _(mo):
 
 @app.cell
 def _(get_integrated_hessians, model, one_hot_batched, sampling_steps, torch):
-    integ_hess_result, ih_delta = get_integrated_hessians(model,one_hot_batched,torch.full_like(one_hot_batched,.25),0, integration_steps=sampling_steps.value, multiply_by_inputs=True)
+    integ_hess_result, ih_delta = get_integrated_hessians(
+        model,
+        one_hot_batched,
+        torch.full_like(one_hot_batched, 0.25),
+        0,
+        integration_steps=sampling_steps.value,
+        multiply_by_inputs=True,
+    )
     integ_hess_result.shape
     return ih_delta, integ_hess_result
+
+
+@app.cell
+def _(integ_hess_result):
+    integ_hess_result.shape
+    return
 
 
 @app.cell
@@ -228,7 +241,7 @@ def _(
 ):
     plot_epistasis_subsetted(
         hessian_onehot_subsetted=subset_onehot_hessian(
-            calculated_hessian=integ_hess_result.squeeze(0).squeeze(2),
+            calculated_hessian=integ_hess_result.squeeze(0),
             one_hot_mask=torch.tensor(one_hot),
         ).numpy(),
         title=f"Integrated hessians. delta: {ih_delta[0]: .3f}",
@@ -239,6 +252,96 @@ def _(
 @app.cell
 def _(integ_hess_result, plt):
     plt.imshow(integ_hess_result.reshape(200, 200), cmap="bwr")
+    return
+
+
+@app.cell
+def _():
+    from path_explain import PathExplainerTorch
+
+    return (PathExplainerTorch,)
+
+
+@app.cell
+def _(model, torch):
+    def exp_reshaper(x: torch.Tensor):
+        x = x.reshape((1, 50, 4))
+        x = model(x)
+        return x
+
+    return (exp_reshaper,)
+
+
+@app.cell
+def _(PathExplainerTorch, exp_reshaper):
+    exp = PathExplainerTorch(exp_reshaper)
+    return (exp,)
+
+
+@app.cell
+def _(one_hot_batched, torch):
+    exp_input = one_hot_batched.reshape(1, 200)
+    exp_baseline = torch.full_like(exp_input, 0.25)
+    exp_baseline.shape
+
+    exp_input.requires_grad_(True)
+    exp_baseline.requires_grad_(True)
+    None
+    return exp_baseline, exp_input
+
+
+@app.cell
+def _(exp, exp_baseline, exp_input):
+    exp_ih = exp.interactions(exp_input, exp_baseline, num_samples=1000, use_expectation=False)
+    return (exp_ih,)
+
+
+@app.cell
+def _(exp_ih):
+    exp_ih.shape
+    return
+
+
+@app.cell
+def _(exp_ih):
+    exp_ih_reshaped = exp_ih.reshape(1,50,4,50,4)
+    exp_ih_reshaped.shape
+    return (exp_ih_reshaped,)
+
+
+@app.cell
+def _(exp_ih_reshaped, plt):
+    plt.imshow(exp_ih_reshaped.detach().numpy().reshape(200, 200), cmap="bwr")
+    return
+
+
+@app.cell
+def _(integ_hess_result):
+    integ_hess_result.shape
+    return
+
+
+@app.cell
+def _(exp_ih_reshaped):
+    exp_ih_reshaped.detach().numpy().squeeze(0).shape
+    return
+
+
+@app.cell
+def _(
+    exp_ih_reshaped,
+    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
+    plot_epistasis_subsetted,
+    subset_onehot_hessian,
+    torch,
+):
+    plot_epistasis_subsetted(
+        hessian_onehot_subsetted=subset_onehot_hessian(
+            calculated_hessian=exp_ih_reshaped.detach().squeeze(0),
+            one_hot_mask=torch.tensor(one_hot),
+        ).numpy(),
+        title=f"Integrated hessians via path explain",
+    )
     return
 
 

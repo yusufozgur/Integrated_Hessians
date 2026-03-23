@@ -116,9 +116,11 @@ def _get_integrated_hessian_for_single_sample(
                 forward_func, interpolation, strict=True
             )  # type: ignore
 
-            local_interaction_step = alpha * local_interaction_step * 1 / (k * m)
+            local_interaction_step = alpha * local_interaction_step
 
             local_interaction += local_interaction_step
+
+    local_interaction = local_interaction * 1 / (k * m)
 
     # jaxtyping does not support multiple variadic specifiers (*name,). So, instead, I am checking the output is correct shape via an assert statement
     assert local_interaction.shape == (*input.shape, *input.shape)
