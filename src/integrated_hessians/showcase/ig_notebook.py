@@ -133,6 +133,14 @@ def _(
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Integrated Gradients
+    """)
+    return
+
+
 @app.cell
 def _(
     baseline_to_input_path_x,
@@ -146,7 +154,7 @@ def _(
     view_path_ax.scatter(baseline_to_input_path_x, baseline_to_input_path_y, view_path_z, color='red', s=20, label=f'Point', zorder=5)
     view_path_ax.set_title("The path between baseline and the input")
     view_path_fig
-    return
+    return (view_path_z,)
 
 
 @app.cell
@@ -191,14 +199,6 @@ def _(mo):
 
 
 @app.cell
-def _():
-    # path_tensor_x = torch.tensor(baseline_to_input_path_x, requires_grad=True)
-    # path_tensor_y = torch.tensor(baseline_to_input_path_y, requires_grad=True)
-
-    return
-
-
-@app.cell
 def _(baseline_to_input_path_x, baseline_to_input_path_y, torch):
     path_tensor = torch.stack([
         torch.tensor(baseline_to_input_path_x),
@@ -215,26 +215,83 @@ def _(baseline_to_input_path_x, baseline_to_input_path_y, torch):
 
 
 @app.cell
-def _(baseline_to_input_path_x, plt, points_f, points_grad):
-    slice_2d_x_with_path_fig, slice_2d_x_with_path_ax = plt.subplots(figsize=(6, 4))
-    slice_2d_x_with_path_ax.plot(baseline_to_input_path_x, points_f.detach().numpy(), color="red", label="Path")
-    slice_2d_x_with_path_ax.plot(baseline_to_input_path_x, points_grad[:,0].detach().numpy(), color="green", label="Gradient")
-    slice_2d_x_with_path_ax.set_title("x vs f")
+def _(baseline_to_input_path_x, np, plt, points_f, points_grad):
+    slice_2d_x_with_path_fig, slice_2d_x_with_path_ax = plt.subplots(figsize=(10, 6))
+    slice_2d_x_with_path__x = baseline_to_input_path_x
+    slice_2d_x_with_path__y1 = points_f.detach().numpy()
+    slice_2d_x_with_path__y2 = points_grad[:,0].detach().numpy()
+    slice_2d_x_with_path__dx = np.ones_like(slice_2d_x_with_path__x)
+    slice_2d_x_with_path__dy = slice_2d_x_with_path__y2
+    slice_2d_x_with_path__magnitude = np.sqrt(slice_2d_x_with_path__dx**2 + slice_2d_x_with_path__dy**2)
+    slice_2d_x_with_path__dx_norm = slice_2d_x_with_path__dx / slice_2d_x_with_path__magnitude
+    slice_2d_x_with_path__dy_norm = slice_2d_x_with_path__dy / slice_2d_x_with_path__magnitude
+
+    slice_2d_x_with_path_ax.plot(slice_2d_x_with_path__x, slice_2d_x_with_path__y1, color="red", label="Path")
+    slice_2d_x_with_path_ax.plot(slice_2d_x_with_path__x, slice_2d_x_with_path__y2, color="green", label="Gradient")
+    slice_2d_x_with_path__q = slice_2d_x_with_path_ax.quiver(
+        slice_2d_x_with_path__x[::5], 
+        slice_2d_x_with_path__y1[::5], 
+        slice_2d_x_with_path__dx_norm[::5], 
+        slice_2d_x_with_path__dy_norm[::5],
+        scale=20,
+        width=0.003,
+        color = "black",
+    )
+    slice_2d_x_with_path_ax.plot([], [], color='black', marker=r'$\rightarrow$', markersize=15, label='Gradient Arrow', linestyle='None')
+    # slice_2d_x_with_path_ax.quiverkey(q, X=0.85, Y=0.05, U=1, label="Gradient Arrow", labelpos='E')
+    slice_2d_x_with_path_ax.set_title("Projected onto x: Path and the gradients")
     slice_2d_x_with_path_ax.set_xlabel("x")
     slice_2d_x_with_path_ax.set_ylabel("f")
+    slice_2d_x_with_path_ax.grid(True, color='gray', linestyle='-', linewidth=0.5, alpha=0.7)
     slice_2d_x_with_path_ax.legend()
-    return
+    return (slice_2d_x_with_path__y2,)
 
 
 @app.cell
-def _(baseline_to_input_path_f, baseline_to_input_path_y, plt, points_grad):
-    slice_2d_y_with_path_fig, slice_2d_y_with_path_ax = plt.subplots(figsize=(6, 4))
-    slice_2d_y_with_path_ax.plot(baseline_to_input_path_y, baseline_to_input_path_f, color="red", label="Path")
-    slice_2d_y_with_path_ax.plot(baseline_to_input_path_y, points_grad[:,1].detach().numpy(), color="green", label="Gradient")
-    slice_2d_y_with_path_ax.set_title("y vs f")
-    slice_2d_y_with_path_ax.set_xlabel("y")
+def _(
+    baseline_to_input_path_y,
+    np,
+    plt,
+    points_f,
+    points_grad,
+    slice_2d_x_with_path__y2,
+):
+    slice_2d_y_with_path_fig, slice_2d_y_with_path_ax = plt.subplots(figsize=(10, 6))
+    slice_2d_y_with_path__x = baseline_to_input_path_y
+    slice_2d_y_with_path__y1 = points_f.detach().numpy()
+    slice_2d_y_with_path__y2 = points_grad[:,1].detach().numpy()
+    slice_2d_y_with_path__dx = np.ones_like(slice_2d_y_with_path__x)
+    slice_2d_y_with_path__dy = slice_2d_x_with_path__y2
+    slice_2d_y_with_path__magnitude = np.sqrt(slice_2d_y_with_path__dx**2 + slice_2d_y_with_path__dy**2)
+    slice_2d_y_with_path__dx_norm = slice_2d_y_with_path__dx / slice_2d_y_with_path__magnitude
+    slice_2d_y_with_path__dy_norm = slice_2d_y_with_path__dy / slice_2d_y_with_path__magnitude
+
+    slice_2d_y_with_path_ax.plot(slice_2d_y_with_path__x, slice_2d_y_with_path__y1, color="red", label="Path")
+    slice_2d_y_with_path_ax.plot(slice_2d_y_with_path__x, slice_2d_y_with_path__y2, color="green", label="Gradient")
+    slice_2d_y_with_path__q = slice_2d_y_with_path_ax.quiver(
+        slice_2d_y_with_path__x[::5], 
+        slice_2d_y_with_path__y1[::5], 
+        slice_2d_y_with_path__dx_norm[::5], 
+        slice_2d_y_with_path__dy_norm[::5],
+        scale=20,
+        width=0.003,
+        color = "black",
+    )
+    slice_2d_y_with_path_ax.plot([], [], color='black', marker=r'$\rightarrow$', markersize=15, label='Gradient Arrow', linestyle='None')
+    # slice_2d_x_with_path_ax.quiverkey(q, X=0.85, Y=0.05, U=1, label="Gradient Arrow", labelpos='E')
+    slice_2d_y_with_path_ax.set_title("Projected onto x: Path and the gradients")
+    slice_2d_y_with_path_ax.set_xlabel("x")
     slice_2d_y_with_path_ax.set_ylabel("f")
+    slice_2d_y_with_path_ax.grid(True, color='gray', linestyle='-', linewidth=0.5, alpha=0.7)
     slice_2d_y_with_path_ax.legend()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Integrated gradients takes an integral along this path of gradients. You will see that IG results for this function is 0, and its apparent the integral of the gradient path will sum up to 0 in the plot too.
+    """)
     return
 
 
@@ -257,7 +314,7 @@ def _(IntegratedGradients, baseline_x, baseline_y, input_x, input_y, torch):
 def _(baseline_tensor, ig, input_tensor):
     attributions, delta = ig.attribute(input_tensor, baseline_tensor, n_steps=50, return_convergence_delta=True)
     f"Captum Attributions: {attributions.detach().numpy()} with delta: {float(delta.detach().numpy()[0]): .2E}"
-    return
+    return (attributions,)
 
 
 @app.cell
@@ -306,6 +363,35 @@ def _(np, torch):
 def _(baseline_tensor, input_tensor, path_ig):
     path_ig_attr, path_ig_delta = path_ig(f_batched,input_tensor,baseline_tensor, target=0)
     f"Path IG(Our) attributions: {path_ig_attr.detach().numpy()} with delta: {float(path_ig_delta.detach().numpy()[0]): .2E}"
+    return (path_ig_attr,)
+
+
+@app.cell
+def _(attributions, np, path_ig_attr, plt):
+    attr_plot_data = np.concat([attributions.detach().numpy(), path_ig_attr.detach().numpy()])
+    attr_plot_fig, attr_plot_ax = plt.subplots(figsize=(3,3))
+    attr_plot_ax.imshow(attr_plot_data, cmap='Blues', vmin=-1, vmax=1)
+    for i in range(2):
+        for j in range(2):
+            attr_plot_ax.text(j, i, f"{attr_plot_data[i,j]:.2E}", ha='center', va='center', fontsize=14)
+    attr_plot_ax.set_xticks([0, 1])
+    attr_plot_ax.set_xticklabels(['X', 'Y'])
+    attr_plot_ax.set_yticks([0, 1])
+    attr_plot_ax.set_yticklabels(['Captum','Our implementation'])
+    attr_plot_ax.set_title('Integrated Gradients Attributions')
+    attr_plot_ax.set_xticks([-0.5,  0.5,  1.5], minor=True)
+    attr_plot_ax.set_yticks(np.arange(-0.5, 2, 1), minor=True)
+    attr_plot_ax.grid(which='minor', color='black', linewidth=1)
+    attr_plot_ax.tick_params(which='minor', length=0)
+    attr_plot_ax
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Integrated Hessians
+    """)
     return
 
 
@@ -319,7 +405,34 @@ def _(mo):
     IH(x,i,j) = IG(IG(x,i),j)
 
     This is a double path integral.
+
+    In IG, you would sample a path from baseline to input.
+
+    In IH, you will trace multiple such path
     """)
+    return
+
+
+@app.cell
+def _(
+    baseline_to_input_path_x,
+    baseline_to_input_path_y,
+    surface_from_function,
+    view_path_z,
+):
+    view_path_ih_top_fig, view_path_ih_top_ax = surface_from_function(f,90,-90)
+    view_path_ih_top_ax.set_zticklabels([])
+    view_path_ih_z = f(baseline_to_input_path_x, baseline_to_input_path_y) + .8
+    view_path_ih_top_ax.scatter(baseline_to_input_path_x, baseline_to_input_path_y, view_path_z, color='red', s=20, label=f'Point', zorder=5)
+    view_path_ih_top_ax.set_title("The path between baseline and the input")
+    view_path_ih_top_ax
+    return
+
+
+@app.cell
+def _(azim_slider, elev_slider, surface_from_function):
+    view_path_ih_fig, view_path_ih_ax = surface_from_function(f, elev_slider.value, azim_slider.value)
+    view_path_ih_ax
     return
 
 
@@ -336,18 +449,6 @@ def _(PathExplainerTorch):
     return (exp,)
 
 
-@app.cell
-def _(input_tensor):
-    input_tensor
-    return
-
-
-@app.cell
-def _(f_vectorized, input_tensor):
-    f_vectorized(input_tensor).detach()
-    return
-
-
 @app.function
 def f_vectorized2(t):
     return (t[:,0] + t[:,1] - 2 * t[:,0] * t[:,1]).unsqueeze(-1)
@@ -355,7 +456,7 @@ def f_vectorized2(t):
 
 @app.cell
 def _(baseline_tensor, exp, input_tensor):
-    exp.interactions(input_tensor,baseline_tensor, use_expectation=False)
+    exp.interactions(input_tensor, baseline_tensor, use_expectation=False, num_samples=3)
     return
 
 
@@ -373,27 +474,52 @@ def _(torch):
 
         outer_product = diff.unsqueeze(1)*diff.unsqueeze(2)
 
-        outer_product = outer_product.reshape(1, 4)
+        outer_product = outer_product.reshape(2,2)
 
         k = n_steps
         m = n_steps
 
-        riem_sum = torch.zeros(1,4)
+        riem_sum = torch.zeros(2,2)
 
         for l in range(1, k + 1):
             for p in range(1, m + 1):
                 alpha = l / k * p / m
+                print(f"alpha: {alpha}")
 
                 # cannot handle multi sample inputs right now
                 second_order_grad = torch.autograd.functional.hessian(
                     f, L(alpha), strict=True,
-                ).reshape(1,4)
+                ).reshape(2,2)
+
+                print(second_order_grad)
+
+                print(second_order_grad*alpha)
 
                 riem_sum += second_order_grad * alpha
 
         riem_sum = riem_sum * 1 / (k * m) * outer_product
+    
+        # calculate the additional term for the diagonal
+        for l in range(1, k + 1):
+            for p in range(1, m + 1):
+                alpha = l / k * p / m
+                print(f"alpha: {alpha}")
 
-        riem_sum = riem_sum.reshape(1,2,2)
+                # cannot handle multi sample inputs right now
+                second_order_grad = torch.autograd.functional.hessian(
+                    f, L(alpha), strict=True,
+                ).reshape(2,2)
+            
+                print(second_order_grad)
+
+                print(second_order_grad*alpha)
+
+                riem_sum.diagonal().add_(
+                    second_order_grad.diagonal() * diff[0]
+                ) 
+
+
+        riem_sum = riem_sum#.reshape(1,2,2)
         return riem_sum
 
     return (path_ih,)
@@ -406,8 +532,8 @@ def _(input_tensor):
 
 
 @app.cell
-def _(baseline_tensor, f_vectorized, input_tensor, path_ih):
-    path_ih(f_vectorized, input_tensor, baseline_tensor)
+def _(baseline_tensor, input_tensor, path_ih):
+    path_ih(f_vectorized2, input_tensor, baseline_tensor, n_steps=3)
     return
 
 
