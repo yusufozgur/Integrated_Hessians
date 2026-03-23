@@ -130,7 +130,7 @@ def _(
     show_surface_ax.set_zlabel('f(x, y)')
     show_surface_ax.computed_zorder = False # to make balls show up
     show_surface_ax.legend()
-    return (show_surface_fig,)
+    return
 
 
 @app.cell
@@ -146,7 +146,7 @@ def _(
     view_path_ax.scatter(baseline_to_input_path_x, baseline_to_input_path_y, view_path_z, color='red', s=20, label=f'Point', zorder=5)
     view_path_ax.set_title("The path between baseline and the input")
     view_path_fig
-    return (view_path_fig,)
+    return
 
 
 @app.cell
@@ -167,58 +167,18 @@ def _(
     view_path_integ_ax.set_zlabel('f(x, y)')
     # view_path_integ_ax.set_proj_type('ortho')
     view_path_integ_fig
-    return (view_path_integ_fig,)
-
-
-@app.cell
-def _(baseline_to_input_path_f, baseline_to_input_path_x, plt):
-    slice_2d_x_with_path_fig, slice_2d_x_with_path_ax = plt.subplots(figsize=(6, 4))
-    slice_2d_x_with_path_ax.plot(baseline_to_input_path_x, baseline_to_input_path_f, color="red", label="Path")
-    slice_2d_x_with_path_ax.set_title("x vs f")
-    slice_2d_x_with_path_ax.set_xlabel("x")
-    slice_2d_x_with_path_ax.set_ylabel("f")
-    slice_2d_x_with_path_ax.legend()
-    return (slice_2d_x_with_path_fig,)
-
-
-@app.cell
-def _(baseline_to_input_path_f, baseline_to_input_path_y, plt):
-    slice_2d_y_with_path_fig, slice_2d_y_with_path_ax = plt.subplots(figsize=(6, 4))
-    slice_2d_y_with_path_ax.plot(baseline_to_input_path_y, baseline_to_input_path_f, color="red", label="Path")
-    slice_2d_y_with_path_ax.set_title("y vs f")
-    slice_2d_y_with_path_ax.set_xlabel("y")
-    slice_2d_y_with_path_ax.set_ylabel("f")
-    slice_2d_y_with_path_ax.legend()
-    return (slice_2d_y_with_path_fig,)
-
-
-@app.cell
-def _(baseline_to_input_path_x, baseline_to_input_path_y, torch):
-    path_tensor_x = torch.tensor(baseline_to_input_path_x, requires_grad=True)
-    path_tensor_y = torch.tensor(baseline_to_input_path_y, requires_grad=True)
-    f_path_tensor = torch.vmap(f)(path_tensor_x, path_tensor_y)
-    # f_path_tensor = f(path_tensor_x, path_tensor_y)
-    # path_tensor_x, path_tensor_y, f_path_tensor
-    torch.autograd.grad(outputs=f_path_tensor,inputs=path_tensor_x)
     return
 
 
 @app.cell
-def _(
-    mo,
-    show_surface_fig,
-    slice_2d_x_with_path_fig,
-    slice_2d_y_with_path_fig,
-    view_path_fig,
-    view_path_integ_fig,
-):
-    mo.vstack([
-        show_surface_fig, 
-        view_path_fig, 
-        view_path_integ_fig,
-        mo.hstack([slice_2d_x_with_path_fig, slice_2d_y_with_path_fig]), 
-    
-    ])
+def _():
+    # mo.vstack([
+    #     show_surface_fig, 
+    #     view_path_fig, 
+    #     view_path_integ_fig,
+    #     mo.hstack([slice_2d_x_with_path_fig, slice_2d_y_with_path_fig]), 
+
+    # ])
     return
 
 
@@ -230,15 +190,63 @@ def _(mo):
     return
 
 
+@app.cell
+def _():
+    # path_tensor_x = torch.tensor(baseline_to_input_path_x, requires_grad=True)
+    # path_tensor_y = torch.tensor(baseline_to_input_path_y, requires_grad=True)
+
+    return
+
+
+@app.cell
+def _(baseline_to_input_path_x, baseline_to_input_path_y, torch):
+    path_tensor = torch.stack([
+        torch.tensor(baseline_to_input_path_x),
+        torch.tensor(baseline_to_input_path_y)
+    ]).transpose(1,0)
+    path_tensor.requires_grad = True
+
+    f_w_point_tensor = lambda x: f(x[0], x[1])
+    points_f = torch.vmap(f_w_point_tensor)(path_tensor)
+    points_grad = torch.vmap(torch.func.grad(f_w_point_tensor))(path_tensor)
+
+    points_f, points_grad
+    return points_f, points_grad
+
+
+@app.cell
+def _(baseline_to_input_path_x, plt, points_f, points_grad):
+    slice_2d_x_with_path_fig, slice_2d_x_with_path_ax = plt.subplots(figsize=(6, 4))
+    slice_2d_x_with_path_ax.plot(baseline_to_input_path_x, points_f.detach().numpy(), color="red", label="Path")
+    slice_2d_x_with_path_ax.plot(baseline_to_input_path_x, points_grad[:,0].detach().numpy(), color="green", label="Gradient")
+    slice_2d_x_with_path_ax.set_title("x vs f")
+    slice_2d_x_with_path_ax.set_xlabel("x")
+    slice_2d_x_with_path_ax.set_ylabel("f")
+    slice_2d_x_with_path_ax.legend()
+    return
+
+
+@app.cell
+def _(baseline_to_input_path_f, baseline_to_input_path_y, plt, points_grad):
+    slice_2d_y_with_path_fig, slice_2d_y_with_path_ax = plt.subplots(figsize=(6, 4))
+    slice_2d_y_with_path_ax.plot(baseline_to_input_path_y, baseline_to_input_path_f, color="red", label="Path")
+    slice_2d_y_with_path_ax.plot(baseline_to_input_path_y, points_grad[:,1].detach().numpy(), color="green", label="Gradient")
+    slice_2d_y_with_path_ax.set_title("y vs f")
+    slice_2d_y_with_path_ax.set_xlabel("y")
+    slice_2d_y_with_path_ax.set_ylabel("f")
+    slice_2d_y_with_path_ax.legend()
+    return
+
+
 @app.function
-def f_vectorized(t):
+def f_batched(t):
     return t[:,0] + t[:,1] - 2 * t[:,0] * t[:,1]
 
 
 @app.cell
 def _(IntegratedGradients, baseline_x, baseline_y, input_x, input_y, torch):
     # Captum
-    ig = IntegratedGradients(f_vectorized)
+    ig = IntegratedGradients(f_batched)
     input_tensor = torch.tensor([input_x,input_y],dtype=torch.float32,requires_grad=True).unsqueeze(0)
     baseline_tensor = torch.tensor([baseline_x,baseline_y],dtype=torch.float32,requires_grad=True).unsqueeze(0)
     input_tensor.shape
@@ -296,7 +304,7 @@ def _(np, torch):
 
 @app.cell
 def _(baseline_tensor, input_tensor, path_ig):
-    path_ig_attr, path_ig_delta = path_ig(f_vectorized,input_tensor,baseline_tensor, target=0)
+    path_ig_attr, path_ig_delta = path_ig(f_batched,input_tensor,baseline_tensor, target=0)
     f"Path IG(Our) attributions: {path_ig_attr.detach().numpy()} with delta: {float(path_ig_delta.detach().numpy()[0]): .2E}"
     return
 
@@ -335,7 +343,7 @@ def _(input_tensor):
 
 
 @app.cell
-def _(input_tensor):
+def _(f_vectorized, input_tensor):
     f_vectorized(input_tensor).detach()
     return
 
@@ -398,7 +406,7 @@ def _(input_tensor):
 
 
 @app.cell
-def _(baseline_tensor, input_tensor, path_ih):
+def _(baseline_tensor, f_vectorized, input_tensor, path_ih):
     path_ih(f_vectorized, input_tensor, baseline_tensor)
     return
 
