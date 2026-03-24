@@ -30,12 +30,14 @@ def _():
         sample_x_range,
         sample_y_range,
     )
+    from integrated_hessians import get_integrated_hessians
 
     return (
         IntegratedGradients,
         PathExplainerTorch,
         azim_slider,
         elev_slider,
+        get_integrated_hessians,
         np,
         plt,
         slider_baseline_x,
@@ -591,13 +593,10 @@ def _():
 @app.cell
 def _(PathExplainerTorch):
     # path_explain
+    def f_vectorized2(t):
+        return (t[:, 0] + t[:, 1] - 2 * t[:, 0] * t[:, 1]).unsqueeze(-1)
     exp = PathExplainerTorch(f_vectorized2)
     return (exp,)
-
-
-@app.function
-def f_vectorized2(t):
-    return (t[:, 0] + t[:, 1] - 2 * t[:, 0] * t[:, 1]).unsqueeze(-1)
 
 
 @app.cell
@@ -605,59 +604,6 @@ def _(baseline_tensor, exp, input_tensor):
     exp.interactions(
         input_tensor, baseline_tensor, use_expectation=False, num_samples=3
     )
-    return
-
-
-@app.cell
-def _(torch):
-    # our implementation
-    def path_ih(f, input, baseline, n_steps=50):
-        def L(a):
-            return baseline + a * (input - baseline)
-
-        input = input.reshape(1, 2)
-        baseline = baseline.reshape(1, 2)
-
-        diff = input - baseline
-
-        outer_product = diff.unsqueeze(1) * diff.unsqueeze(2)
-
-        outer_product = outer_product.reshape(2, 2)
-
-        k = n_steps
-        m = n_steps
-
-        riem_sum = torch.zeros(2, 2)
-
-        for l in range(1, k + 1):
-            for p in range(1, m + 1):
-                alpha = (l - 0.5) / k * (p - 0.5) / m
-
-                # cannot handle multi sample inputs right now
-                second_order_grad = torch.autograd.functional.hessian(
-                    f,
-                    L(alpha),
-                    strict=True,
-                ).reshape(2, 2)
-
-                riem_sum += second_order_grad * alpha
-
-        result = riem_sum * 1 / (k * m) * outer_product
-
-        return result
-
-    return (path_ih,)
-
-
-@app.cell
-def _(input_tensor, torch):
-    torch.func.jacfwd(torch.func.jacrev(f_batched))(input_tensor)
-    return
-
-
-@app.cell
-def _(baseline_tensor, input_tensor, path_ih):
-    path_ih(f_vectorized2, input_tensor, baseline_tensor, n_steps=3)
     return
 
 
@@ -672,187 +618,12 @@ def _(mo):
 
 
 @app.cell
-def _(torch):
-    # our implementation
-    def path_ih_for_ij(f, input, baseline, i, j, n_steps=50):
-        """
-        Let x=input and x'=baseline. We are going to find interaction value between xi and xj features of the input.
-        If i != j, then
-
-        IH = (xi - xi') (xj - xj') sum_l=1^k (sum_p=1^m( l/k*p/m * df(x' + (l/k) (x - x'))/(dxi dxj) 1/k/m ))
-
-        if i == j, then the following term is added to the previous result
-        extra_term = (xi - xi') +
-        """
-
-        input = input.reshape(1, 2)
-        baseline = baseline.reshape(1, 2)
-
-        xi = input[0, i]
-        xj = input[0, j]
-        xib = baseline[0, i]
-        xjb = baseline[0, j]
-
-        diff = input - baseline
-
-        k = n_steps
-        m = n_steps
-
-        riem_sum = torch.zeros(1)
-
-        for l in range(1, k + 1):
-            beta = (l - 0.5) / k  # -.5 is for getting the middle riemann sum
-            for p in range(1, m + 1):
-                alpha = (p - 0.5) / m
-
-                alphabeta = beta * alpha
-
-                sample = baseline + alphabeta * (input - baseline)
-
-                # cannot handle multi sample inputs right now
-                second_order_grad = torch.autograd.functional.hessian(
-                    f,
-                    sample,
-                    strict=True,
-                ).reshape(2, 2)
-
-                second_order_grad = second_order_grad[i, j]
-
-                riem_sum += second_order_grad * alphabeta * 1 / k / m
-
-        result = (xi - xib) * (xi - xjb) * riem_sum
-        print(result)
-
-        # Due to the chain rule, case i==j has an extra term
-        if i == j:
-            riem_sum_extra_for_ijequal = torch.zeros(1)
-            for l in range(1, k + 1):
-                beta = (l - 0.5) / k  # -.5 is for getting the middle riemann sum
-                for p in range(1, m + 1):
-                    alpha = (p - 0.5) / m
-
-                    alphabeta = beta * alpha
-
-                    sample = baseline + alphabeta * (input - baseline)
-
-                    fout = f(sample)
-
-                    # deriv = torch.tensor([
-                    #     [1 - 2 * alphabeta],
-                    #     [1 - 2 * alphabeta]
-                    # ]) # REPLACE THIS WITH GRAD
-
-                    first_order_grad = torch.autograd.grad([fout], [sample])[0]
-
-                    riem_sum_extra_for_ijequal += first_order_grad[0, i] * 1 / k / m
-
-            result += (xi - xib) * riem_sum_extra_for_ijequal
-            print((xi - xib) * riem_sum_extra_for_ijequal)
-
-        return result
-
-    return (path_ih_for_ij,)
-
-
-@app.cell
-def _(baseline_tensor, input_tensor, path_ih_for_ij):
-    path_ih_for_ij(f_batched, input_tensor, baseline_tensor, 1, 0, n_steps=2)
-    return
-
-
-@app.cell
-def _(baseline_tensor, input_tensor, path_ih_for_ij):
-    path_ih_for_ij(f_batched, input_tensor, baseline_tensor, 0, 0, n_steps=2)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    Calculate delta
-    """)
-    return
-
-
-@app.cell
-def _(baseline_tensor, input_tensor, torch):
-    input_tensor_two_samples = torch.cat([input_tensor, input_tensor])
-    baseline_tensor_two_samples = torch.cat([baseline_tensor, baseline_tensor])
-    return baseline_tensor_two_samples, input_tensor_two_samples
-
-
-@app.cell
-def _(input_tensor_two_samples):
-    input_tensor_two_samples.shape
-    return
-
-
-@app.cell
-def _(input_tensor_two_samples, torch):
-    torch.vmap(torch.func.hessian(lambda x: f_batched(x.unsqueeze(0)).squeeze()))(
-        input_tensor_two_samples
-    )
-    return
-
-
-@app.cell
-def _(input_tensor_two_samples):
-    tuple(input_tensor_two_samples)
-    return
-
-
-@app.cell
-def _():
-    from integrated_hessians import (
-        _get_common_term,
-        _get_self_interaction_extra_term,
-        get_integrated_hessians,
-    )
-
-    return (get_integrated_hessians,)
-
-
-@app.cell
-def _():
-    # _get_common_term(f_batched, input_tensor_two_samples, baseline_tensor_two_samples, 50)
-    return
-
-
-@app.cell
-def _():
-    # _get_self_interaction_extra_term(f_batched, input_tensor_two_samples, baseline_tensor_two_samples, 50)
-    return
-
-
-@app.cell
-def _():
-    """(
-        _get_common_term(
-            f_batched, input_tensor_two_samples, baseline_tensor_two_samples, 50
-        )
-        + _get_self_interaction_extra_term(
-            f_batched, input_tensor_two_samples, baseline_tensor_two_samples, 50
-        ).diag_embed()
-    )"""
-    return
-
-
-@app.function
-def f_input_batched_output_dimmed(t):
-    return (t[:, 0] + t[:, 1] - 2 * t[:, 0] * t[:, 1]).unsqueeze(-1)
-
-
-@app.cell
-def _(
-    baseline_tensor_two_samples,
-    get_integrated_hessians,
-    input_tensor_two_samples,
-):
+def _(baseline_tensor, get_integrated_hessians, input_tensor):
     our_ih_attr, our_ih_delta = get_integrated_hessians(
-        model=f_input_batched_output_dimmed,
-        inputs=input_tensor_two_samples,
-        baselines=baseline_tensor_two_samples,
-        target=0,
+        model=f_batched,
+        inputs=input_tensor,
+        baselines=baseline_tensor,
+        target=None,
         approximation_steps=3,
     )
     return our_ih_attr, our_ih_delta
@@ -867,12 +638,6 @@ def _(our_ih_attr):
 @app.cell
 def _(our_ih_delta):
     our_ih_delta
-    return
-
-
-@app.cell
-def _(input_tensor):
-    f_input_batched_output_dimmed(input_tensor)[:, 0]
     return
 
 
