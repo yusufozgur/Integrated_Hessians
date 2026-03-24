@@ -50,6 +50,26 @@ def f(X, Y):
     return X + Y - 2 * X * Y
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    The gradient $\nabla f(x, y)$ is:
+    $$\nabla f(x, y) = \left( \frac{\partial f}{\partial x}, \frac{\partial f}{\partial y} \right) = (1 - 2y, 1 - 2x)$$
+
+    The Hessian matrix $H(f) = \nabla^2 f$ is:
+    $$
+    H(f) = \begin{bmatrix}
+    \frac{\partial^2 f}{\partial x^2} & \frac{\partial^2 f}{\partial x \partial y} \\
+    \frac{\partial^2 f}{\partial y \partial x} & \frac{\partial^2 f}{\partial y^2}
+    \end{bmatrix} = \begin{bmatrix}
+    0 & -2 \\
+    -2 & 0
+    \end{bmatrix}
+    $$
+    """)
+    return
+
+
 @app.cell
 def _(
     azim_slider,
@@ -211,7 +231,18 @@ def _(baseline_to_input_path_x, baseline_to_input_path_y, torch):
     points_grad = torch.vmap(torch.func.grad(f_w_point_tensor))(path_tensor)
 
     points_f, points_grad
-    return points_f, points_grad
+    return f_w_point_tensor, path_tensor, points_f, points_grad
+
+
+@app.cell
+def _(f_w_point_tensor, path_tensor, torch):
+    f_hessian_func = torch.func.hessian(f_w_point_tensor)
+
+    # Apply vmap to compute the Hessian at every point along the path
+    # If path_tensor has shape (N, 2), points_hessian will be (N, 2, 2)
+    points_hessian = torch.vmap(f_hessian_func)(path_tensor)
+    points_hessian
+    return
 
 
 @app.cell
@@ -331,7 +362,7 @@ def _(np, torch):
     #   IG = (x-x')*sum_a{dG(a)/da * 1/m}
     #   we do not need to explicitly calculate the derivative of G(a) using the chain rule, as autograd should handle that
 
-    def path_ig(F, input, baseline, target: int, n_steps=50):
+    def path_ig(F, input, baseline, target: int, n_steps=50, retain_graph = False):
         alphas = np.linspace(0, 1, n_steps)
         def L(a):
             return baseline + a * (input - baseline)
@@ -342,7 +373,7 @@ def _(np, torch):
             out = F(interpolation)
             out = out[target]
 
-            grad_tuple = torch.autograd.grad(outputs=out,inputs=interpolation)
+            grad_tuple = torch.autograd.grad(outputs=out,inputs=interpolation,retain_graph=retain_graph)
             grad = grad_tuple[0]
 
             rimann_sum += grad
@@ -483,52 +514,22 @@ def _(torch):
 
         for l in range(1, k + 1):
             for p in range(1, m + 1):
-                alpha = l / k * p / m
-                print(f"alpha: {alpha}")
+                alpha = (l - .5) / k * (p - .5) / m
 
                 # cannot handle multi sample inputs right now
                 second_order_grad = torch.autograd.functional.hessian(
                     f, L(alpha), strict=True,
                 ).reshape(2,2)
-
-                print(second_order_grad)
-
-                print(second_order_grad*alpha)
 
                 riem_sum += second_order_grad * alpha
 
         riem_sum = riem_sum * 1 / (k * m) * outer_product
     
-        # calculate the additional term for the diagonal
-        for l in range(1, k + 1):
-            for p in range(1, m + 1):
-                alpha = l / k * p / m
-                print(f"alpha: {alpha}")
-
-                # cannot handle multi sample inputs right now
-                second_order_grad = torch.autograd.functional.hessian(
-                    f, L(alpha), strict=True,
-                ).reshape(2,2)
-            
-                print(second_order_grad)
-
-                print(second_order_grad*alpha)
-
-                riem_sum.diagonal().add_(
-                    second_order_grad.diagonal() * diff[0]
-                ) 
-
 
         riem_sum = riem_sum#.reshape(1,2,2)
         return riem_sum
 
     return (path_ih,)
-
-
-@app.cell
-def _(input_tensor):
-    input_tensor.shape
-    return
 
 
 @app.cell
@@ -539,13 +540,64 @@ def _(baseline_tensor, input_tensor, path_ih):
 
 @app.cell
 def _(torch):
-    tmp = torch.arange(1,5).unsqueeze(0)
-    tmp
-    return
+    # our implementation
+    def path_ih_for_ij(f, input, baseline, i, j, n_steps=50):
+        """
+        Let x=input and x'=baseline. We are going to find interaction value between xi and xj features of the input.
+        If i != j, then
+
+        IH = (xi - xi') (xj - xj') sum_l=1^k ( l/k * df(x' + (l/k) (x - x'))/(dxi dxj) 1/k )
+        """
+        assert i != j
+    
+
+        input = input.reshape(1,2)
+        baseline = baseline.reshape(1,2)
+
+        xi = input[0, i]
+        xj = input[0, j]
+        xib = baseline[0, i]
+        xjb = baseline[0, j]
+
+        diff = input - baseline
+
+        k = n_steps
+        m = n_steps
+
+        riem_sum = torch.zeros(1)
+
+        for l in range(1, k + 1):
+            beta = (l - .5) / k # -.5 is for getting the middle riemann sum
+            for p in range(1, m + 1):
+                alpha = (p - .5) / m
+
+                alphabeta = beta * alpha
+
+                sample = baseline + alphabeta * (input - baseline)
+                print(f"sample {sample}")
+    
+                # cannot handle multi sample inputs right now
+                second_order_grad = torch.autograd.functional.hessian(
+                    f, sample, strict=True,
+                ).reshape(2,2)
+    
+                second_order_grad = second_order_grad[i,j]
+    
+                riem_sum += second_order_grad * alphabeta * 1 / k / m
+
+                print(f"alpha={alphabeta} d2grad={second_order_grad}")
+            print(" ")
+    
+
+        result = (xi-xib) * (xi - xjb) * riem_sum
+        return result
+
+    return (path_ih_for_ij,)
 
 
 @app.cell
-def _():
+def _(baseline_tensor, input_tensor, path_ih_for_ij):
+    path_ih_for_ij(f_vectorized2, input_tensor, baseline_tensor, 1, 0, n_steps=2)
     return
 
 
