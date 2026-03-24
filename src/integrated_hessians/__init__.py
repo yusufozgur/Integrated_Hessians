@@ -329,8 +329,59 @@ def get_integrated_hessians(
     Annotated[Tensor, "batch_size *input_shape"],  # interaction attributions
     Annotated[Tensor, "batch_size"],  # deltas
 ]:
-    """
-    target is used to subset the scalar output of interest out of the model predictions, internally it is used like x[:,target], where the first dimension(:) is the batch dimension for the outputs, and the target is the selection to get a scalar out of the rest of the dimensions. If target is none, no such subsetting is per
+    """Computes integrated hessians for feature interaction attributions.
+
+    Calculates second-order interaction attributions between input features by
+    integrating the Hessian of the model output along a path from a baseline to
+    the input. This decomposes the model output into pairwise feature interaction
+    terms, analogous to how integrated gradients decompose outputs into first-order
+    feature attributions.
+
+    ReLU activations are replaced with softplus during computation to ensure
+    smooth second-order derivatives.
+
+    Parameters
+    ----------
+    model : Callable
+        A callable that maps batched inputs of shape ``(batch_size, *input_shape)``
+        to batched outputs of shape ``(batch_size, *output_shape)``.
+    inputs : Float[Tensor, "batch_size *input_shape"]
+        Input tensor. Must have at least two dimensions, where the first is the
+        batch dimension.
+    baselines : Float[Tensor, "batch_size *input_shape"]
+        Baseline tensor representing the reference point for the path integral.
+        Must match the shape of ``inputs``.
+    target : None or int or tuple of int
+        Index or indices used to select a scalar output from the model predictions
+        via ``output[:, target]``. Pass ``None`` to skip subsetting, in which case
+        the model must already return a scalar per batch element.
+    approximation_steps : int, optional
+        Number of steps used for the Riemann sum approximation of the double path
+        integral. Higher values yield more accurate results at greater
+        computational cost. Defaults to 50.
+
+    Returns
+    -------
+    interaction_attributions : Tensor of shape (batch_size, *input_shape, *input_shape)
+        Pairwise interaction attribution scores. Diagonal entries ``[b, i, i]``
+        represent self-interaction (analogous to integrated gradients), while
+        off-diagonal entries ``[b, i, j]`` capture the interaction between
+        features ``i`` and ``j`` for batch element ``b``.
+    deltas : Tensor of shape (batch_size,)
+        Approximation error per sample, defined as the difference between the
+        actual change in model output ``f(input) - f(baseline)`` and the sum of
+        all interaction attributions. Values close to zero indicate a reliable
+        approximation.
+
+    Raises
+    ------
+    AssertionError
+        If ``inputs`` has fewer than two dimensions.
+    AssertionError
+        If ``baselines`` does not match the shape of ``inputs``.
+    AssertionError
+        If the model output cannot be reduced to a scalar per batch element using
+        the provided ``target``.
     """
     assert len(inputs.shape) >= 2, (
         "inputs must have at least two dimensions, one bath dimension and one or more input dimensions"
@@ -426,8 +477,8 @@ def get_integrated_hessians(
 
         delta = _get_delta(
             func=func_with_scalar_output,
-            inputs_flattened=inputs,
-            baselines_flattened=baselines,
+            inputs_flattened=inputs_flattened,
+            baselines_flattened=baselines_flattened,
             interaction_attributions=interaction_attributions,
         )
 
