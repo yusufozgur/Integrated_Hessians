@@ -373,7 +373,7 @@ def _(np, torch):
             out = F(interpolation)
             out = out[target]
 
-            grad_tuple = torch.autograd.grad(outputs=out,inputs=interpolation,retain_graph=retain_graph)
+            grad_tuple = torch.autograd.grad(outputs=out,inputs=interpolation)
             grad = grad_tuple[0]
 
             rimann_sum += grad
@@ -538,6 +538,16 @@ def _(baseline_tensor, input_tensor, path_ih):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Fix for non diag: Middle riemann sum converges much faster
+
+    Fix for diag: include the additional term for i=j case
+    """)
+    return
+
+
 @app.cell
 def _(torch):
     # our implementation
@@ -546,10 +556,11 @@ def _(torch):
         Let x=input and x'=baseline. We are going to find interaction value between xi and xj features of the input.
         If i != j, then
 
-        IH = (xi - xi') (xj - xj') sum_l=1^k ( l/k * df(x' + (l/k) (x - x'))/(dxi dxj) 1/k )
-        """
-        assert i != j
-    
+        IH = (xi - xi') (xj - xj') sum_l=1^k (sum_p=1^m( l/k*p/m * df(x' + (l/k) (x - x'))/(dxi dxj) 1/k/m ))
+
+        if i == j, then the following term is added to the previous result
+        extra_term = (xi - xi') + 
+        """    
 
         input = input.reshape(1,2)
         baseline = baseline.reshape(1,2)
@@ -574,7 +585,6 @@ def _(torch):
                 alphabeta = beta * alpha
 
                 sample = baseline + alphabeta * (input - baseline)
-                print(f"sample {sample}")
     
                 # cannot handle multi sample inputs right now
                 second_order_grad = torch.autograd.functional.hessian(
@@ -584,12 +594,38 @@ def _(torch):
                 second_order_grad = second_order_grad[i,j]
     
                 riem_sum += second_order_grad * alphabeta * 1 / k / m
-
-                print(f"alpha={alphabeta} d2grad={second_order_grad}")
-            print(" ")
     
-
         result = (xi-xib) * (xi - xjb) * riem_sum
+        print(result)
+
+        # Due to the chain rule, case i==j has an extra term
+        if i == j:
+            riem_sum_extra_for_ijequal = torch.zeros(1)
+            for l in range(1, k + 1):
+                beta = (l - .5) / k # -.5 is for getting the middle riemann sum
+                for p in range(1, m + 1):
+                    alpha = (p - .5) / m
+    
+                    alphabeta = beta * alpha
+    
+                    sample = baseline + alphabeta * (input - baseline)
+
+                    fout = f(sample)
+
+                    # deriv = torch.tensor([
+                    #     [1 - 2 * alphabeta],
+                    #     [1 - 2 * alphabeta]
+                    # ]) # REPLACE THIS WITH GRAD
+
+                    first_order_grad = torch.autograd.grad(
+                        [fout], [sample]
+                    )[0]
+        
+                    riem_sum_extra_for_ijequal += first_order_grad[0,i] * 1 / k / m
+                
+            result += (xi-xib) * riem_sum_extra_for_ijequal
+            print((xi-xib) * riem_sum_extra_for_ijequal)
+    
         return result
 
     return (path_ih_for_ij,)
@@ -597,7 +633,21 @@ def _(torch):
 
 @app.cell
 def _(baseline_tensor, input_tensor, path_ih_for_ij):
-    path_ih_for_ij(f_vectorized2, input_tensor, baseline_tensor, 1, 0, n_steps=2)
+    path_ih_for_ij(f_batched, input_tensor, baseline_tensor, 1, 0, n_steps=2)
+    return
+
+
+@app.cell
+def _(baseline_tensor, input_tensor, path_ih_for_ij):
+    path_ih_for_ij(f_batched, input_tensor, baseline_tensor, 0, 0, n_steps=2)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Calculate delta
+    """)
     return
 
 
