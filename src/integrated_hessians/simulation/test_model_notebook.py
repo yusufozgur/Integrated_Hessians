@@ -160,7 +160,7 @@ def _(
     interpolate_onehot,
     jx,
     model,
-    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
+    one_hot: 'jx.Float[NDArray[np.float32], "alphabet_length sequence_length"]',
     plot_epistasis_subsetted,
     subset_onehot_hessian,
     torch,
@@ -198,9 +198,9 @@ def _():
 
 @app.cell
 def _():
-    from integrated_hessians import get_integrated_hessians
+    from integrated_hessians import _deleteme_get_integrated_hessians
 
-    return (get_integrated_hessians,)
+    return (_deleteme_get_integrated_hessians,)
 
 
 @app.cell
@@ -234,7 +234,7 @@ def _(integ_hess_result):
 def _(
     ih_delta,
     integ_hess_result,
-    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
+    one_hot: 'jx.Float[NDArray[np.float32], "alphabet_length sequence_length"]',
     plot_epistasis_subsetted,
     subset_onehot_hessian,
     torch,
@@ -292,7 +292,9 @@ def _(one_hot_batched, torch):
 
 @app.cell
 def _(exp, exp_baseline, exp_input):
-    exp_ih = exp.interactions(exp_input, exp_baseline, num_samples=1000, use_expectation=False)
+    exp_ih = exp.interactions(
+        exp_input, exp_baseline, num_samples=1000, use_expectation=False
+    )
     return (exp_ih,)
 
 
@@ -304,7 +306,7 @@ def _(exp_ih):
 
 @app.cell
 def _(exp_ih):
-    exp_ih_reshaped = exp_ih.reshape(1,50,4,50,4)
+    exp_ih_reshaped = exp_ih.reshape(1, 50, 4, 50, 4)
     exp_ih_reshaped.shape
     return (exp_ih_reshaped,)
 
@@ -330,7 +332,7 @@ def _(exp_ih_reshaped):
 @app.cell
 def _(
     exp_ih_reshaped,
-    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
+    one_hot: 'jx.Float[NDArray[np.float32], "alphabet_length sequence_length"]',
     plot_epistasis_subsetted,
     subset_onehot_hessian,
     torch,

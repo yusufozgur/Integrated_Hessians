@@ -19,7 +19,17 @@ def _():
     import torch
     from captum.attr import IntegratedGradients
     from path_explain import PathExplainerTorch
-    from integrated_hessians.showcase import surface_from_function, elev_slider, azim_slider, slider_input_x, slider_input_y, slider_baseline_x, slider_baseline_y, sample_x_range, sample_y_range
+    from integrated_hessians.showcase import (
+        surface_from_function,
+        elev_slider,
+        azim_slider,
+        slider_input_x,
+        slider_input_y,
+        slider_baseline_x,
+        slider_baseline_y,
+        sample_x_range,
+        sample_y_range,
+    )
 
     return (
         IntegratedGradients,
@@ -83,16 +93,18 @@ def _(
     slider_input_y,
 ):
     # Configurations for the notebook
-    mo.vstack([
-        elev_slider, 
-        azim_slider, 
-        slider_input_x, 
-        slider_input_y, 
-        f"f(input)={f_input}",
-        slider_baseline_x,
-        slider_baseline_y,
-        f"f(baseline)={f_baseline}",
-    ])
+    mo.vstack(
+        [
+            elev_slider,
+            azim_slider,
+            slider_input_x,
+            slider_input_y,
+            f"f(input)={f_input}",
+            slider_baseline_x,
+            slider_baseline_y,
+            f"f(baseline)={f_baseline}",
+        ]
+    )
     return
 
 
@@ -112,10 +124,9 @@ def _(
     f_input = f(X=input_x, Y=input_y)
     f_baseline = f(X=baseline_x, Y=baseline_y)
 
-
     baseline = 20
-    baseline_to_input_path_x = np.linspace(baseline_x,input_x,50)
-    baseline_to_input_path_y = np.linspace(baseline_y,input_y,50)
+    baseline_to_input_path_x = np.linspace(baseline_x, input_x, 50)
+    baseline_to_input_path_y = np.linspace(baseline_y, input_y, 50)
     baseline_to_input_path_f = f(baseline_to_input_path_x, baseline_to_input_path_y)
     return (
         baseline_to_input_path_f,
@@ -143,12 +154,24 @@ def _(
     surface_from_function,
 ):
     # Show surface and, baseline and input points
-    show_surface_fig, show_surface_ax = surface_from_function(f, elev_slider.value, azim_slider.value)
-    show_surface_ax.scatter([input_x], [input_y], [f_input], color='red', s=50, label=f'Input', zorder=5)
-    show_surface_ax.scatter([baseline_x], [baseline_y], [f_baseline], color='blue', s=50, label=f'Baseline', zorder=5)
-    show_surface_ax.set_title(r'XOR-like surface $f(x, y) = x + y - 2xy$')
-    show_surface_ax.set_zlabel('f(x, y)')
-    show_surface_ax.computed_zorder = False # to make balls show up
+    show_surface_fig, show_surface_ax = surface_from_function(
+        f, elev_slider.value, azim_slider.value
+    )
+    show_surface_ax.scatter(
+        [input_x], [input_y], [f_input], color="red", s=50, label=f"Input", zorder=5
+    )
+    show_surface_ax.scatter(
+        [baseline_x],
+        [baseline_y],
+        [f_baseline],
+        color="blue",
+        s=50,
+        label=f"Baseline",
+        zorder=5,
+    )
+    show_surface_ax.set_title(r"XOR-like surface $f(x, y) = x + y - 2xy$")
+    show_surface_ax.set_zlabel("f(x, y)")
+    show_surface_ax.computed_zorder = False  # to make balls show up
     show_surface_ax.legend()
     return
 
@@ -168,10 +191,18 @@ def _(
     surface_from_function,
 ):
     # Show interpolations in 2d overview
-    view_path_fig, view_path_ax = surface_from_function(f,90,-90)
+    view_path_fig, view_path_ax = surface_from_function(f, 90, -90)
     view_path_ax.set_zticklabels([])
-    view_path_z = f(baseline_to_input_path_x, baseline_to_input_path_y) + .8
-    view_path_ax.scatter(baseline_to_input_path_x, baseline_to_input_path_y, view_path_z, color='red', s=20, label=f'Point', zorder=5)
+    view_path_z = f(baseline_to_input_path_x, baseline_to_input_path_y) + 0.8
+    view_path_ax.scatter(
+        baseline_to_input_path_x,
+        baseline_to_input_path_y,
+        view_path_z,
+        color="red",
+        s=20,
+        label=f"Point",
+        zorder=5,
+    )
     view_path_ax.set_title("The path between baseline and the input")
     view_path_fig
     return (view_path_z,)
@@ -187,12 +218,24 @@ def _(
     surface_from_function,
 ):
     # Show interpolations in 3d view
-    view_path_integ_fig, view_path_integ_ax = surface_from_function(f, elev_slider.value, azim_slider.value)
+    view_path_integ_fig, view_path_integ_ax = surface_from_function(
+        f, elev_slider.value, azim_slider.value
+    )
     view_path_integ_sampling = 20
-    view_path_integ_ax.scatter(baseline_to_input_path_x, baseline_to_input_path_y, baseline_to_input_path_f, color='red', s=20, label=f'Point', zorder=5)
-    view_path_integ_ax.computed_zorder = False # to make balls show up
-    view_path_integ_ax.set_title("The approximation for the path integral between baseline and the input")
-    view_path_integ_ax.set_zlabel('f(x, y)')
+    view_path_integ_ax.scatter(
+        baseline_to_input_path_x,
+        baseline_to_input_path_y,
+        baseline_to_input_path_f,
+        color="red",
+        s=20,
+        label=f"Point",
+        zorder=5,
+    )
+    view_path_integ_ax.computed_zorder = False  # to make balls show up
+    view_path_integ_ax.set_title(
+        "The approximation for the path integral between baseline and the input"
+    )
+    view_path_integ_ax.set_zlabel("f(x, y)")
     # view_path_integ_ax.set_proj_type('ortho')
     view_path_integ_fig
     return
@@ -201,10 +244,10 @@ def _(
 @app.cell
 def _():
     # mo.vstack([
-    #     show_surface_fig, 
-    #     view_path_fig, 
+    #     show_surface_fig,
+    #     view_path_fig,
     #     view_path_integ_fig,
-    #     mo.hstack([slice_2d_x_with_path_fig, slice_2d_y_with_path_fig]), 
+    #     mo.hstack([slice_2d_x_with_path_fig, slice_2d_y_with_path_fig]),
 
     # ])
     return
@@ -220,10 +263,9 @@ def _(mo):
 
 @app.cell
 def _(baseline_to_input_path_x, baseline_to_input_path_y, torch):
-    path_tensor = torch.stack([
-        torch.tensor(baseline_to_input_path_x),
-        torch.tensor(baseline_to_input_path_y)
-    ]).transpose(1,0)
+    path_tensor = torch.stack(
+        [torch.tensor(baseline_to_input_path_x), torch.tensor(baseline_to_input_path_y)]
+    ).transpose(1, 0)
     path_tensor.requires_grad = True
 
     f_w_point_tensor = lambda x: f(x[0], x[1])
@@ -250,30 +292,53 @@ def _(baseline_to_input_path_x, np, plt, points_f, points_grad):
     slice_2d_x_with_path_fig, slice_2d_x_with_path_ax = plt.subplots(figsize=(10, 6))
     slice_2d_x_with_path__x = baseline_to_input_path_x
     slice_2d_x_with_path__y1 = points_f.detach().numpy()
-    slice_2d_x_with_path__y2 = points_grad[:,0].detach().numpy()
+    slice_2d_x_with_path__y2 = points_grad[:, 0].detach().numpy()
     slice_2d_x_with_path__dx = np.ones_like(slice_2d_x_with_path__x)
     slice_2d_x_with_path__dy = slice_2d_x_with_path__y2
-    slice_2d_x_with_path__magnitude = np.sqrt(slice_2d_x_with_path__dx**2 + slice_2d_x_with_path__dy**2)
-    slice_2d_x_with_path__dx_norm = slice_2d_x_with_path__dx / slice_2d_x_with_path__magnitude
-    slice_2d_x_with_path__dy_norm = slice_2d_x_with_path__dy / slice_2d_x_with_path__magnitude
+    slice_2d_x_with_path__magnitude = np.sqrt(
+        slice_2d_x_with_path__dx**2 + slice_2d_x_with_path__dy**2
+    )
+    slice_2d_x_with_path__dx_norm = (
+        slice_2d_x_with_path__dx / slice_2d_x_with_path__magnitude
+    )
+    slice_2d_x_with_path__dy_norm = (
+        slice_2d_x_with_path__dy / slice_2d_x_with_path__magnitude
+    )
 
-    slice_2d_x_with_path_ax.plot(slice_2d_x_with_path__x, slice_2d_x_with_path__y1, color="red", label="Path")
-    slice_2d_x_with_path_ax.plot(slice_2d_x_with_path__x, slice_2d_x_with_path__y2, color="green", label="Gradient")
+    slice_2d_x_with_path_ax.plot(
+        slice_2d_x_with_path__x, slice_2d_x_with_path__y1, color="red", label="Path"
+    )
+    slice_2d_x_with_path_ax.plot(
+        slice_2d_x_with_path__x,
+        slice_2d_x_with_path__y2,
+        color="green",
+        label="Gradient",
+    )
     slice_2d_x_with_path__q = slice_2d_x_with_path_ax.quiver(
-        slice_2d_x_with_path__x[::5], 
-        slice_2d_x_with_path__y1[::5], 
-        slice_2d_x_with_path__dx_norm[::5], 
+        slice_2d_x_with_path__x[::5],
+        slice_2d_x_with_path__y1[::5],
+        slice_2d_x_with_path__dx_norm[::5],
         slice_2d_x_with_path__dy_norm[::5],
         scale=20,
         width=0.003,
-        color = "black",
+        color="black",
     )
-    slice_2d_x_with_path_ax.plot([], [], color='black', marker=r'$\rightarrow$', markersize=15, label='Gradient Arrow', linestyle='None')
+    slice_2d_x_with_path_ax.plot(
+        [],
+        [],
+        color="black",
+        marker=r"$\rightarrow$",
+        markersize=15,
+        label="Gradient Arrow",
+        linestyle="None",
+    )
     # slice_2d_x_with_path_ax.quiverkey(q, X=0.85, Y=0.05, U=1, label="Gradient Arrow", labelpos='E')
     slice_2d_x_with_path_ax.set_title("Projected onto x: Path and the gradients")
     slice_2d_x_with_path_ax.set_xlabel("x")
     slice_2d_x_with_path_ax.set_ylabel("f")
-    slice_2d_x_with_path_ax.grid(True, color='gray', linestyle='-', linewidth=0.5, alpha=0.7)
+    slice_2d_x_with_path_ax.grid(
+        True, color="gray", linestyle="-", linewidth=0.5, alpha=0.7
+    )
     slice_2d_x_with_path_ax.legend()
     return (slice_2d_x_with_path__y2,)
 
@@ -290,30 +355,53 @@ def _(
     slice_2d_y_with_path_fig, slice_2d_y_with_path_ax = plt.subplots(figsize=(10, 6))
     slice_2d_y_with_path__x = baseline_to_input_path_y
     slice_2d_y_with_path__y1 = points_f.detach().numpy()
-    slice_2d_y_with_path__y2 = points_grad[:,1].detach().numpy()
+    slice_2d_y_with_path__y2 = points_grad[:, 1].detach().numpy()
     slice_2d_y_with_path__dx = np.ones_like(slice_2d_y_with_path__x)
     slice_2d_y_with_path__dy = slice_2d_x_with_path__y2
-    slice_2d_y_with_path__magnitude = np.sqrt(slice_2d_y_with_path__dx**2 + slice_2d_y_with_path__dy**2)
-    slice_2d_y_with_path__dx_norm = slice_2d_y_with_path__dx / slice_2d_y_with_path__magnitude
-    slice_2d_y_with_path__dy_norm = slice_2d_y_with_path__dy / slice_2d_y_with_path__magnitude
+    slice_2d_y_with_path__magnitude = np.sqrt(
+        slice_2d_y_with_path__dx**2 + slice_2d_y_with_path__dy**2
+    )
+    slice_2d_y_with_path__dx_norm = (
+        slice_2d_y_with_path__dx / slice_2d_y_with_path__magnitude
+    )
+    slice_2d_y_with_path__dy_norm = (
+        slice_2d_y_with_path__dy / slice_2d_y_with_path__magnitude
+    )
 
-    slice_2d_y_with_path_ax.plot(slice_2d_y_with_path__x, slice_2d_y_with_path__y1, color="red", label="Path")
-    slice_2d_y_with_path_ax.plot(slice_2d_y_with_path__x, slice_2d_y_with_path__y2, color="green", label="Gradient")
+    slice_2d_y_with_path_ax.plot(
+        slice_2d_y_with_path__x, slice_2d_y_with_path__y1, color="red", label="Path"
+    )
+    slice_2d_y_with_path_ax.plot(
+        slice_2d_y_with_path__x,
+        slice_2d_y_with_path__y2,
+        color="green",
+        label="Gradient",
+    )
     slice_2d_y_with_path__q = slice_2d_y_with_path_ax.quiver(
-        slice_2d_y_with_path__x[::5], 
-        slice_2d_y_with_path__y1[::5], 
-        slice_2d_y_with_path__dx_norm[::5], 
+        slice_2d_y_with_path__x[::5],
+        slice_2d_y_with_path__y1[::5],
+        slice_2d_y_with_path__dx_norm[::5],
         slice_2d_y_with_path__dy_norm[::5],
         scale=20,
         width=0.003,
-        color = "black",
+        color="black",
     )
-    slice_2d_y_with_path_ax.plot([], [], color='black', marker=r'$\rightarrow$', markersize=15, label='Gradient Arrow', linestyle='None')
+    slice_2d_y_with_path_ax.plot(
+        [],
+        [],
+        color="black",
+        marker=r"$\rightarrow$",
+        markersize=15,
+        label="Gradient Arrow",
+        linestyle="None",
+    )
     # slice_2d_x_with_path_ax.quiverkey(q, X=0.85, Y=0.05, U=1, label="Gradient Arrow", labelpos='E')
     slice_2d_y_with_path_ax.set_title("Projected onto x: Path and the gradients")
     slice_2d_y_with_path_ax.set_xlabel("x")
     slice_2d_y_with_path_ax.set_ylabel("f")
-    slice_2d_y_with_path_ax.grid(True, color='gray', linestyle='-', linewidth=0.5, alpha=0.7)
+    slice_2d_y_with_path_ax.grid(
+        True, color="gray", linestyle="-", linewidth=0.5, alpha=0.7
+    )
     slice_2d_y_with_path_ax.legend()
     return
 
@@ -328,22 +416,28 @@ def _(mo):
 
 @app.function
 def f_batched(t):
-    return t[:,0] + t[:,1] - 2 * t[:,0] * t[:,1]
+    return t[:, 0] + t[:, 1] - 2 * t[:, 0] * t[:, 1]
 
 
 @app.cell
 def _(IntegratedGradients, baseline_x, baseline_y, input_x, input_y, torch):
     # Captum
     ig = IntegratedGradients(f_batched)
-    input_tensor = torch.tensor([input_x,input_y],dtype=torch.float32,requires_grad=True).unsqueeze(0)
-    baseline_tensor = torch.tensor([baseline_x,baseline_y],dtype=torch.float32,requires_grad=True).unsqueeze(0)
+    input_tensor = torch.tensor(
+        [input_x, input_y], dtype=torch.float32, requires_grad=True
+    ).unsqueeze(0)
+    baseline_tensor = torch.tensor(
+        [baseline_x, baseline_y], dtype=torch.float32, requires_grad=True
+    ).unsqueeze(0)
     input_tensor.shape
     return baseline_tensor, ig, input_tensor
 
 
 @app.cell
 def _(baseline_tensor, ig, input_tensor):
-    attributions, delta = ig.attribute(input_tensor, baseline_tensor, n_steps=50, return_convergence_delta=True)
+    attributions, delta = ig.attribute(
+        input_tensor, baseline_tensor, n_steps=50, return_convergence_delta=True
+    )
     f"Captum Attributions: {attributions.detach().numpy()} with delta: {float(delta.detach().numpy()[0]): .2E}"
     return (attributions,)
 
@@ -353,7 +447,7 @@ def _(np, torch):
     # our implementation
 
     # I think the biggest difference in our implementation could be to make the linear path its own function, and take gradients with respect to that
-    # Usually the formula for integrated gradients is written in vector form as: 
+    # Usually the formula for integrated gradients is written in vector form as:
     #   IG = (x-x')*sum_k=1^m=50{dF(x' + k/m * (x-x'))/dx * 1/m}
     # However, as the inside of the function is the interpolation of the linear path, we can express the formula in a simpler form by taking the interpolation into a seperate variable
     #   L(a) = x'+a*(x-x') where a/alpha is the interpolation coefficient, which was k/m from before
@@ -362,8 +456,9 @@ def _(np, torch):
     #   IG = (x-x')*sum_a{dG(a)/da * 1/m}
     #   we do not need to explicitly calculate the derivative of G(a) using the chain rule, as autograd should handle that
 
-    def path_ig(F, input, baseline, target: int, n_steps=50, retain_graph = False):
+    def path_ig(F, input, baseline, target: int, n_steps=50, retain_graph=False):
         alphas = np.linspace(0, 1, n_steps)
+
         def L(a):
             return baseline + a * (input - baseline)
 
@@ -373,47 +468,57 @@ def _(np, torch):
             out = F(interpolation)
             out = out[target]
 
-            grad_tuple = torch.autograd.grad(outputs=out,inputs=interpolation)
+            grad_tuple = torch.autograd.grad(outputs=out, inputs=interpolation)
             grad = grad_tuple[0]
 
             rimann_sum += grad
 
-        rimann_sum *= (1/n_steps) # we apply 1/m outside the loop as its equivalent
+        rimann_sum *= 1 / n_steps  # we apply 1/m outside the loop as its equivalent
 
         ig_result = (input - baseline) * rimann_sum
 
-        delta = (ig_result.sum() - (F(input) - F(baseline)))
+        delta = ig_result.sum() - (F(input) - F(baseline))
 
         return ig_result, delta
-
 
     return (path_ig,)
 
 
 @app.cell
 def _(baseline_tensor, input_tensor, path_ig):
-    path_ig_attr, path_ig_delta = path_ig(f_batched,input_tensor,baseline_tensor, target=0)
+    path_ig_attr, path_ig_delta = path_ig(
+        f_batched, input_tensor, baseline_tensor, target=0
+    )
     f"Path IG(Our) attributions: {path_ig_attr.detach().numpy()} with delta: {float(path_ig_delta.detach().numpy()[0]): .2E}"
     return (path_ig_attr,)
 
 
 @app.cell
 def _(attributions, np, path_ig_attr, plt):
-    attr_plot_data = np.concat([attributions.detach().numpy(), path_ig_attr.detach().numpy()])
-    attr_plot_fig, attr_plot_ax = plt.subplots(figsize=(3,3))
-    attr_plot_ax.imshow(attr_plot_data, cmap='Blues', vmin=-1, vmax=1)
+    attr_plot_data = np.concat(
+        [attributions.detach().numpy(), path_ig_attr.detach().numpy()]
+    )
+    attr_plot_fig, attr_plot_ax = plt.subplots(figsize=(3, 3))
+    attr_plot_ax.imshow(attr_plot_data, cmap="Blues", vmin=-1, vmax=1)
     for i in range(2):
         for j in range(2):
-            attr_plot_ax.text(j, i, f"{attr_plot_data[i,j]:.2E}", ha='center', va='center', fontsize=14)
+            attr_plot_ax.text(
+                j,
+                i,
+                f"{attr_plot_data[i, j]:.2E}",
+                ha="center",
+                va="center",
+                fontsize=14,
+            )
     attr_plot_ax.set_xticks([0, 1])
-    attr_plot_ax.set_xticklabels(['X', 'Y'])
+    attr_plot_ax.set_xticklabels(["X", "Y"])
     attr_plot_ax.set_yticks([0, 1])
-    attr_plot_ax.set_yticklabels(['Captum','Our implementation'])
-    attr_plot_ax.set_title('Integrated Gradients Attributions')
-    attr_plot_ax.set_xticks([-0.5,  0.5,  1.5], minor=True)
+    attr_plot_ax.set_yticklabels(["Captum", "Our implementation"])
+    attr_plot_ax.set_title("Integrated Gradients Attributions")
+    attr_plot_ax.set_xticks([-0.5, 0.5, 1.5], minor=True)
     attr_plot_ax.set_yticks(np.arange(-0.5, 2, 1), minor=True)
-    attr_plot_ax.grid(which='minor', color='black', linewidth=1)
-    attr_plot_ax.tick_params(which='minor', length=0)
+    attr_plot_ax.grid(which="minor", color="black", linewidth=1)
+    attr_plot_ax.tick_params(which="minor", length=0)
     attr_plot_ax
     return
 
@@ -451,10 +556,18 @@ def _(
     surface_from_function,
     view_path_z,
 ):
-    view_path_ih_top_fig, view_path_ih_top_ax = surface_from_function(f,90,-90)
+    view_path_ih_top_fig, view_path_ih_top_ax = surface_from_function(f, 90, -90)
     view_path_ih_top_ax.set_zticklabels([])
-    view_path_ih_z = f(baseline_to_input_path_x, baseline_to_input_path_y) + .8
-    view_path_ih_top_ax.scatter(baseline_to_input_path_x, baseline_to_input_path_y, view_path_z, color='red', s=20, label=f'Point', zorder=5)
+    view_path_ih_z = f(baseline_to_input_path_x, baseline_to_input_path_y) + 0.8
+    view_path_ih_top_ax.scatter(
+        baseline_to_input_path_x,
+        baseline_to_input_path_y,
+        view_path_z,
+        color="red",
+        s=20,
+        label=f"Point",
+        zorder=5,
+    )
     view_path_ih_top_ax.set_title("The path between baseline and the input")
     view_path_ih_top_ax
     return
@@ -462,7 +575,9 @@ def _(
 
 @app.cell
 def _(azim_slider, elev_slider, surface_from_function):
-    view_path_ih_fig, view_path_ih_ax = surface_from_function(f, elev_slider.value, azim_slider.value)
+    view_path_ih_fig, view_path_ih_ax = surface_from_function(
+        f, elev_slider.value, azim_slider.value
+    )
     view_path_ih_ax
     return
 
@@ -482,12 +597,14 @@ def _(PathExplainerTorch):
 
 @app.function
 def f_vectorized2(t):
-    return (t[:,0] + t[:,1] - 2 * t[:,0] * t[:,1]).unsqueeze(-1)
+    return (t[:, 0] + t[:, 1] - 2 * t[:, 0] * t[:, 1]).unsqueeze(-1)
 
 
 @app.cell
 def _(baseline_tensor, exp, input_tensor):
-    exp.interactions(input_tensor, baseline_tensor, use_expectation=False, num_samples=3)
+    exp.interactions(
+        input_tensor, baseline_tensor, use_expectation=False, num_samples=3
+    )
     return
 
 
@@ -498,38 +615,44 @@ def _(torch):
         def L(a):
             return baseline + a * (input - baseline)
 
-        input = input.reshape(1,2)
-        baseline = baseline.reshape(1,2)
+        input = input.reshape(1, 2)
+        baseline = baseline.reshape(1, 2)
 
         diff = input - baseline
 
-        outer_product = diff.unsqueeze(1)*diff.unsqueeze(2)
+        outer_product = diff.unsqueeze(1) * diff.unsqueeze(2)
 
-        outer_product = outer_product.reshape(2,2)
+        outer_product = outer_product.reshape(2, 2)
 
         k = n_steps
         m = n_steps
 
-        riem_sum = torch.zeros(2,2)
+        riem_sum = torch.zeros(2, 2)
 
         for l in range(1, k + 1):
             for p in range(1, m + 1):
-                alpha = (l - .5) / k * (p - .5) / m
+                alpha = (l - 0.5) / k * (p - 0.5) / m
 
                 # cannot handle multi sample inputs right now
                 second_order_grad = torch.autograd.functional.hessian(
-                    f, L(alpha), strict=True,
-                ).reshape(2,2)
+                    f,
+                    L(alpha),
+                    strict=True,
+                ).reshape(2, 2)
 
                 riem_sum += second_order_grad * alpha
 
-        riem_sum = riem_sum * 1 / (k * m) * outer_product
-    
+        result = riem_sum * 1 / (k * m) * outer_product
 
-        riem_sum = riem_sum#.reshape(1,2,2)
-        return riem_sum
+        return result
 
     return (path_ih,)
+
+
+@app.cell
+def _(input_tensor, torch):
+    torch.func.jacfwd(torch.func.jacrev(f_batched))(input_tensor)
+    return
 
 
 @app.cell
@@ -559,11 +682,11 @@ def _(torch):
         IH = (xi - xi') (xj - xj') sum_l=1^k (sum_p=1^m( l/k*p/m * df(x' + (l/k) (x - x'))/(dxi dxj) 1/k/m ))
 
         if i == j, then the following term is added to the previous result
-        extra_term = (xi - xi') + 
-        """    
+        extra_term = (xi - xi') +
+        """
 
-        input = input.reshape(1,2)
-        baseline = baseline.reshape(1,2)
+        input = input.reshape(1, 2)
+        baseline = baseline.reshape(1, 2)
 
         xi = input[0, i]
         xj = input[0, j]
@@ -578,36 +701,38 @@ def _(torch):
         riem_sum = torch.zeros(1)
 
         for l in range(1, k + 1):
-            beta = (l - .5) / k # -.5 is for getting the middle riemann sum
+            beta = (l - 0.5) / k  # -.5 is for getting the middle riemann sum
             for p in range(1, m + 1):
-                alpha = (p - .5) / m
+                alpha = (p - 0.5) / m
 
                 alphabeta = beta * alpha
 
                 sample = baseline + alphabeta * (input - baseline)
-    
+
                 # cannot handle multi sample inputs right now
                 second_order_grad = torch.autograd.functional.hessian(
-                    f, sample, strict=True,
-                ).reshape(2,2)
-    
-                second_order_grad = second_order_grad[i,j]
-    
+                    f,
+                    sample,
+                    strict=True,
+                ).reshape(2, 2)
+
+                second_order_grad = second_order_grad[i, j]
+
                 riem_sum += second_order_grad * alphabeta * 1 / k / m
-    
-        result = (xi-xib) * (xi - xjb) * riem_sum
+
+        result = (xi - xib) * (xi - xjb) * riem_sum
         print(result)
 
         # Due to the chain rule, case i==j has an extra term
         if i == j:
             riem_sum_extra_for_ijequal = torch.zeros(1)
             for l in range(1, k + 1):
-                beta = (l - .5) / k # -.5 is for getting the middle riemann sum
+                beta = (l - 0.5) / k  # -.5 is for getting the middle riemann sum
                 for p in range(1, m + 1):
-                    alpha = (p - .5) / m
-    
+                    alpha = (p - 0.5) / m
+
                     alphabeta = beta * alpha
-    
+
                     sample = baseline + alphabeta * (input - baseline)
 
                     fout = f(sample)
@@ -617,15 +742,13 @@ def _(torch):
                     #     [1 - 2 * alphabeta]
                     # ]) # REPLACE THIS WITH GRAD
 
-                    first_order_grad = torch.autograd.grad(
-                        [fout], [sample]
-                    )[0]
-        
-                    riem_sum_extra_for_ijequal += first_order_grad[0,i] * 1 / k / m
-                
-            result += (xi-xib) * riem_sum_extra_for_ijequal
-            print((xi-xib) * riem_sum_extra_for_ijequal)
-    
+                    first_order_grad = torch.autograd.grad([fout], [sample])[0]
+
+                    riem_sum_extra_for_ijequal += first_order_grad[0, i] * 1 / k / m
+
+            result += (xi - xib) * riem_sum_extra_for_ijequal
+            print((xi - xib) * riem_sum_extra_for_ijequal)
+
         return result
 
     return (path_ih_for_ij,)
@@ -648,6 +771,108 @@ def _(mo):
     mo.md(r"""
     Calculate delta
     """)
+    return
+
+
+@app.cell
+def _(baseline_tensor, input_tensor, torch):
+    input_tensor_two_samples = torch.cat([input_tensor, input_tensor])
+    baseline_tensor_two_samples = torch.cat([baseline_tensor, baseline_tensor])
+    return baseline_tensor_two_samples, input_tensor_two_samples
+
+
+@app.cell
+def _(input_tensor_two_samples):
+    input_tensor_two_samples.shape
+    return
+
+
+@app.cell
+def _(input_tensor_two_samples, torch):
+    torch.vmap(torch.func.hessian(lambda x: f_batched(x.unsqueeze(0)).squeeze()))(
+        input_tensor_two_samples
+    )
+    return
+
+
+@app.cell
+def _(input_tensor_two_samples):
+    tuple(input_tensor_two_samples)
+    return
+
+
+@app.cell
+def _():
+    from integrated_hessians import (
+        _get_common_term,
+        _get_self_interaction_extra_term,
+        get_integrated_hessians,
+    )
+
+    return (get_integrated_hessians,)
+
+
+@app.cell
+def _():
+    # _get_common_term(f_batched, input_tensor_two_samples, baseline_tensor_two_samples, 50)
+    return
+
+
+@app.cell
+def _():
+    # _get_self_interaction_extra_term(f_batched, input_tensor_two_samples, baseline_tensor_two_samples, 50)
+    return
+
+
+@app.cell
+def _():
+    """(
+        _get_common_term(
+            f_batched, input_tensor_two_samples, baseline_tensor_two_samples, 50
+        )
+        + _get_self_interaction_extra_term(
+            f_batched, input_tensor_two_samples, baseline_tensor_two_samples, 50
+        ).diag_embed()
+    )"""
+    return
+
+
+@app.function
+def f_input_batched_output_dimmed(t):
+    return (t[:, 0] + t[:, 1] - 2 * t[:, 0] * t[:, 1]).unsqueeze(-1)
+
+
+@app.cell
+def _(
+    baseline_tensor_two_samples,
+    get_integrated_hessians,
+    input_tensor_two_samples,
+):
+    our_ih_attr, our_ih_delta = get_integrated_hessians(
+        model=f_input_batched_output_dimmed,
+        inputs=input_tensor_two_samples,
+        baselines=baseline_tensor_two_samples,
+        target=0,
+        approximation_steps=3,
+    )
+    return our_ih_attr, our_ih_delta
+
+
+@app.cell
+def _(our_ih_attr):
+    our_ih_attr
+    return
+
+
+@app.cell
+def _(our_ih_delta):
+    our_ih_delta
+    return
+
+
+@app.cell
+def _(input_tensor):
+    f_input_batched_output_dimmed(input_tensor)[:, 0]
     return
 
 
