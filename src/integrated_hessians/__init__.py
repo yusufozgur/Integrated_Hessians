@@ -323,12 +323,15 @@ def get_integrated_hessians(
     ],
     inputs: jx.Float[Tensor, " batch_size *input_shape "],
     baselines: jx.Float[Tensor, " batch_size *input_shape "],
-    target: Union[int, Tuple[int, ...]],
+    target: Union[None, int, Tuple[int, ...]],
     approximation_steps=50,
 ) -> Tuple[
     Annotated[Tensor, "batch_size *input_shape"],  # interaction attributions
     Annotated[Tensor, "batch_size"],  # deltas
 ]:
+    """
+    target is used to subset the scalar output of interest out of the model predictions, internally it is used like x[:,target], where the first dimension(:) is the batch dimension for the outputs, and the target is the selection to get a scalar out of the rest of the dimensions. If target is none, no such subsetting is per
+    """
     assert len(inputs.shape) >= 2, (
         "inputs must have at least two dimensions, one bath dimension and one or more input dimensions"
     )
@@ -367,13 +370,12 @@ def get_integrated_hessians(
         flat_to_original = x.reshape(x_batch_size, *input_shape)
         output = model(flat_to_original)
         # target does subsetting to get the scalar outputs, so it could be an int or tuple of ints
-        scalar_output = output[:, target]
-        assert scalar_output.shape == (
-            x_batch_size,
-        ), (  # the 1 comes from the unsqueeze
+        if target is not None:
+            output = output[:, target]
+        assert output.shape == (x_batch_size,), (  # the 1 comes from the unsqueeze
             "Could not reduce output dimension to scalars, the target given for subsetting may be incorrect."
         )
-        return scalar_output
+        return output
 
     @jx.jaxtyped(typechecker=beartype)
     def func_with_scalar_output_and_transient_batch_dimentsion(
