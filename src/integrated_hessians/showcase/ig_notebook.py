@@ -31,6 +31,7 @@ def _():
         sample_y_range,
     )
     from integrated_hessians import get_integrated_hessians
+    import plotly.express as px
 
     return (
         IntegratedGradients,
@@ -40,6 +41,7 @@ def _():
         get_integrated_hessians,
         np,
         plt,
+        px,
         slider_baseline_x,
         slider_baseline_y,
         slider_input_x,
@@ -275,18 +277,7 @@ def _(baseline_to_input_path_x, baseline_to_input_path_y, torch):
     points_grad = torch.vmap(torch.func.grad(f_w_point_tensor))(path_tensor)
 
     points_f, points_grad
-    return f_w_point_tensor, path_tensor, points_f, points_grad
-
-
-@app.cell
-def _(f_w_point_tensor, path_tensor, torch):
-    f_hessian_func = torch.func.hessian(f_w_point_tensor)
-
-    # Apply vmap to compute the Hessian at every point along the path
-    # If path_tensor has shape (N, 2), points_hessian will be (N, 2, 2)
-    points_hessian = torch.vmap(f_hessian_func)(path_tensor)
-    points_hessian
-    return
+    return points_f, points_grad
 
 
 @app.cell
@@ -426,10 +417,10 @@ def _(IntegratedGradients, baseline_x, baseline_y, input_x, input_y, torch):
     # Captum
     ig = IntegratedGradients(f_batched)
     input_tensor = torch.tensor(
-        [input_x, input_y], dtype=torch.float32, requires_grad=True
+        [input_x, input_y], dtype=torch.float64, requires_grad=True
     ).unsqueeze(0)
     baseline_tensor = torch.tensor(
-        [baseline_x, baseline_y], dtype=torch.float32, requires_grad=True
+        [baseline_x, baseline_y], dtype=torch.float64, requires_grad=True
     ).unsqueeze(0)
     input_tensor.shape
     return baseline_tensor, ig, input_tensor
@@ -591,19 +582,20 @@ def _():
 
 
 @app.cell
-def _(PathExplainerTorch):
+def _(PathExplainerTorch, baseline_tensor, input_tensor):
     # path_explain
     def f_vectorized2(t):
         return (t[:, 0] + t[:, 1] - 2 * t[:, 0] * t[:, 1]).unsqueeze(-1)
     exp = PathExplainerTorch(f_vectorized2)
-    return (exp,)
+    path_explain_interactions = exp.interactions(
+        input_tensor, baseline_tensor, use_expectation=False, num_samples=3
+    )
+    return (path_explain_interactions,)
 
 
 @app.cell
-def _(baseline_tensor, exp, input_tensor):
-    exp.interactions(
-        input_tensor, baseline_tensor, use_expectation=False, num_samples=3
-    )
+def _(path_explain_interactions):
+    path_explain_interactions
     return
 
 
@@ -638,6 +630,14 @@ def _(our_ih_attr):
 @app.cell
 def _(our_ih_delta):
     our_ih_delta
+    return
+
+
+@app.cell
+def _(our_ih_attr, path_explain_interactions, px, torch):
+    z = torch.cat([path_explain_interactions.detach(), our_ih_attr.detach()]).numpy().transpose(1,0,2).reshape(2,4)
+    fig = px.imshow(z, text_auto=True)
+    fig
     return
 
 
