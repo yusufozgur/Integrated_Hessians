@@ -304,7 +304,7 @@ def _(mo):
 @app.cell
 def _(exp, exp_baseline, exp_input):
     exp_ih = exp.interactions(
-        exp_input, exp_baseline, num_samples=3600, use_expectation=False
+        exp_input, exp_baseline, num_samples=60, use_expectation=False
     )
     return (exp_ih,)
 
