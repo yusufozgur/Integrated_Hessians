@@ -303,7 +303,7 @@ def _get_delta(
     ],
 ) -> jx.Float[Tensor, " batch_size "]:
     f_input: jx.Float[Tensor, " batch_size 1 "] = func(inputs_flattened)
-    f_baseline: jx.Float[Tensor, " batch_size 1 "] = func(inputs_flattened)
+    f_baseline: jx.Float[Tensor, " batch_size 1 "] = func(baselines_flattened)
 
     out_diff: jx.Float[Tensor, " batch_size 1 "] = f_input - f_baseline
 
