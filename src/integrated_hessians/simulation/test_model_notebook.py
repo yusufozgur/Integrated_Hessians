@@ -212,12 +212,6 @@ def _(mo):
 
 
 @app.cell
-def _(model, one_hot_batched, torch):
-    model(one_hot_batched) - model(torch.full_like(one_hot_batched, 0.25))
-    return
-
-
-@app.cell
 def _(get_integrated_hessians, model, one_hot_batched, sampling_steps, torch):
     integ_hess_result, ih_delta = get_integrated_hessians(
         model=model,
@@ -335,8 +329,14 @@ def _(exp_ih_reshaped):
 
 
 @app.cell
+def _(integ_hess_result, model, one_hot_batched, torch):
+    f"Our {model(one_hot_batched) - model(torch.full_like(one_hot_batched, 0.25)) - integ_hess_result.sum()}"
+    return
+
+
+@app.cell
 def _(exp_ih_reshaped, model, one_hot_batched, torch):
-    model(one_hot_batched) - model(torch.full_like(one_hot_batched, 0.25)) - exp_ih_reshaped.sum()
+    f"path explain IH delta: {model(one_hot_batched) - model(torch.full_like(one_hot_batched, 0.25)) - exp_ih_reshaped.sum()}"
     return
 
 
