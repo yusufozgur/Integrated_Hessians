@@ -593,6 +593,14 @@ def _(PathExplainerTorch, baseline_tensor, input_tensor):
     return (path_explain_interactions,)
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Janizek et al IH implementation:
+    """)
+    return
+
+
 @app.cell
 def _(path_explain_interactions):
     path_explain_interactions
@@ -619,6 +627,14 @@ def _(baseline_tensor, get_integrated_hessians, input_tensor):
         approximation_steps=3,
     )
     return our_ih_attr, our_ih_delta
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Our IH implementation:
+    """)
+    return
 
 
 @app.cell

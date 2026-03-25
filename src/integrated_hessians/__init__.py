@@ -1,3 +1,4 @@
+from collections import defaultdict
 from contextlib import contextmanager
 from typing import Callable, Annotated, Literal, Tuple, Union
 from beartype import beartype
@@ -79,111 +80,58 @@ def get_hessian(
     return hessian_result
 
 
-def _get_integrated_hessian_for_single_sample(
-    input: jx.Float[Tensor, " 1 *input_shape"],
-    baseline: jx.Float[Tensor, " 1 *input_shape"],
-    model,
-    target,
-    integration_steps,
-) -> tuple[
-    jx.Float[Tensor, " *input_shape"],
-    jx.Float[Tensor, " *input_shape"],
-    jx.Float[Tensor, "1"],
-]:
+def _get_interpolation_coefficients(
+    mode: Literal["default", "multiplication_table_optimized"],
+    approximation_steps: int,
+    verbose: bool,
+):
+    """
+    For example, in a multiplication table, there are multiple ways to get 16, 2*8, 4*4 or 8*2. Similarly, we do not need to calculate hessians if the interpolated value will be the same. mode == "multiplication_table_optimized" acccounts for that
+    """
 
-    batch_shape = input.shape[0]
-    input_shape = input.shape[1:]
+    k = approximation_steps
+    m = approximation_steps
 
-    def forward_func(x):
-        return model(x)[target]
-
-    k = integration_steps
-    m = integration_steps
-
-    local_interaction: jx.Float[Tensor, "*input_shape *input_shape"] = torch.zeros(
-        (*input.shape, *input.shape), dtype=torch.float64
+    assert mode in ["default", "multiplication_table_optimized"], (
+        "You must provide a valid value for mode parameter."
     )
 
-    for l in tqdm(range(1, k + 1)):  # noqa: E741
-        for p in range(1, m + 1):
-            # alpha is the interpolation coefficient. alpha=0: baseline, alpha=1:input
-            alpha = l / k * p / m
-            interpolation = baseline + alpha * (input - baseline)
+    if mode == "default":
+        alphabetas: list[float] = []
+        weights: list[float] = []
+        # Important: we use the middle riemann sum, because it approximates better than right riemann sum. Usage of (l - .5) and (p - .5) is due to the middle riemann sum.
+        for l in range(1, k + 1):  # noqa: E741
+            beta: float = (l - 0.5) / k  # -.5 is for getting the middle riemann sum
+            for p in range(1, m + 1):
+                alpha: float = (p - 0.5) / m
 
-            local_interaction_step: jx.Float[
-                Tensor, "batch_size *input_shape batch_size *input_shape"
-            ] = torch.autograd.functional.hessian(
-                forward_func, interpolation, strict=True
-            )  # type: ignore
+                # alphabeta is the combined interpolation coefficient
+                alphabeta: float = beta * alpha
 
-            local_interaction_step = alpha * local_interaction_step
+                alphabetas.append(alphabeta)
+                weights.append(1)
+        return alphabetas, weights
+    elif mode == "multiplication_table_optimized":
+        alphabetas_dict = defaultdict(int)
 
-            local_interaction += local_interaction_step
+        for l in range(1, k + 1):  # noqa: E741
+            beta: float = (l - 0.5) / k  # -.5 is for getting the middle riemann sum
+            for p in range(1, m + 1):
+                alpha: float = (p - 0.5) / m
 
-    local_interaction = local_interaction * 1 / (k * m)
+                # alphabeta is a float, hence, I dont wanna use it as dictionary key due to floating point imprecision.
+                alphabeta_key = l * p
+                alphabetas_dict[alphabeta_key] += 1
 
-    # jaxtyping does not support multiple variadic specifiers (*name,). So, instead, I am checking the output is correct shape via an assert statement
-    assert local_interaction.shape == (*input.shape, *input.shape)
-    global_interaction = local_interaction * (input - baseline) * (input - baseline)
+        alphabetas = [(l_times_k / k / m) for l_times_k in alphabetas_dict.keys()]
+        weights = list(alphabetas_dict.values())
 
-    local_interaction = local_interaction.reshape((*input_shape, *input_shape))
-    global_interaction = global_interaction.reshape((*input_shape, *input_shape))
-
-    delta = (forward_func(input) - forward_func(baseline)) - global_interaction.sum()
-
-    return (local_interaction, global_interaction, delta)
-
-
-@jx.jaxtyped(typechecker=beartype)
-def _deleteme_get_integrated_hessians(
-    model: Callable,
-    inputs: jx.Float[Tensor, " batch_size *input_shape"],
-    baselines: jx.Float[Tensor, " batch_size *input_shape"],
-    target: int,
-    integration_steps=50,
-    multiply_by_inputs=True,  # return local(false) vs global(True) interactions, analagous to the option in integrated gradients
-) -> Tuple[
-    Annotated[Tensor, "batch_size *input_shape"],
-    Annotated[Tensor, "batch_size"],
-]:
-
-    assert len(inputs.shape) > 2, (
-        "inputs must have at least two dimensions, one bath dimension and one or more input dimensions"
-    )
-
-    batch_shape = inputs.shape[0]
-    input_shape = inputs.shape[1:]
-
-    assert baselines.shape == (batch_shape, *input_shape)
-
-    global_interactions: jx.Float[Tensor, " batch_size *input_shape"] = torch.zeros(
-        (batch_shape, *input_shape, *input_shape)
-    )
-    local_interactions: jx.Float[Tensor, " batch_size *input_shape"] = torch.zeros(
-        (batch_shape, *input_shape, *input_shape)
-    )
-    deltas: jx.Float[Tensor, " batch_size"] = torch.zeros(batch_shape)
-
-    with replace_relu_with_softplus():
-        for i, (sample_input, sample_baseline) in enumerate(zip(inputs, baselines)):
-            # re insert a batch dimension of size 1
-            sample_input: jx.Float[Tensor, ""] = sample_input.unsqueeze(0)
-            sample_baseline: jx.Float[Tensor, ""] = sample_baseline.unsqueeze(0)
-
-            local_interaction, global_interaction, delta = (
-                _get_integrated_hessian_for_single_sample(
-                    sample_input, sample_baseline, model, target, integration_steps
-                )
+        if verbose:
+            print(
+                f"multiplication table deduplication reduced calculations by {(1 - len(alphabetas) / approximation_steps**2) * 100}%"
             )
 
-            local_interactions[i] = local_interaction
-            global_interactions[i] = global_interaction
-            deltas[i] = delta
-
-    if multiply_by_inputs:
-        return global_interactions, deltas
-    else:
-        return local_interactions, deltas
+        return alphabetas, weights
 
 
 @jx.jaxtyped(typechecker=beartype)
@@ -195,6 +143,9 @@ def _get_common_term(
     inputs_flattened: jx.Float[Tensor, "batch_size input_shape_flattened"],
     baselines_flattened: jx.Float[Tensor, "batch_size input_shape_flattened "],
     approximation_steps: int,
+    interpolation_coefficients_mode: Literal[
+        "default", "multiplication_table_optimized"
+    ],
 ) -> jx.Float[Tensor, "batch_size input_shape_flattened input_shape_flattened"]:
     """
     If i != j, then
@@ -210,29 +161,34 @@ def _get_common_term(
     second_order_sensitivity = torch.zeros(
         batch_shape, flattened_input_shape, flattened_input_shape
     )
-    k = approximation_steps
-    m = approximation_steps
 
-    # Important: we use the middle riemann sum, because it approximates better than right riemann sum. Usage of (l - .5) and (p - .5) is due to the middle riemann sum.
-    for l in tqdm(range(1, k + 1)):  # noqa: E741
-        beta: float = (l - 0.5) / k  # -.5 is for getting the middle riemann sum
-        for p in range(1, m + 1):
-            alpha: float = (p - 0.5) / m
+    get_second_order_grad = torch.vmap(torch.func.hessian(func=func))
 
-            # alphabeta is the combined interpolation coefficient
-            alphabeta: float = beta * alpha
-            # This is one point on the path integral
-            interpolation: jx.Float[Tensor, "batch_size input_shape_flattened "] = (
-                baselines_flattened
-                + alphabeta * (inputs_flattened - baselines_flattened)
-            )
+    alphabetas, weights = _get_interpolation_coefficients(
+        mode=interpolation_coefficients_mode,
+        approximation_steps=approximation_steps,
+        verbose=True,
+    )
 
-            get_second_order_grad = torch.vmap(torch.func.hessian(func=func))
-            second_order_grad: jx.Float[
-                Tensor, "batch_size input_shape_flattened input_shape_flattened"
-            ] = get_second_order_grad(interpolation).detach()
+    for alphabeta, weight in tqdm(zip(alphabetas, weights), total=len(alphabetas)):
+        # This is one point on the path integral
+        interpolation: jx.Float[Tensor, "batch_size input_shape_flattened "] = (
+            baselines_flattened + alphabeta * (inputs_flattened - baselines_flattened)
+        )
 
-            second_order_sensitivity += second_order_grad * alphabeta * 1 / k / m
+        second_order_grad: jx.Float[
+            Tensor, "batch_size input_shape_flattened input_shape_flattened"
+        ] = get_second_order_grad(interpolation)
+        # this is important to not get memory overflows
+        # as otherwise the accumulated tensor will remember every graph
+        second_order_grad = second_order_grad.detach()
+
+        second_order_sensitivity += (
+            second_order_grad
+            * alphabeta
+            * (1 / approximation_steps / approximation_steps)  # 1 / k / m
+            * weight
+        )
 
     diff = inputs_flattened - baselines_flattened
     outer_product = diff.unsqueeze(dim=1) * diff.unsqueeze(dim=2)
@@ -249,6 +205,9 @@ def _get_self_interaction_extra_term(
     inputs_flattened: jx.Float[Tensor, "batch_size input_shape_flattened"],
     baselines_flattened: jx.Float[Tensor, "batch_size input_shape_flattened "],
     approximation_steps: int,
+    interpolation_coefficients_mode: Literal[
+        "default", "multiplication_table_optimized"
+    ],
 ) -> jx.Float[Tensor, "batch_size input_shape_flattened"]:
     """
     if i == j, then
@@ -262,28 +221,33 @@ def _get_self_interaction_extra_term(
 
     # this carries the riemann sum
     self_interaction_term = torch.zeros(batch_shape, flattened_input_shape)
-    k = approximation_steps
-    m = approximation_steps
 
-    # Important: we use the middle riemann sum, because it approximates better than right riemann sum. Usage of (l - .5) and (p - .5) is due to the middle riemann sum.
-    for l in tqdm(range(1, k + 1)):  # noqa: E741
-        beta: float = (l - 0.5) / k  # -.5 is for getting the middle riemann sum
-        for p in range(1, m + 1):
-            alpha: float = (p - 0.5) / m
+    get_jacobian = torch.vmap(torch.func.jacrev(func=func))
 
-            # alphabeta is the combined interpolation coefficient
-            alphabeta: float = beta * alpha
-            # This is one point on the path integral
-            interpolation: jx.Float[Tensor, "batch_size input_shape_flattened "] = (
-                baselines_flattened
-                + alphabeta * (inputs_flattened - baselines_flattened)
-            )
+    for alphabeta, weight in zip(
+        *_get_interpolation_coefficients(
+            mode=interpolation_coefficients_mode,
+            approximation_steps=approximation_steps,
+            verbose=False,
+        )
+    ):
+        # This is one point on the path integral
+        interpolation: jx.Float[Tensor, "batch_size input_shape_flattened "] = (
+            baselines_flattened + alphabeta * (inputs_flattened - baselines_flattened)
+        )
 
-            first_order_grad: jx.Float[
-                Tensor, "batch_size input_shape_flattened input_shape_flattened"
-            ] = torch.vmap(torch.func.jacrev(func=func))(interpolation).detach()
+        first_order_grad: jx.Float[
+            Tensor, "batch_size input_shape_flattened input_shape_flattened"
+        ] = get_jacobian(interpolation)
 
-            self_interaction_term += first_order_grad * 1 / k / m
+        # this is important to not get memory overflows
+        first_order_grad = first_order_grad.detach()
+
+        self_interaction_term += (
+            first_order_grad
+            * (1 / approximation_steps / approximation_steps)  # 1 / k / m
+            * weight
+        )
 
     diff = inputs_flattened - baselines_flattened
     self_interaction_term = diff * self_interaction_term
@@ -325,6 +289,7 @@ def get_integrated_hessians(
     baselines: jx.Float[Tensor, " batch_size *input_shape "],
     target: Union[None, int, Tuple[int, ...]],
     approximation_steps=50,
+    optimize_for_duplicate_interpolation_values=True,
 ) -> Tuple[
     Annotated[Tensor, "batch_size *input_shape"],  # interaction attributions
     Annotated[Tensor, "batch_size"],  # deltas
@@ -359,6 +324,10 @@ def get_integrated_hessians(
         Number of steps used for the Riemann sum approximation of the double path
         integral. Higher values yield more accurate results at greater
         computational cost. Defaults to 50.
+    optimize_for_duplicate_interpolation_values : bool, optional
+        If True, groups identical interpolation coefficient alpha*beta on the
+        integration grid to avoid redundant calculations. This significantly reduces
+        the number of Hessian/Jacobian evaluations by up to ~70%.
 
     Returns
     -------
@@ -450,6 +419,12 @@ def get_integrated_hessians(
         assert scalar_output_no_batch_dim.shape == ()
         return scalar_output_no_batch_dim
 
+    match optimize_for_duplicate_interpolation_values:
+        case True:
+            interpolation_coefficients_mode = "multiplication_table_optimized"
+        case False:
+            interpolation_coefficients_mode = "default"
+
     with replace_relu_with_softplus():
         # used in both i!=j and i==j cases.
         common_term: jx.Float[
@@ -459,6 +434,7 @@ def get_integrated_hessians(
             inputs_flattened=inputs_flattened,
             baselines_flattened=baselines_flattened,
             approximation_steps=approximation_steps,
+            interpolation_coefficients_mode=interpolation_coefficients_mode,
         )
         # self_interaction_extra_terms are calculated for diagonals(i==j), it exists due to the chain rule of calculus when you take d(IG(xi))/dxi.
         self_interaction_extra_term: jx.Float[
@@ -468,6 +444,7 @@ def get_integrated_hessians(
             inputs_flattened=inputs_flattened,
             baselines_flattened=baselines_flattened,
             approximation_steps=approximation_steps,
+            interpolation_coefficients_mode=interpolation_coefficients_mode,
         )
 
         # this operation add self interaction term only onto the diagonals of the common term

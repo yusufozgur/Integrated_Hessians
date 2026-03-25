@@ -13,6 +13,7 @@ Integrated Gradients is an interpretability method in deep learning, focused on 
 - path explain doesnt return delta
 - We use runtime type checking for tensors in this repo, using jaxtyping and beartype. This ensures operations involving false tensor shapes raises an error, preventing silent bugs or hard to debug errors.
 - Also, another ergonomic improvement we make is seamless ReLU to Softplus switching to take second order gradients in ReLU based models. path_explain repo requires changing the model architecture to use softplus, but in this project, we use monkey patching to replace every relu call with a call to softplus, this makes our api easier to use.
+- we optimize the multiplication table for up to 70% less computations, while also improving floating point precision.
 - More plotting options, preferably those that incorporate the subsetting option would be desirable. For example, a hybrid plot with subsetted feature attributions on top, calculated with integrated gradients, and 45 degree rotated interaction half-matrix at the bottom, like those found in [squid-manuscript](https://github.com/evanseitz/squid-manuscript/blob/e3cbd567448a0db8cef0877702594d7d8c20484b/squid/figs_surrogate.py#L290)
 - [Janizek et al. (2021)](#references) tests this method with a language modelling example and a small XOR network. I believe there could be an interesting test case where a model learns interactions between genomic motifs, and then the user unravels the learned behaviour by looking at interactions attributions.
 <figure>

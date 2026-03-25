@@ -206,7 +206,7 @@ def _():
 
 @app.cell
 def _(mo):
-    sampling_steps = mo.ui.number(0, 100, 1, label="Sampling steps", value=50)
+    sampling_steps = mo.ui.number(0, 200, 1, label="Sampling steps", value=60)
     sampling_steps
     return (sampling_steps,)
 
@@ -225,6 +225,7 @@ def _(get_integrated_hessians, model, one_hot_batched, sampling_steps, torch):
         baselines=torch.full_like(one_hot_batched, 0.25),
         target=0,
         approximation_steps=sampling_steps.value,
+        optimize_for_duplicate_interpolation_values = True,
     )
     integ_hess_result.shape
     return ih_delta, integ_hess_result
@@ -298,10 +299,18 @@ def _(one_hot_batched, torch):
     return exp_baseline, exp_input
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Path explain implementation takes square root of the num_samples variable, so if num of steps is 60 for us, it will be 3600 for them.
+    """)
+    return
+
+
 @app.cell
 def _(exp, exp_baseline, exp_input):
     exp_ih = exp.interactions(
-        exp_input, exp_baseline, num_samples=10, use_expectation=False
+        exp_input, exp_baseline, num_samples=3600, use_expectation=False
     )
     return (exp_ih,)
 
@@ -320,20 +329,14 @@ def _(exp_ih):
 
 
 @app.cell
-def _(exp_ih_reshaped, plt):
-    plt.imshow(exp_ih_reshaped.detach().numpy().reshape(200, 200), cmap="bwr")
-    return
-
-
-@app.cell
-def _(integ_hess_result):
-    integ_hess_result.shape
-    return
-
-
-@app.cell
 def _(exp_ih_reshaped):
     exp_ih_reshaped.detach().numpy().squeeze(0).shape
+    return
+
+
+@app.cell
+def _(exp_ih_reshaped, model, one_hot_batched, torch):
+    model(one_hot_batched) - model(torch.full_like(one_hot_batched, 0.25)) - exp_ih_reshaped.sum()
     return
 
 
@@ -352,6 +355,12 @@ def _(
         ).numpy(),
         title=f"Integrated hessians via path explain",
     )
+    return
+
+
+@app.cell
+def _(exp_ih_reshaped, plt):
+    plt.imshow(exp_ih_reshaped.detach().numpy().reshape(200, 200), cmap="bwr")
     return
 
 
