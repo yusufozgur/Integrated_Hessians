@@ -214,7 +214,7 @@ def _get_common_term(
     m = approximation_steps
 
     # Important: we use the middle riemann sum, because it approximates better than right riemann sum. Usage of (l - .5) and (p - .5) is due to the middle riemann sum.
-    for l in range(1, k + 1):  # noqa: E741
+    for l in tqdm(range(1, k + 1)):  # noqa: E741
         beta: float = (l - 0.5) / k  # -.5 is for getting the middle riemann sum
         for p in range(1, m + 1):
             alpha: float = (p - 0.5) / m
@@ -230,7 +230,7 @@ def _get_common_term(
             get_second_order_grad = torch.vmap(torch.func.hessian(func=func))
             second_order_grad: jx.Float[
                 Tensor, "batch_size input_shape_flattened input_shape_flattened"
-            ] = get_second_order_grad(interpolation)
+            ] = get_second_order_grad(interpolation).detach()
 
             second_order_sensitivity += second_order_grad * alphabeta * 1 / k / m
 
@@ -266,7 +266,7 @@ def _get_self_interaction_extra_term(
     m = approximation_steps
 
     # Important: we use the middle riemann sum, because it approximates better than right riemann sum. Usage of (l - .5) and (p - .5) is due to the middle riemann sum.
-    for l in range(1, k + 1):  # noqa: E741
+    for l in tqdm(range(1, k + 1)):  # noqa: E741
         beta: float = (l - 0.5) / k  # -.5 is for getting the middle riemann sum
         for p in range(1, m + 1):
             alpha: float = (p - 0.5) / m
@@ -281,7 +281,7 @@ def _get_self_interaction_extra_term(
 
             first_order_grad: jx.Float[
                 Tensor, "batch_size input_shape_flattened input_shape_flattened"
-            ] = torch.vmap(torch.func.jacrev(func=func))(interpolation)
+            ] = torch.vmap(torch.func.jacrev(func=func))(interpolation).detach()
 
             self_interaction_term += first_order_grad * 1 / k / m
 
@@ -303,7 +303,7 @@ def _get_delta(
     ],
 ) -> jx.Float[Tensor, " batch_size "]:
     f_input: jx.Float[Tensor, " batch_size 1 "] = func(inputs_flattened)
-    f_baseline: jx.Float[Tensor, " batch_size 1 "] = func(inputs_flattened)
+    f_baseline: jx.Float[Tensor, " batch_size 1 "] = func(baselines_flattened)
 
     out_diff: jx.Float[Tensor, " batch_size 1 "] = f_input - f_baseline
 

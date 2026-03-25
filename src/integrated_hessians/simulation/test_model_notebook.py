@@ -30,7 +30,7 @@ def _():
         plot_binary_string,
         plot_heatmap,
     )
-    from integrated_hessians import get_hessian
+    from integrated_hessians import get_hessian, get_integrated_hessians
     from integrated_hessians.simulation.test_model import (
         get_test_data,
         get_model,
@@ -47,6 +47,7 @@ def _():
         SimulatedSequence,
         get_attributions,
         get_hessian,
+        get_integrated_hessians,
         get_model,
         get_prediction,
         get_test_data,
@@ -160,7 +161,7 @@ def _(
     interpolate_onehot,
     jx,
     model,
-    one_hot: 'jx.Float[NDArray[np.float32], "alphabet_length sequence_length"]',
+    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
     plot_epistasis_subsetted,
     subset_onehot_hessian,
     torch,
@@ -200,25 +201,30 @@ def _():
 def _():
     from integrated_hessians import _deleteme_get_integrated_hessians
 
-    return (_deleteme_get_integrated_hessians,)
+    return
 
 
 @app.cell
 def _(mo):
-    sampling_steps = mo.ui.number(0, 100, 1, label="Sampling steps", value=1)
+    sampling_steps = mo.ui.number(0, 100, 1, label="Sampling steps", value=50)
     sampling_steps
     return (sampling_steps,)
 
 
 @app.cell
+def _(model, one_hot_batched, torch):
+    model(one_hot_batched) - model(torch.full_like(one_hot_batched, 0.25))
+    return
+
+
+@app.cell
 def _(get_integrated_hessians, model, one_hot_batched, sampling_steps, torch):
     integ_hess_result, ih_delta = get_integrated_hessians(
-        model,
-        one_hot_batched,
-        torch.full_like(one_hot_batched, 0.25),
-        0,
-        integration_steps=sampling_steps.value,
-        multiply_by_inputs=True,
+        model=model,
+        inputs=one_hot_batched,
+        baselines=torch.full_like(one_hot_batched, 0.25),
+        target=0,
+        approximation_steps=sampling_steps.value,
     )
     integ_hess_result.shape
     return ih_delta, integ_hess_result
@@ -234,7 +240,7 @@ def _(integ_hess_result):
 def _(
     ih_delta,
     integ_hess_result,
-    one_hot: 'jx.Float[NDArray[np.float32], "alphabet_length sequence_length"]',
+    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
     plot_epistasis_subsetted,
     subset_onehot_hessian,
     torch,
@@ -243,7 +249,9 @@ def _(
         hessian_onehot_subsetted=subset_onehot_hessian(
             calculated_hessian=integ_hess_result.squeeze(0),
             one_hot_mask=torch.tensor(one_hot),
-        ).numpy(),
+        )
+        .detach()
+        .numpy(),
         title=f"Integrated hessians. delta: {ih_delta[0]: .3f}",
     )
     return
@@ -251,7 +259,7 @@ def _(
 
 @app.cell
 def _(integ_hess_result, plt):
-    plt.imshow(integ_hess_result.reshape(200, 200), cmap="bwr")
+    plt.imshow(integ_hess_result.detach().reshape(200, 200), cmap="bwr")
     return
 
 
@@ -293,7 +301,7 @@ def _(one_hot_batched, torch):
 @app.cell
 def _(exp, exp_baseline, exp_input):
     exp_ih = exp.interactions(
-        exp_input, exp_baseline, num_samples=1000, use_expectation=False
+        exp_input, exp_baseline, num_samples=10, use_expectation=False
     )
     return (exp_ih,)
 
@@ -332,7 +340,7 @@ def _(exp_ih_reshaped):
 @app.cell
 def _(
     exp_ih_reshaped,
-    one_hot: 'jx.Float[NDArray[np.float32], "alphabet_length sequence_length"]',
+    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
     plot_epistasis_subsetted,
     subset_onehot_hessian,
     torch,
