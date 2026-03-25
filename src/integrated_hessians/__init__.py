@@ -66,6 +66,10 @@ def get_hessian(
     input: jx.Float[Tensor, " batch_size *input_shape"],
     target: int,
 ) -> Annotated[Tensor, "batch_size *input_shape batch_size *input_shape"]:
+    """
+    Utility function for the notebook.
+    """
+
     def forward_func(x):
         return model(x)[target]
 
