@@ -47,9 +47,14 @@ Integrated Gradients is an interpretability method in deep learning, focused on 
 ## Running Simulations
 
 ```
+# Create the venv
+uv sync
 # Save the simulation train and test data
-uv run '/home/fgsasse_lrs_4/Integrated_Hessians/src/integrated_hessians/simulation/simple_simulation/create_simulation.py'
+uv run python '/home/fgsasse_lrs_4/Integrated_Hessians/src/integrated_hessians/simulation/simple_simulation/create_simulation.py'
 # Train the model
+uv run python src/integrated_hessians/simulation/simple_simulation/train_model.py
+# Test the model and create plots
+uv run python src/integrated_hessians/simulation/simple_simulation/test_model.py
 ```
 
 ## References
