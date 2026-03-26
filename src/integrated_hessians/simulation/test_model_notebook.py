@@ -33,7 +33,7 @@ def _():
         plot_heatmap,
     )
     from integrated_hessians import get_hessian, get_integrated_hessians
-    from integrated_hessians.simulation.test_model import (
+    from integrated_hessians.simulation.simple_simulation.test_model import (
         get_test_data,
         get_model,
         plot_training_metrics,
@@ -64,7 +64,11 @@ def _():
 
 @app.cell
 def _(mo):
-    simulation_dropdown = mo.ui.dropdown(options=["Simple", "Custom Additive and Interaction Effects"],value="Simple",label="Choose Simulation")
+    simulation_dropdown = mo.ui.dropdown(
+        options=["Simple", "Custom Additive and Interaction Effects"],
+        value="Simple",
+        label="Choose Simulation",
+    )
     simulation_dropdown
     return (simulation_dropdown,)
 
@@ -73,7 +77,11 @@ def _(mo):
 def _(simulation_dropdown):
     match simulation_dropdown.value:
         case "Simple":
-            from integrated_hessians.simulation.simple_simulation.config import TEST_DATA, OUT_BEST_MODEL, SEQLEN
+            from integrated_hessians.simulation.simple_simulation.config import (
+                TEST_DATA,
+                OUT_BEST_MODEL,
+                SEQLEN,
+            )
         case "Custom Additive and Interaction Effects":
             pass
     return OUT_BEST_MODEL, SEQLEN, TEST_DATA
@@ -158,13 +166,15 @@ def _(
 @app.cell
 def _(mo):
     show_hessian = mo.ui.checkbox(label="Show Hessian")
-    show_integrated_hessian = mo.ui.checkbox(label="Show Integrated Hessian (Our implementation)")
-    show_integrated_hessian_janizeketal = mo.ui.checkbox(label="Show Integrated Hessian (Janizek Implementation)")
-    mo.vstack([
-        show_hessian,
-        show_integrated_hessian,
-        show_integrated_hessian_janizeketal
-    ])
+    show_integrated_hessian = mo.ui.checkbox(
+        label="Show Integrated Hessian (Our implementation)"
+    )
+    show_integrated_hessian_janizeketal = mo.ui.checkbox(
+        label="Show Integrated Hessian (Janizek Implementation)"
+    )
+    mo.vstack(
+        [show_hessian, show_integrated_hessian, show_integrated_hessian_janizeketal]
+    )
     return (
         show_hessian,
         show_integrated_hessian,
@@ -189,7 +199,7 @@ def _(
     interpolate_onehot,
     jx,
     model,
-    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
+    one_hot: 'jx.Float[NDArray[np.float32], "alphabet_length sequence_length"]',
     plot_epistasis_subsetted,
     show_hessian,
     subset_onehot_hessian,
@@ -230,7 +240,12 @@ def _():
 @app.cell
 def _(mo, show_integrated_hessian):
     sampling_steps = mo.ui.number(0, 200, 1, label="Sampling steps", value=10)
-    mo.vstack(["Increasing the sampling steps will make integrated hessians approximation more accurate",sampling_steps]) if show_integrated_hessian.value else None
+    mo.vstack(
+        [
+            "Increasing the sampling steps will make integrated hessians approximation more accurate",
+            sampling_steps,
+        ]
+    ) if show_integrated_hessian.value else None
     return (sampling_steps,)
 
 
@@ -238,7 +253,7 @@ def _(mo, show_integrated_hessian):
 def _(
     get_integrated_hessians,
     model,
-    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
+    one_hot: 'jx.Float[NDArray[np.float32], "alphabet_length sequence_length"]',
     one_hot_batched,
     plot_epistasis_subsetted,
     plt,
@@ -256,9 +271,11 @@ def _(
             approximation_steps=sampling_steps.value,
             optimize_for_duplicate_interpolation_values=True,
         )
-    
-        integ_hess_plots_fig, integ_hess_plots_ax = plt.subplots(nrows=1,ncols=2, figsize=(10,4))
-    
+
+        integ_hess_plots_fig, integ_hess_plots_ax = plt.subplots(
+            nrows=1, ncols=2, figsize=(10, 4)
+        )
+
         ih_interaction_plot_subsetted = plot_epistasis_subsetted(
             hessian_onehot_subsetted=subset_onehot_hessian(
                 calculated_hessian=integ_hess_result.squeeze(0),
@@ -267,11 +284,13 @@ def _(
             .detach()
             .numpy(),
             title=f"Integrated hessians. delta: {ih_delta[0]: .3f}",
-            ax=integ_hess_plots_ax[0]
+            ax=integ_hess_plots_ax[0],
         )
-        integ_hess_plots_ax[1].imshow(integ_hess_result.detach().reshape(400, 400), cmap="bwr")
+        integ_hess_plots_ax[1].imshow(
+            integ_hess_result.detach().reshape(400, 400), cmap="bwr"
+        )
     else:
-        integ_hess_plots_fig=None
+        integ_hess_plots_fig = None
 
     integ_hess_plots_fig
     return
@@ -279,8 +298,15 @@ def _(
 
 @app.cell
 def _(mo, show_integrated_hessian_janizeketal):
-    sampling_steps_janizeketal = mo.ui.number(0, 200, 1, label="Sampling steps (janizek et al)", value=10)
-    mo.vstack(["Path explain implementation takes square root of the num_samples variable, so if num of steps is 60 for us, it will be 3600 for them.",sampling_steps_janizeketal]) if show_integrated_hessian_janizeketal.value else None
+    sampling_steps_janizeketal = mo.ui.number(
+        0, 200, 1, label="Sampling steps (janizek et al)", value=10
+    )
+    mo.vstack(
+        [
+            "Path explain implementation takes square root of the num_samples variable, so if num of steps is 60 for us, it will be 3600 for them.",
+            sampling_steps_janizeketal,
+        ]
+    ) if show_integrated_hessian_janizeketal.value else None
     return (sampling_steps_janizeketal,)
 
 
@@ -288,7 +314,7 @@ def _(mo, show_integrated_hessian_janizeketal):
 def _(
     SEQLEN,
     model,
-    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
+    one_hot: 'jx.Float[NDArray[np.float32], "alphabet_length sequence_length"]',
     one_hot_batched,
     plot_epistasis_subsetted,
     sampling_steps_janizeketal,
@@ -297,29 +323,39 @@ def _(
     torch,
 ):
     from path_explain import PathExplainerTorch
+
     if show_integrated_hessian_janizeketal.value:
+
         def exp_reshaper(x: torch.Tensor):
             x = x.reshape((1, SEQLEN, 4))
             x = model(x)
             return x
+
         exp = PathExplainerTorch(exp_reshaper)
-    
-        exp_input = one_hot_batched.reshape(1, SEQLEN*4)
+
+        exp_input = one_hot_batched.reshape(1, SEQLEN * 4)
         exp_baseline = torch.full_like(exp_input, 0.25)
         exp_baseline.shape
-    
+
         exp_input.requires_grad_(True)
         exp_baseline.requires_grad_(True)
-    
+
         exp_ih = exp.interactions(
-            exp_input, exp_baseline, num_samples=sampling_steps_janizeketal.value, use_expectation=False
+            exp_input,
+            exp_baseline,
+            num_samples=sampling_steps_janizeketal.value,
+            use_expectation=False,
         )
-    
-        exp_ih_delta = model(one_hot_batched) - model(torch.full_like(one_hot_batched, 0.25)) - exp_ih.sum()
-    
+
+        exp_ih_delta = (
+            model(one_hot_batched)
+            - model(torch.full_like(one_hot_batched, 0.25))
+            - exp_ih.sum()
+        )
+
         exp_ih_reshaped = exp_ih.reshape(1, SEQLEN, 4, SEQLEN, 4)
         exp_ih_reshaped.shape
-    
+
         exp_ih_interaction_plot = plot_epistasis_subsetted(
             hessian_onehot_subsetted=subset_onehot_hessian(
                 calculated_hessian=exp_ih_reshaped.detach().squeeze(0),

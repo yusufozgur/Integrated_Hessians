@@ -13,3 +13,4 @@ OUT_BEST_MODEL = "data/simple_simulation/model_best.pth"
 OUT_BEST_MODEL_EVAL = "data/simple_simulation/model_best_evaluation.json"
 SEQLEN = 100
 TEST_DATA = Path("data/simple_simulation/1k_test.json")
+TEST_OUTPUT = Path("src/integrated_hessians/simulation/test/")

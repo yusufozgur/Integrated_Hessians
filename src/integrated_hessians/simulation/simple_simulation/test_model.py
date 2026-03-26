@@ -23,17 +23,19 @@ from integrated_hessians.simulation.plot import (
 from integrated_hessians import get_hessian
 from beartype import beartype
 
-TEST_DATA = Path("data/simple_simulation/1k_test.json")
-BEST_MODEL = Path("data/simple_simulation/model_best.pth")
-BEST_MODEL_EVAL = Path("data/simple_simulation/model_best_evaluation.json")
-OUTPUT = Path("src/integrated_hessians/simulation/test/")
+from integrated_hessians.simulation.simple_simulation.config import (
+    TEST_DATA,
+    OUT_BEST_MODEL,
+    OUT_BEST_MODEL_EVAL,
+    TEST_OUTPUT,
+)
 
 
 def main():
     test_data = get_test_data(TEST_DATA)
     for SELECTED_ROW in range(5):
         test_row: SimulatedSequence = test_data[SELECTED_ROW]
-        model = get_model(BEST_MODEL)
+        model = get_model(Path(OUT_BEST_MODEL))
         # TODO
         plot_training_metrics()
         plot_gif_hessians_from_baseline_to_real()
@@ -75,7 +77,7 @@ def main():
             motif_type_2=test_row.motif_types[1].name,
             calculated_hessian=calculated_hessian,
         )
-        test_row_plot_fig.savefig(OUTPUT / f"test_row_{SELECTED_ROW}.svg")
+        test_row_plot_fig.savefig(TEST_OUTPUT / f"test_row_{SELECTED_ROW}.svg")
         # TODO
         # get_integrated_hessian()
         # plot_integrated_hessian()
