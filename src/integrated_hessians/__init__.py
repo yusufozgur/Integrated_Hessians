@@ -367,6 +367,11 @@ def get_integrated_hessians(
         "Input tensor and baseline tensor must have the same shape"
     )
 
+    # Reset the autograd history on the tensors
+    # I am not sure if this is necessary, but I am doing it just in case
+    inputs = inputs.detach().requires_grad_(True)
+    baselines = baselines.detach().requires_grad_(True)
+
     # instead of an unknown shape, it is easier to operate on the flattened tensors
 
     inputs_flattened: jx.Float[Tensor, "batch_size input_shape_flattened"] = (
