@@ -6,7 +6,7 @@ from integrated_hessians.simulation import (
     MotifType,
 )
 import json
-from integrated_hessians.simulation.simple_simulation.config import (
+from integrated_hessians.simulation.custom_additive_and_interactive_effects.config import (
     MOTIFS_FILE,
     SEQLEN,
     TRAIN_DATA,
@@ -21,7 +21,7 @@ def main():
     ):
         motifs = extract_motifs_from_jaspar_psm_file(jaspar_pfm_file=MOTIFS_FILE)
         roles = {
-            "Interactive1": MotifType.PURE_INTERACTION,
+            "Motif1": MotifType.PURE_INTERACTION,
             "Interactive2": MotifType.PURE_INTERACTION,
             "Random1": MotifType.NEUTRAL,
             "Random2": MotifType.NEUTRAL,
@@ -31,7 +31,7 @@ def main():
             SimulatedSequence.from_motifs(
                 motif_pool=motifs,
                 length=SEQLEN,
-                phenotype_strategy=Additive_And_Interactive(),
+                phenotype_strategy=CustomAdditiveAndInteractive(),
             )
             for _ in range(NUM_OF_SEQUENCES)
         ]
@@ -41,7 +41,7 @@ def main():
             json.dump(sequences_dict, f, indent=4)
 
 
-class Additive_And_Interactive(PhenotypeStrategy):
+class CustomAdditiveAndInteractive(PhenotypeStrategy):
     def get_phenotype_contribution(
         self, current_motif: SimulationMotif, other_motif: SimulationMotif
     ) -> float:
