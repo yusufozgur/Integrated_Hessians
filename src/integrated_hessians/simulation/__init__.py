@@ -9,6 +9,7 @@ from enum import Enum, auto
 import random
 from typing import NewType, Tuple, Optional
 import jaxtyping as jx
+from abc import ABC, abstractmethod
 
 Nucleotide_Sequence = str
 NUCLEOTIDE_ORDER = ["A", "C", "G", "T"]
@@ -109,25 +110,13 @@ class SimulationMotif(Motif):
             role=role,
         )
 
+
+class PhenotypeStrategy(ABC):
+    @abstractmethod
     def get_phenotype_contribution(
-        self, other_motif_in_sequence: SimulationMotif
+        self, current_motif: SimulationMotif, other_motif: SimulationMotif
     ) -> float:
-        match self.role:
-            case MotifType.PURE_ADDITIVE:
-                return 0.5
-            case MotifType.HYBRID:
-                contribution = 0.25
-                if other_motif_in_sequence.role == MotifType.HYBRID:
-                    contribution += 0.25
-                return contribution
-            case MotifType.PURE_INTERACTION:
-                match other_motif_in_sequence.role:
-                    case MotifType.PURE_INTERACTION:
-                        return 0.5
-                    case _:
-                        return 0
-            case MotifType.NEUTRAL:
-                return 0
+        pass
 
 
 @dataclass
@@ -142,7 +131,11 @@ class SimulatedSequence:
     motif_mask_2: str
 
     @staticmethod
-    def from_motifs(motif_pool: list[SimulationMotif], length=100):
+    def from_motifs(
+        motif_pool: list[SimulationMotif],
+        length: int,
+        phenotype_strategy: PhenotypeStrategy,
+    ):
 
         nucleotides = "".join(random.choices(NUCLEOTIDE_ORDER, k=length))
 
@@ -154,12 +147,16 @@ class SimulatedSequence:
             nucleotides, motifs[0]
         )
 
-        phenotype += motifs[0].get_phenotype_contribution(motifs[1])
+        phenotype += phenotype_strategy.get_phenotype_contribution(
+            current_motif=motifs[0], other_motif=motifs[1]
+        )
 
         nucleotides, motif_mask_2 = SimulatedSequence.insert_motif(
             nucleotides, motifs[1]
         )
-        phenotype += motifs[1].get_phenotype_contribution(motifs[0])
+        phenotype += phenotype_strategy.get_phenotype_contribution(
+            current_motif=motifs[1], other_motif=motifs[0]
+        )
 
         motif_names = [m.name for m in motifs]
         motif_types = [m.role for m in motifs]

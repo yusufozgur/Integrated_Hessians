@@ -9,7 +9,7 @@ class CNNMLP(nn.Module):
 
     def __init__(
         self,
-        sequence_length=50,
+        sequence_length=100,
         alphabet_size=4,  # ACGT
         dropout: float = 0.1,
         width_multiplier=10,

@@ -10,7 +10,9 @@ import numpy as np
 
 from integrated_hessians.simulation import Nucleotide_Sequence, SimulatedSequence
 from integrated_hessians.simulation.simple_simulation.model import CNNMLP
-from integrated_hessians.simulation.train_model import MotifInteractionsDataset
+from integrated_hessians.simulation.simple_simulation.train_model import (
+    MotifInteractionsDataset,
+)
 from integrated_hessians.simulation.plot import (
     plot_epistasis,
     plot_epistasis_subsetted,
@@ -162,10 +164,10 @@ def test_and_plot_selected_row(
     axes: ndarray
     fig, axes = plt.subplots(
         ncols=1,
-        nrows=6,
-        figsize=(10, 10),
+        nrows=5,
+        figsize=(10, 6),
         sharex=True,  # guarantees column alignment
-        height_ratios=[4, 1, 1, 4, 1, 20],
+        height_ratios=[4, 1, 1, 4, 1],
         layout="constrained",
     )
 
@@ -190,16 +192,6 @@ def test_and_plot_selected_row(
         ax=axes[4],
         cmap="bwr",
         title="Real Attributions",
-    )
-
-    # TODO: Show unsubsetted epistasis
-    plot_epistasis_subsetted(
-        ax=axes[5],
-        hessian_onehot_subsetted=subset_onehot_hessian(
-            calculated_hessian=calculated_hessian,
-            one_hot_mask=torch.tensor(one_hot).permute(1, 0),
-        ).numpy(),
-        title=f"Hessian of input with prediction {prediction: .3f}",
     )
 
     # plt.tight_layout() # alternative to layout='constrained'

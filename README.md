@@ -25,7 +25,7 @@ Integrated Gradients is an interpretability method in deep learning, focused on 
 **WIP**
 
 ## Performance comparison
-I could not compare this implementation with path_explain, as path explain did not accept the input tensors of shape (batch_size, sequence_length, alphabet_size), which is the standard shape for genomics. One could change their model architecture to test the performance difference.
+**WIP**
 
 ## Pypi
 
@@ -43,6 +43,14 @@ I could not compare this implementation with path_explain, as path explain did n
 6. Convert sequences to one-hot encoding.
 5. Train a Transformer model with CNN embedding on these sequences.
 6. Utilize Integrated Hessians package to produce interaction attributions and plot the results.
+
+## Running Simulations
+
+```
+# Save the simulation train and test data
+uv run '/home/fgsasse_lrs_4/Integrated_Hessians/src/integrated_hessians/simulation/simple_simulation/create_simulation.py'
+# Train the model
+```
 
 ## References
 

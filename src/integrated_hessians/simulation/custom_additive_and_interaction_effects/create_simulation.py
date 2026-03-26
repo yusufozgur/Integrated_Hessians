@@ -7,7 +7,12 @@ from integrated_hessians.simulation import (
 )
 from pathlib import Path
 import json
-from integrated_hessians.simulation.simple_simulation.config import MOTIFS_FILE, SEQLEN
+
+
+MOTIFS_FILE = Path(
+    "src/integrated_hessians/simulation/simple_simulation/simple_motifs.pfm"
+)
+SEQLEN = 50
 
 
 def main():
@@ -15,7 +20,7 @@ def main():
         (Path("data/simple_simulation/100k.json"), 10**5),
         (Path("data/simple_simulation/1k_test.json"), 10**3),
     ):
-        motifs = extract_motifs_from_jaspar_psm_file(jaspar_pfm_file=MOTIFS_FILE)
+        motifs = extract_motifs_from_jaspar_psm_file(MOTIFS_FILE)
         roles = {
             "Interactive1": MotifType.PURE_INTERACTION,
             "Interactive2": MotifType.PURE_INTERACTION,
@@ -38,8 +43,9 @@ def main():
 
 
 class Additive_And_Interactive(PhenotypeStrategy):
+    @staticmethod
     def get_phenotype_contribution(
-        self, current_motif: SimulationMotif, other_motif: SimulationMotif
+        current_motif: SimulationMotif, other_motif: SimulationMotif
     ) -> float:
         match current_motif.role:
             case MotifType.PURE_ADDITIVE:
