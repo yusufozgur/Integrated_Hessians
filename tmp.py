@@ -18,16 +18,17 @@ def _():
     import matplotlib.colors as mcolors
     import matplotlib.patches as mpatches
 
-    def make_rgba(H, seq_len, alphabet=["A", "G", "T", "C"]):
+
+    def make_rgba(H, seq_len, alphabet=['A', 'G', 'T', 'C']):
         """Convert Hessian to RGBA image with nucleotide color blending."""
         n_nuc = len(alphabet)
         N = seq_len * n_nuc
 
         NUC_COLORS = {
-            "A": "#2ECC71",
-            "G": "#E67E22",
-            "T": "#E74C3C",
-            "C": "#3498DB",
+            'A': '#2ECC71',
+            'G': '#E67E22',
+            'T': '#E74C3C',
+            'C': '#3498DB',
         }
 
         H_abs = np.abs(H)
@@ -47,6 +48,7 @@ def _():
 
         return rgba
 
+
     def add_axes_labels(ax, seq_len, alphabet, is_reordered, NUC_COLORS):
         """Add colored tick labels and position separators."""
         n_nuc = len(alphabet)
@@ -57,15 +59,15 @@ def _():
             tick_labels = [f"{alphabet[i % n_nuc]}{i // n_nuc}" for i in range(N)]
             tick_colors = [NUC_COLORS[alphabet[i % n_nuc]] for i in range(N)]
             for pos in range(1, seq_len):
-                ax.axvline(pos * n_nuc - 0.5, color="black", linewidth=1.2)
-                ax.axhline(pos * n_nuc - 0.5, color="black", linewidth=1.2)
+                ax.axvline(pos * n_nuc - 0.5, color='black', linewidth=1.2)
+                ax.axhline(pos * n_nuc - 0.5, color='black', linewidth=1.2)
         else:
-            # Nucleotide-major: A0 A1 A2 ... | G0 G1 G2 ...
+            # Nucleotide-major: A0 A1 A2 ... | G0 G1 G2 ... 
             tick_labels = [f"{alphabet[i // seq_len]}{i % seq_len}" for i in range(N)]
             tick_colors = [NUC_COLORS[alphabet[i // seq_len]] for i in range(N)]
             for nuc in range(1, n_nuc):
-                ax.axvline(nuc * seq_len - 0.5, color="black", linewidth=1.2)
-                ax.axhline(nuc * seq_len - 0.5, color="black", linewidth=1.2)
+                ax.axvline(nuc * seq_len - 0.5, color='black', linewidth=1.2)
+                ax.axhline(nuc * seq_len - 0.5, color='black', linewidth=1.2)
 
         ax.set_xticks(range(N))
         ax.set_yticks(range(N))
@@ -74,12 +76,13 @@ def _():
 
         for tick, color in zip(ax.get_xticklabels(), tick_colors):
             tick.set_color(color)
-            tick.set_fontweight("bold")
+            tick.set_fontweight('bold')
         for tick, color in zip(ax.get_yticklabels(), tick_colors):
             tick.set_color(color)
-            tick.set_fontweight("bold")
+            tick.set_fontweight('bold')
 
-    def plot_hessian_before_after(H_nuc_major, seq_len, alphabet=["A", "G", "T", "C"]):
+
+    def plot_hessian_before_after(H_nuc_major, seq_len, alphabet=['A', 'G', 'T', 'C']):
         """
         Plot Hessian before and after reordering side by side.
 
@@ -91,16 +94,14 @@ def _():
         N = seq_len * n_nuc
 
         NUC_COLORS = {
-            "A": "#2ECC71",
-            "G": "#E67E22",
-            "T": "#E74C3C",
-            "C": "#3498DB",
+            'A': '#2ECC71',
+            'G': '#E67E22',
+            'T': '#E74C3C',
+            'C': '#3498DB',
         }
 
         # Reorder: nuc-major -> pos-major
-        idx = np.array(
-            [nuc * seq_len + pos for pos in range(seq_len) for nuc in range(n_nuc)]
-        )
+        idx = np.array([nuc * seq_len + pos for pos in range(seq_len) for nuc in range(n_nuc)])
         H_pos_major = H_nuc_major[np.ix_(idx, idx)]
 
         # Build RGBA for both — but use the SAME normalization for fair comparison
@@ -152,36 +153,33 @@ def _():
             [rgba_before, rgba_after],
             [False, True],
             [
-                "Before reordering  (nucleotide-major)\n[A0…AN | G0…GN | T0…TN | C0…CN]",
-                "After reordering  (position-major)\n[A0 G0 T0 C0 | A1 G1 T1 C1 | …]",
+                'Before reordering  (nucleotide-major)\n[A0…AN | G0…GN | T0…TN | C0…CN]',
+                'After reordering  (position-major)\n[A0 G0 T0 C0 | A1 G1 T1 C1 | …]',
             ],
         ):
-            ax.imshow(rgba, aspect="auto", interpolation="nearest")
+            ax.imshow(rgba, aspect='auto', interpolation='nearest')
             add_axes_labels(ax, seq_len, alphabet, is_reordered, NUC_COLORS)
             ax.set_title(title, fontsize=12, pad=10)
-            ax.set_xlabel("Sequence position × nucleotide")
-            ax.set_ylabel("Sequence position × nucleotide")
+            ax.set_xlabel('Sequence position × nucleotide')
+            ax.set_ylabel('Sequence position × nucleotide')
 
         # Shared legend
         legend_patches = [
             mpatches.Patch(color=NUC_COLORS[nuc], label=nuc) for nuc in alphabet
         ]
         axes[1].legend(
-            handles=legend_patches,
-            loc="upper right",
-            bbox_to_anchor=(1.13, 1),
-            framealpha=0.9,
-            title="Nucleotide",
+            handles=legend_patches, loc='upper right',
+            bbox_to_anchor=(1.13, 1), framealpha=0.9, title='Nucleotide',
         )
 
         fig.suptitle(
-            "Hessian of one-hot encoded sequence\n"
-            "Color = blend of interacting nucleotides  |  Brightness = |H_ij|",
-            fontsize=13,
-            y=1.01,
+            'Hessian of one-hot encoded sequence\n'
+            'Color = blend of interacting nucleotides  |  Brightness = |H_ij|',
+            fontsize=13, y=1.01,
         )
         plt.tight_layout()
         return fig
+
 
     # --- Demo ---
     seq_len = 8
@@ -203,7 +201,7 @@ def _():
     H_raw[n_nuc * seq_len - 3, 0] *= 8.0
 
     fig = plot_hessian_before_after(H_raw, seq_len)
-    # plt.savefig('hessian_before_after.png', dpi=150, bbox_inches='tight')
+    plt.savefig('hessian_before_after.png', dpi=150, bbox_inches='tight')
     plt.show()
     return
 
@@ -214,7 +212,7 @@ def _():
 
     # --- Build a fake one-hot sequence (50 positions, 4 nucleotides) ---
     torch.manual_seed(42)
-    seq_indices = torch.randint(0, 4, (50,))  # which nucleotide is hot per position
+    seq_indices = torch.randint(0, 4, (50,))          # which nucleotide is hot per position
     one_hot = torch.zeros(50, 4)
     one_hot[torch.arange(50), seq_indices] = 1.0
     one_hot = one_hot.bool()
@@ -231,12 +229,12 @@ def _():
                     hess[0, i, a, 0, j, b] = i * 100 + a * 10 + j + b * 0.1
 
     # --- Your indexing ---
-    idx = one_hot  # [50, 4]
+    idx = one_hot                          # [50, 4]
     flat_idx = idx.nonzero(as_tuple=False)[:, 1]  # [50] — hot column per row
 
-    h = hess[0]  # [50, 4, 1, 50, 4]
-    h = h[idx]  # [50, 1, 50, 4]
-    h = h[:, 0, :, :]  # [50, 50, 4]
+    h = hess[0]                            # [50, 4, 1, 50, 4]
+    h = h[idx]                             # [50, 1, 50, 4]
+    h = h[:, 0, :, :]                      # [50, 50, 4]
     h = h[:, torch.arange(50), flat_idx]  # [50, 50]
 
     print("h shape:", h.shape)  # should be [50, 50]
@@ -246,9 +244,9 @@ def _():
     errors = 0
     i_idx = torch.arange(50)
     expected = (
-        i_idx.unsqueeze(1) * 100  # i*100,  shape [50,1]
-        + seq_indices.unsqueeze(1) * 10  # a*10,   shape [50,1]
-        + i_idx.unsqueeze(0)  # j,      shape [1,50]
+        i_idx.unsqueeze(1) * 100          # i*100,  shape [50,1]
+        + seq_indices.unsqueeze(1) * 10   # a*10,   shape [50,1]
+        + i_idx.unsqueeze(0)              # j,      shape [1,50]
         + seq_indices.unsqueeze(0) * 0.1  # b*0.1,  shape [1,50]
     )  # broadcasts to [50, 50]
 
@@ -257,7 +255,6 @@ def _():
     else:
         diff = (h - expected).abs()
         print(f"✗ Max error: {diff.max().item():.6f} at {diff.argmax().item()}")
-
     return
 
 

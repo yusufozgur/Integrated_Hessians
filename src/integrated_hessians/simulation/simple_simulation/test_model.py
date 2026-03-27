@@ -10,7 +10,7 @@ import numpy as np
 from tqdm import tqdm
 
 from integrated_hessians.simulation import Nucleotide_Sequence, SimulatedSequence
-from integrated_hessians.simulation.simple_simulation.model import CNNMLP
+from integrated_hessians.simulation.model import CNNMLP
 from integrated_hessians.simulation.simple_simulation.train_model import (
     MotifInteractionsDataset,
 )
@@ -30,12 +30,13 @@ from integrated_hessians.simulation.simple_simulation.config import (
     OUT_BEST_MODEL_EVAL,
     TEST_OUTPUT,
     INTEGRATED_HESSIANS_SAMPLING_STEPS,
+    NUM_OF_ROWS_TESTED,
 )
 
 
 def main():
     test_data = get_test_data(TEST_DATA)
-    for SELECTED_ROW in tqdm(range(5)):
+    for SELECTED_ROW in tqdm(range(NUM_OF_ROWS_TESTED)):
         # Plot interesting graphs for SELECTED_ROW
         # - Logo sequence
         # - One hot encoded sequence heatmap
@@ -83,6 +84,7 @@ def main():
 
         # TODO
         plot_training_metrics()
+        # plot predicted vs actual phenotype correlation
         plot_gif_hessians_from_baseline_to_real()
 
         test_row_plot_fig: Figure
@@ -109,12 +111,12 @@ def main():
         plot_binary_string(
             test_row.motif_mask_1,
             test_row_plot_axes[1],
-            title=test_row.motif_types[0].name,
+            title=test_row.motif_names[0],
         )
         plot_binary_string(
             test_row.motif_mask_2,
             test_row_plot_axes[2],
-            title=test_row.motif_types[1].name,
+            title=test_row.motif_names[1],
         )
         # - Plot Integrated Gradients heatmap
         plot_onehot(

@@ -1,9 +1,8 @@
 from integrated_hessians.simulation import (
+    Motif,
     PhenotypeStrategy,
-    SimulationMotif,
     extract_motifs_from_jaspar_psm_file,
     SimulatedSequence,
-    MotifType,
 )
 import json
 from integrated_hessians.simulation.simple_simulation.config import (
@@ -20,18 +19,11 @@ def main():
         (TEST_DATA, 10**3),
     ):
         motifs = extract_motifs_from_jaspar_psm_file(jaspar_pfm_file=MOTIFS_FILE)
-        roles = {
-            "Interactive1": MotifType.PURE_INTERACTION,
-            "Interactive2": MotifType.PURE_INTERACTION,
-            "Random1": MotifType.NEUTRAL,
-            "Random2": MotifType.NEUTRAL,
-        }
-        motifs = [SimulationMotif.from_motif(m, role=roles[m.name]) for m in motifs]
         sequences = [
             SimulatedSequence.from_motifs(
                 motif_pool=motifs,
                 length=SEQLEN,
-                phenotype_strategy=Additive_And_Interactive(),
+                phenotype_strategy=SimplePhenotypeStrategy(),
             )
             for _ in range(NUM_OF_SEQUENCES)
         ]
@@ -41,26 +33,14 @@ def main():
             json.dump(sequences_dict, f, indent=4)
 
 
-class Additive_And_Interactive(PhenotypeStrategy):
+class SimplePhenotypeStrategy(PhenotypeStrategy):
     def get_phenotype_contribution(
-        self, current_motif: SimulationMotif, other_motif: SimulationMotif
+        self, current_motif: Motif, other_motif: Motif
     ) -> float:
-        match current_motif.role:
-            case MotifType.PURE_ADDITIVE:
-                return 0.5
-            case MotifType.HYBRID:
-                contribution = 0.25
-                if other_motif.role == MotifType.HYBRID:
-                    contribution += 0.25
-                return contribution
-            case MotifType.PURE_INTERACTION:
-                match other_motif.role:
-                    case MotifType.PURE_INTERACTION:
-                        return 0.5
-                    case _:
-                        return 0
-            case MotifType.NEUTRAL:
-                return 0
+        if "Interactive" in current_motif.name and "Interactive" in other_motif.name:
+            return 0.5
+        else:
+            return 0
 
 
 if __name__ == "__main__":

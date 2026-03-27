@@ -6,10 +6,10 @@ from torch.utils.data import Dataset, DataLoader
 import json
 from integrated_hessians.simulation import SimulatedSequence
 from torch.utils.data import random_split
-from integrated_hessians.simulation.simple_simulation.model import CNNMLP
+from integrated_hessians.simulation.model import CNNMLP
 from tqdm import tqdm
 
-from integrated_hessians.simulation.simple_simulation.config import (
+from integrated_hessians.simulation.custom_additive_and_interactive_effects.config import (
     SEQLEN,
     TRAIN_DATA,
     BATCH_SIZE,

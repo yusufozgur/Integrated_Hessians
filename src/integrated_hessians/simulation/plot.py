@@ -26,8 +26,6 @@ def plot_heatmap(
     if ax is None:
         _, ax = plt.subplots(figsize=(max(6, len(col_labels) * 0.4), 3))
 
-    ax.imshow(matrix, cmap=cmap, aspect="auto")
-
     n_rows, n_cols = matrix.shape
     for x in range(n_cols + 1):
         ax.axvline(x - 0.5, color="black", linewidth=1.5)
@@ -56,7 +54,17 @@ def plot_heatmap(
     ax.set_xlabel("Position")
     ax.set_ylabel("Base")
 
-    im = ax.imshow(matrix, cmap=cmap, aspect="auto")
+    # Make 0 white
+    vmin = matrix.min()
+    vmax = matrix.max()
+    # Ensure 0 is within the range to avoid errors
+    if vmin < 0 < vmax:
+        norm = mcolors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+    else:
+        # Fallback if data is all positive or all negative
+        norm = None
+
+    im = ax.imshow(matrix, cmap=cmap, aspect="auto", norm=norm)
     if add_colorbar:
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="3%", pad=0.05)
@@ -70,6 +78,7 @@ def plot_onehot(
     ax=None,
     title="One-Hot Encoded DNA Sequence",
     text=False,
+    cmap="Greys",
 ) -> Axes:
 
     return plot_heatmap(
@@ -78,7 +87,7 @@ def plot_onehot(
         row_labels=NUCLEOTIDE_ORDER,
         title=title,
         ax=ax,
-        cmap="bwr",
+        cmap=cmap,
         text=text,
     )
 
@@ -93,7 +102,7 @@ def plot_binary_string(binary: str, ax=None, title="Binary String") -> Axes:
         row_labels=[""],
         title=title,
         ax=ax,
-        cmap="bwr",
+        cmap="Greys",
     )
 
 

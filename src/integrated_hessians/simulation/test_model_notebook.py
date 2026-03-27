@@ -21,7 +21,7 @@ def _():
 @app.cell
 def _():
     from integrated_hessians.simulation import Nucleotide_Sequence, SimulatedSequence
-    from integrated_hessians.simulation.simple_simulation.model import CNNMLP
+    from integrated_hessians.simulation.model import CNNMLP
     from integrated_hessians.simulation.simple_simulation.train_model import (
         MotifInteractionsDataset,
     )

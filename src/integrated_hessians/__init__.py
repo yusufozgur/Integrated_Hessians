@@ -1,6 +1,6 @@
 from collections import defaultdict
 from contextlib import contextmanager
-from typing import Callable, Annotated, Literal, Tuple, Union
+from typing import Callable, Annotated, Literal, Optional, Tuple, Union
 from beartype import beartype
 from torch import Tensor
 import torch
@@ -150,6 +150,7 @@ def _get_common_term(
     interpolation_coefficients_mode: Literal[
         "default", "multiplication_table_optimized"
     ],
+    batch_size: Optional[int],
 ) -> jx.Float[Tensor, "batch_size input_shape_flattened input_shape_flattened"]:
     """
     If i != j, then
@@ -166,7 +167,9 @@ def _get_common_term(
         batch_shape, flattened_input_shape, flattened_input_shape
     )
 
-    get_second_order_grad = torch.vmap(torch.func.hessian(func=func))
+    get_second_order_grad = torch.vmap(
+        torch.func.hessian(func=func), chunk_size=batch_size
+    )
 
     alphabetas, weights = _get_interpolation_coefficients(
         mode=interpolation_coefficients_mode,
@@ -212,6 +215,7 @@ def _get_self_interaction_extra_term(
     interpolation_coefficients_mode: Literal[
         "default", "multiplication_table_optimized"
     ],
+    batch_size: Optional[int],
 ) -> jx.Float[Tensor, "batch_size input_shape_flattened"]:
     """
     if i == j, then
@@ -226,7 +230,7 @@ def _get_self_interaction_extra_term(
     # this carries the riemann sum
     self_interaction_term = torch.zeros(batch_shape, flattened_input_shape)
 
-    get_jacobian = torch.vmap(torch.func.jacrev(func=func))
+    get_jacobian = torch.vmap(torch.func.jacrev(func=func), chunk_size=batch_size)
 
     for alphabeta, weight in zip(
         *_get_interpolation_coefficients(
@@ -294,6 +298,7 @@ def get_integrated_hessians(
     target: Union[None, int, Tuple[int, ...]],
     approximation_steps=50,
     optimize_for_duplicate_interpolation_values=True,
+    batch_size=None,
 ) -> Tuple[
     Annotated[Tensor, "batch_size *input_shape"],  # interaction attributions
     Annotated[Tensor, "batch_size"],  # deltas
@@ -332,6 +337,11 @@ def get_integrated_hessians(
         If True, groups identical interpolation coefficient alpha*beta on the
         integration grid to avoid redundant calculations. This significantly reduces
         the number of Hessian/Jacobian evaluations by up to ~70%.
+    batch_size : int, optional
+        The number of samples to process in parallel during the vectorized
+        Hessian and Jacobian computations via ``torch.vmap``. If ``None``,
+        processes the entire input batch at once. Adjusting this can help
+        manage memory overhead.
 
     Returns
     -------
@@ -444,7 +454,8 @@ def get_integrated_hessians(
             baselines_flattened=baselines_flattened,
             approximation_steps=approximation_steps,
             interpolation_coefficients_mode=interpolation_coefficients_mode,
-        )
+            batch_size=batch_size,
+        ).detach()
         # self_interaction_extra_terms are calculated for diagonals(i==j), it exists due to the chain rule of calculus when you take d(IG(xi))/dxi.
         self_interaction_extra_term: jx.Float[
             Tensor, "batch_size input_shape_flattened"
@@ -454,7 +465,8 @@ def get_integrated_hessians(
             baselines_flattened=baselines_flattened,
             approximation_steps=approximation_steps,
             interpolation_coefficients_mode=interpolation_coefficients_mode,
-        )
+            batch_size=batch_size,
+        ).detach()
 
         # this operation add self interaction term only onto the diagonals of the common term
         interaction_attributions: jx.Float[
@@ -466,7 +478,7 @@ def get_integrated_hessians(
             inputs_flattened=inputs_flattened,
             baselines_flattened=baselines_flattened,
             interaction_attributions=interaction_attributions,
-        )
+        ).detach()
 
     interaction_attributions_original_shape = interaction_attributions.reshape(
         batch_shape, *input_shape, *input_shape

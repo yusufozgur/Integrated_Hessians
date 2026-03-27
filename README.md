@@ -55,6 +55,9 @@ uv run python '/home/fgsasse_lrs_4/Integrated_Hessians/src/integrated_hessians/s
 uv run python src/integrated_hessians/simulation/simple_simulation/train_model.py
 # Test the model and create plots
 uv run python src/integrated_hessians/simulation/simple_simulation/test_model.py
+
+# or
+uv run src/integrated_hessians/simulation/custom_additive_and_interactive_effects/run_all.py
 ```
 
 ## References
