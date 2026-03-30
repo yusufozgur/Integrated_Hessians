@@ -13,6 +13,8 @@ dependencies = [
     "jaxtyping>=0.3.9",
     "kipoiseq>=0.7.1",
     "numpy>=2.4.2",
+    "polars>=1.39.3",
+    "seaborn>=0.13.2",
     "torch>=2.10.0",
     "tqdm>=4.67.3",
 ]
@@ -36,4 +38,5 @@ dev = [
     "logomaker>=0.8.7",
     "mavenn>=1.1.4",
     "kipoi>=0.8.6",
+    "pyarrow>=23.0.1",
 ]

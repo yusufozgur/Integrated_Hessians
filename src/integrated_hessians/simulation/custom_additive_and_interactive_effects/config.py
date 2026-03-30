@@ -19,10 +19,16 @@ OUT_EXTRACTED_ADDITIVE_EFFECTS = Path(
 OUT_EXTRACTED_INTERACTIVE_EFFECTS = Path(
     "data/custom_additive_and_interactive_effects/interactive_effects_extracted_from_integrated_hessians.json"
 )
+OUT_EXTRACTED_self_interactions_and_pair_interactions_sums = Path(
+    "data/custom_additive_and_interactive_effects/self_interactions_and_pair_interactions_sums.json"
+)
 SEQLEN = 100
-TEST_DATA = Path("data/custom_additive_and_interactive_effects/1k_test.json")
+TEST_DATA = Path("data/custom_additive_and_interactive_effects/10k_test.json")
 TEST_OUTPUT = Path(
     "src/integrated_hessians/simulation/custom_additive_and_interactive_effects/test/"
 )
-INTEGRATED_HESSIANS_SAMPLING_STEPS = 1
+INTEGRATED_HESSIANS_SAMPLING_STEPS = 30
 NUM_OF_ROWS_TESTED = 3
+DEVICE = "cuda"
+TRAIN_DATA_SIZE = 10**5
+TEST_DATA_SIZE = 10**4

@@ -1,7 +1,4 @@
-from collections import defaultdict
-
 import jaxtyping as jx
-from beartype import beartype
 from integrated_hessians import get_integrated_hessians
 from integrated_hessians.simulation import SimulatedSequence
 from integrated_hessians.simulation.custom_additive_and_interactive_effects.test_model import (
@@ -11,13 +8,11 @@ from integrated_hessians.simulation.custom_additive_and_interactive_effects.conf
     INTEGRATED_HESSIANS_SAMPLING_STEPS,
     TEST_DATA,
     OUT_BEST_MODEL,
-    OUT_EXTRACTED_ADDITIVE_EFFECTS,
-    OUT_EXTRACTED_INTERACTIVE_EFFECTS,
+    OUT_EXTRACTED_self_interactions_and_pair_interactions_sums,
     DEVICE,
 )
 import torch
 from torch import Tensor
-from captum.attr import IntegratedGradients
 import json
 from integrated_hessians.simulation.model import CNNMLP
 import numpy as np
@@ -26,7 +21,8 @@ BATCH_SIZE = 50
 
 
 def main():
-    test_data: list[SimulatedSequence] = get_test_data(TEST_DATA)[:1000]
+    # setup
+    test_data: list[SimulatedSequence] = get_test_data(TEST_DATA)[:3000]
 
     model = CNNMLP()
     model.load_state_dict(torch.load(OUT_BEST_MODEL))
@@ -51,16 +47,9 @@ def main():
     # input_minus_baseline_preds: jx.Float[Tensor, " batch_shape "] = (
     #     (model(one_hots) - model(baselines)).squeeze(-1).detach()
     # )
+    model_preds = model(one_hots).detach().reshape(batch_size)
 
-    ig = IntegratedGradients(model, multiply_by_inputs=True)
-    ig_attributions: jx.Float[Tensor, "batch_size seqlen 4"]
-    ig_delta: jx.Float[Tensor, " batch_size "]
-    ig_attributions, ig_delta = ig.attribute(
-        one_hots,
-        baselines,
-        return_convergence_delta=True,
-        internal_batch_size=20000,
-    )
+    # Calculate Integrated Hessians
 
     integ_hess_interactions: jx.Float[Tensor, "batch_size seqlen 4 seqlen 4"]
     ih_delta: jx.Float[Tensor, " batch_size "]
@@ -77,84 +66,75 @@ def main():
     integ_hess_interactions = integ_hess_interactions.detach()
     ih_delta = ih_delta.detach()
 
-    # zero out unreal positions
-    ig_attributions = ig_attributions * one_hots
-    integ_hess_interactions = (
-        one_hots.reshape(batch_size, seqlen, 4, 1, 1)
-        * integ_hess_interactions
-        * one_hots.reshape(batch_size, 1, 1, seqlen, 4)
-    )
+    # Important, all positions, including real and unreal, are considered. We do not subset for existing nucleotides, as non-existing nucleotide positions affect the outcome as well.
 
-    # zero out places outside the masks
-    ig_attributions_masks1 = ig_attributions * masks1.reshape(batch_size, seqlen, 1)
-    ig_attributions_masks2 = ig_attributions * masks2.reshape(batch_size, seqlen, 1)
-
-    #   for interaction values, it is symmetric so it shouldnt matter which order we multiply with the motif mask
-
-    ih_interactions_masked = (
+    ih_mask_pair_1 = (
         integ_hess_interactions
         * masks1.reshape(batch_size, seqlen, 1, 1, 1)
         * masks2.reshape(batch_size, 1, 1, seqlen, 1)
     )
+    ih_mask_pair_2 = (
+        integ_hess_interactions
+        * masks1.reshape(batch_size, 1, 1, seqlen, 1)
+        * masks2.reshape(batch_size, seqlen, 1, 1, 1)
+    )
+    ih_mask_self_interaction_1 = (
+        integ_hess_interactions
+        * masks1.reshape(batch_size, seqlen, 1, 1, 1)
+        * masks1.reshape(batch_size, 1, 1, seqlen, 1)
+    )
+    ih_mask_self_interaction_2 = (
+        integ_hess_interactions
+        * masks2.reshape(batch_size, seqlen, 1, 1, 1)
+        * masks2.reshape(batch_size, 1, 1, seqlen, 1)
+    )
 
     # sum
+    ih_mask_pair_1_sums = ih_mask_pair_1.reshape(batch_size, -1).sum(dim=1)
+    ih_mask_pair_2_sums = ih_mask_pair_2.reshape(batch_size, -1).sum(dim=1)
+    ih_mask_self_interaction_1_sums = ih_mask_self_interaction_1.reshape(
+        batch_size, -1
+    ).sum(dim=1)
+    ih_mask_self_interaction_2_sums = ih_mask_self_interaction_2.reshape(
+        batch_size, -1
+    ).sum(dim=1)
 
-    additive_effects_mask1 = ig_attributions_masks1.sum(dim=[1, 2])
-    additive_effects_mask2 = ig_attributions_masks2.sum(dim=[1, 2])
-
-    interactive_effects_masked = ih_interactions_masked.sum(dim=[1, 2, 3, 4])
-
-    # normalize based on f-f', which is equal to sum of ig/ih according to completeness axioms
-    # additive_effects_mask1 = additive_effects_mask1 / input_minus_baseline_preds
-    # additive_effects_mask2 = additive_effects_mask2 / input_minus_baseline_preds
-    # interactive_effects_masked = interactive_effects_masked / input_minus_baseline_preds
-    #
-
-    motif_attribution_sums = defaultdict(float)
-    motif_pairs_interactions_sums = defaultdict(float)
-
-    for name, additive_effect in zip(names1, additive_effects_mask1):
-        motif_attribution_sums[name] += float(additive_effect)
-    for name, additive_effect in zip(names2, additive_effects_mask2):
-        motif_attribution_sums[name] += float(additive_effect)
-
-    for name1, name2, interactive_effect in zip(
-        names1, names2, interactive_effects_masked
+    out_list = []
+    for (
+        test_row,
+        sum_pair1,
+        sum_pair2,
+        sum_selfinteract1,
+        sum_selfinteract2,
+        pred,
+    ) in zip(
+        test_data,
+        ih_mask_pair_1_sums,
+        ih_mask_pair_2_sums,
+        ih_mask_self_interaction_1_sums,
+        ih_mask_self_interaction_2_sums,
+        model_preds,
     ):
-        motif_pairs_interactions_sums[frozenset([name1, name2])] += float(
-            interactive_effect
+        out_list.append(
+            {
+                "name1": test_row.motif_names[0],
+                "name2": test_row.motif_names[1],
+                "sum_of_pairs": float(sum_pair1 + sum_pair2),
+                "sum_self_interaction_1": float(sum_selfinteract1),
+                "sum_self_interaction_2": float(sum_selfinteract2),
+                "prediction": float(pred),
+                "phenotype": test_row.phenotype,
+            }
         )
 
-    with open(OUT_EXTRACTED_ADDITIVE_EFFECTS, "w") as f:
-        # sort
-        motif_attribution_sums = dict(
-            sorted(motif_attribution_sums.items(), key=lambda item: item[1])
-        )
-        json.dump(motif_attribution_sums, f, indent=4)
-    with open(OUT_EXTRACTED_INTERACTIVE_EFFECTS, "w") as f:
-        # as json cannot write frozenset as keys
-        motif_pairs_interactions_sums = {
-            ",".join(sorted(list(k))): v
-            for k, v in motif_pairs_interactions_sums.items()
-        }
-        # sort according to interaction values
-        motif_pairs_interactions_sums = dict(
-            sorted(motif_pairs_interactions_sums.items(), key=lambda item: item[1])
-        )
-        json.dump(motif_pairs_interactions_sums, f, indent=4)
+    with open(OUT_EXTRACTED_self_interactions_and_pair_interactions_sums, "w") as f:
+        json.dump(out_list, f, indent=4)
 
-    # also save deltas for integrated gradients and integrated hessians
-    with open(
-        OUT_EXTRACTED_ADDITIVE_EFFECTS.with_stem(
-            f"{OUT_EXTRACTED_ADDITIVE_EFFECTS.stem}_deltas"
-        ).with_suffix(".json"),
-        "w",
-    ) as f:
-        json.dump(ig_delta.tolist(), f, indent=4)
+    # also save deltas integrated hessians
 
     with open(
-        OUT_EXTRACTED_INTERACTIVE_EFFECTS.with_stem(
-            f"{OUT_EXTRACTED_INTERACTIVE_EFFECTS.stem}_deltas"
+        OUT_EXTRACTED_self_interactions_and_pair_interactions_sums.with_stem(
+            f"{OUT_EXTRACTED_self_interactions_and_pair_interactions_sums.stem}_deltas"
         ).with_suffix(".json"),
         "w",
     ) as f:

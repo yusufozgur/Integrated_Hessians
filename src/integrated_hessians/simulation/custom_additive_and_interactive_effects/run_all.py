@@ -8,7 +8,12 @@ from integrated_hessians.simulation.custom_additive_and_interactive_effects.test
     main as test_model,
 )
 
+from integrated_hessians.simulation.custom_additive_and_interactive_effects.extract_rules import (
+    main as extract_rules,
+)
+
 if __name__ == "__main__":
     create_sim_data()
     train_model()
     test_model()
+    extract_rules()

@@ -85,13 +85,48 @@ def _(simulation_dropdown):
                 SEQLEN,
             )
         case "Custom Additive and Interaction Effects":
-            pass
+            from integrated_hessians.simulation.custom_additive_and_interactive_effects.config import (
+                TEST_DATA,
+                OUT_BEST_MODEL,
+                SEQLEN,
+            )
     return OUT_BEST_MODEL, SEQLEN, TEST_DATA
 
 
 @app.cell
+def _(TEST_DATA, get_test_data):
+    test_data = get_test_data(TEST_DATA)
+    return (test_data,)
+
+
+@app.cell
+def _(test_data):
+    set_of_names = list(set([x.motif_names[0] for x in test_data]))
+    set_of_names
+    return (set_of_names,)
+
+
+@app.cell
+def _(mo, set_of_names):
+    motif1_choose = mo.ui.dropdown(options=set_of_names+["Any"], value="Any", label="Motif1:")
+    motif2_choose = mo.ui.dropdown(options=set_of_names+["Any"], value="Any", label="Motif1:")
+    motif1_choose, motif2_choose
+    return motif1_choose, motif2_choose
+
+
+@app.cell
+def _(motif1_choose, motif2_choose, test_data):
+    subsetted_data = test_data
+    if motif1_choose.value is not "Any":
+        subsetted_data = [x for x in subsetted_data if x.motif_names[0] == motif1_choose.value]
+    if motif2_choose.value is not "Any":
+        subsetted_data = [x for x in subsetted_data if x.motif_names[1] == motif2_choose.value]
+    return (subsetted_data,)
+
+
+@app.cell
 def _(mo):
-    SELECTEd_ROW = mo.ui.number(0, 1000, 1, label="Choose Row")
+    SELECTEd_ROW = mo.ui.number(0, 200, 1, label="Choose Row")
     SELECTEd_ROW
     return (SELECTEd_ROW,)
 
@@ -103,12 +138,10 @@ def _(
     OUT_BEST_MODEL,
     SELECTEd_ROW,
     SimulatedSequence,
-    TEST_DATA,
     get_attributions,
     get_hessian,
     get_model,
     get_prediction,
-    get_test_data,
     jx,
     np,
     plot_binary_string,
@@ -117,10 +150,10 @@ def _(
     plot_onehot,
     plot_training_metrics,
     plt,
+    subsetted_data,
     torch,
 ):
-    test_data = get_test_data(TEST_DATA)
-    test_row: SimulatedSequence = test_data[SELECTEd_ROW.value]
+    test_row: SimulatedSequence = subsetted_data[SELECTEd_ROW.value]
     model = get_model(OUT_BEST_MODEL)
     # TODO
     plot_training_metrics()
@@ -216,7 +249,18 @@ def _(
 
 
     test_row_plot_fig
-    return model, one_hot, one_hot_batched
+    return model, one_hot, one_hot_batched, real_attributions, test_row
+
+
+@app.cell
+def _(np, real_attributions, test_row: "SimulatedSequence"):
+    mask1 = np.array([int(x) for x in test_row.motif_mask_1])
+    mask2 = np.array([int(x) for x in test_row.motif_mask_2])
+    (
+    f"First motif with name: {test_row.motif_names[0]} has attr sum: {(real_attributions[0] * mask1).sum(): .3f}",
+    f"Second motif with name: {test_row.motif_names[1]} has attr sum: {(real_attributions[0] * mask2).sum(): .3f}"
+    )
+    return mask1, mask2
 
 
 @app.cell
@@ -239,11 +283,11 @@ def _(mo):
 
 
 @app.cell
-def _(mo):
+def _(mo, show_hessian):
     baseline_to_input_alpha = mo.ui.slider(
         0, 1, 0.1, show_value=True, label="Baseline to input alpha", value=1
     )
-    baseline_to_input_alpha
+    baseline_to_input_alpha if show_hessian.value else None
     return (baseline_to_input_alpha,)
 
 
@@ -349,6 +393,96 @@ def _(
         integ_hess_plots_fig = None
 
     integ_hess_plots_fig
+    return (integ_hess_result,)
+
+
+@app.cell
+def _(
+    SEQLEN,
+    integ_hess_result,
+    mask1,
+    mask2,
+    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
+    subset_onehot_hessian,
+    torch,
+):
+    ihnp = integ_hess_result.squeeze(0).numpy()
+    ihrealnp = (
+        subset_onehot_hessian(
+                calculated_hessian=integ_hess_result.squeeze(0),
+                one_hot_mask=torch.tensor(one_hot),
+            )
+    ).numpy()
+
+    ihrealnp_masked_sum_pair1  = (
+        ihrealnp
+        * mask1.reshape(SEQLEN, 1)
+        * mask2.reshape(1, SEQLEN)
+    ).sum()
+    ihrealnp_masked_sum_pair2  = (
+        ihrealnp
+        * mask2.reshape(SEQLEN, 1)
+        * mask1.reshape(1, SEQLEN)
+    ).sum()
+
+
+    ihnp_masked_sum_pair1  = (
+        ihnp
+        * mask1.reshape(SEQLEN, 1, 1, 1)
+        * mask2.reshape(1, 1, SEQLEN, 1)
+    ).sum()
+    ihnp_masked_sum_pair2  = (
+        ihnp
+        * mask1.reshape(1, 1, SEQLEN, 1)
+        * mask2.reshape(SEQLEN, 1, 1, 1)
+    ).sum()
+
+
+    ihrealnp_masked_selfinteractmotif1  = (
+        ihrealnp
+        * mask1.reshape(SEQLEN, 1)
+        * mask1.reshape(1, SEQLEN)
+    ).sum()
+
+    ihrealnp_masked_selfinteractmotif2  = (
+        ihrealnp
+        * mask2.reshape(SEQLEN, 1)
+        * mask2.reshape(1, SEQLEN)
+    ).sum()
+
+
+    ihnp_masked_selfinteractmotif1  = (
+        ihnp
+        * mask1.reshape(1, 1, SEQLEN, 1)
+        * mask1.reshape(SEQLEN, 1, 1, 1)
+    ).sum()
+
+    ihnp_masked_selfinteractmotif2  = (
+        ihnp
+        * mask2.reshape(1, 1, SEQLEN, 1)
+        * mask2.reshape(SEQLEN, 1, 1, 1)
+    ).sum()
+
+    allrealsum = ihrealnp_masked_sum_pair1 + ihrealnp_masked_sum_pair2 + ihrealnp_masked_selfinteractmotif1 + ihrealnp_masked_selfinteractmotif2
+
+    all_sum = ihnp_masked_sum_pair1 + ihnp_masked_sum_pair2 + ihnp_masked_selfinteractmotif1 + ihnp_masked_selfinteractmotif2
+
+    (
+        f"{ihrealnp_masked_sum_pair1 = :.3f}",
+        f"{ihrealnp_masked_sum_pair2 = :.3f}",
+        f"{ihrealnp_masked_sum_pair1 + ihrealnp_masked_sum_pair2 = :.3f}",
+        f"{ihrealnp_masked_selfinteractmotif1 = :.3f}",
+        f"{ihrealnp_masked_selfinteractmotif2 = :.3f}",
+        f"{allrealsum = :.3f}",
+        f"{ihrealnp.sum() = :.3f}",
+        f"{integ_hess_result.sum() = :.3f}",
+        f"{ihnp_masked_sum_pair1 = :.3f}",
+        f"{ihnp_masked_sum_pair2 = :.3f}",
+        f"{ihnp_masked_sum_pair1 + ihnp_masked_sum_pair2 = :.3f}",
+        f"{ihnp_masked_selfinteractmotif1 = :.3f}",
+        f"{ihnp_masked_selfinteractmotif2 = :.3f}",
+        f"{all_sum = :.3f}",
+    )
     return
 
 

@@ -9,14 +9,16 @@ from integrated_hessians.simulation.custom_additive_and_interactive_effects.conf
     MOTIFS_FILE,
     SEQLEN,
     TRAIN_DATA,
+    TRAIN_DATA_SIZE,
     TEST_DATA,
+    TEST_DATA_SIZE,
 )
 
 
 def main():
     for OUTPUT, NUM_OF_SEQUENCES in (
-        (TRAIN_DATA, 10**5),
-        (TEST_DATA, 10**3),
+        (TRAIN_DATA, TRAIN_DATA_SIZE),
+        (TEST_DATA, TEST_DATA_SIZE),
     ):
         motifs = extract_motifs_from_jaspar_psm_file(jaspar_pfm_file=MOTIFS_FILE)
         sequences = [
@@ -51,10 +53,13 @@ class Additive_And_Interactive(PhenotypeStrategy):
             "Random2": 0,
         }
         self.interactive_effects = {
+            #
             ("Motif1", "Motif2"): 0.25,
             ("Motif2", "Motif1"): 0.25,
+            #
             ("Motif2", "Motif3"): 0.5,
             ("Motif3", "Motif2"): 0.5,
+            #
             ("Motif1", "Motif6"): 0.25,
             ("Motif6", "Motif1"): 0.25,
         }
