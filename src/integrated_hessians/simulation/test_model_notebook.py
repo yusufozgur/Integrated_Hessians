@@ -14,8 +14,9 @@ def _():
     import torch
     import numpy as np
     import matplotlib.pyplot as plt
+    from matplotlib.figure import Figure
 
-    return NDArray, jx, mo, np, plt, torch
+    return Figure, NDArray, jx, mo, np, plt, torch
 
 
 @app.cell
@@ -40,7 +41,6 @@ def _():
         plot_gif_hessians_from_baseline_to_real,
         get_prediction,
         get_attributions,
-        test_and_plot_selected_row,
         interpolate_onehot,
         subset_onehot_hessian,
     )
@@ -54,11 +54,13 @@ def _():
         get_prediction,
         get_test_data,
         interpolate_onehot,
+        plot_binary_string,
         plot_epistasis_subsetted,
         plot_gif_hessians_from_baseline_to_real,
+        plot_heatmap,
+        plot_onehot,
         plot_training_metrics,
         subset_onehot_hessian,
-        test_and_plot_selected_row,
     )
 
 
@@ -96,6 +98,7 @@ def _(mo):
 
 @app.cell
 def _(
+    Figure,
     NDArray,
     OUT_BEST_MODEL,
     SELECTEd_ROW,
@@ -108,9 +111,12 @@ def _(
     get_test_data,
     jx,
     np,
+    plot_binary_string,
     plot_gif_hessians_from_baseline_to_real,
+    plot_heatmap,
+    plot_onehot,
     plot_training_metrics,
-    test_and_plot_selected_row,
+    plt,
     torch,
 ):
     test_data = get_test_data(TEST_DATA)
@@ -144,20 +150,70 @@ def _(
         "alphabet_length sequence_length alphabet_length sequence_length",
     ] = calculated_hessian.squeeze(0).squeeze(2)
 
-    test_row_plot_fig, _ = test_and_plot_selected_row(
+    # test_row_plot_fig, _ = test_and_plot_selected_row(
+    #     sequence=test_row.nucleotides,
+    #     one_hot=one_hot_permuted,
+    #     attributions=attributions_permuted,
+    #     integrated_gradients_delta=float(ig_delta),
+    #     real_attributions=real_attributions,
+    #     phenotype=test_row.phenotype,
+    #     prediction=row_prediction,
+    #     motif_mask_1=test_row.motif_mask_1,
+    #     motif_type_1=test_row.motif_types[0].name,
+    #     motif_mask_2=test_row.motif_mask_2,
+    #     motif_type_2=test_row.motif_types[1].name,
+    #     calculated_hessian=calculated_hessian,
+    # )
+
+    test_row_plot_fig: Figure
+    test_row_plot_axes: np.ndarray
+    test_row_plot_fig, test_row_plot_axes = plt.subplots(
+        ncols=1,
+        nrows=5,
+        figsize=(10, 6),
+        sharex=True,  # guarantees column alignment
+        height_ratios=[8, 1, 1, 8, 1],
+        layout="constrained",
+    )
+
+    # - One hot encoded sequence heatmap
+    plot_onehot(
         sequence=test_row.nucleotides,
         one_hot=one_hot_permuted,
-        attributions=attributions_permuted,
-        integrated_gradients_delta=float(ig_delta),
-        real_attributions=real_attributions,
-        phenotype=test_row.phenotype,
-        prediction=row_prediction,
-        motif_mask_1=test_row.motif_mask_1,
-        motif_type_1=test_row.motif_types[0].name,
-        motif_mask_2=test_row.motif_mask_2,
-        motif_type_2=test_row.motif_types[1].name,
-        calculated_hessian=calculated_hessian,
+        ax=test_row_plot_axes[0],
+        title=f"Phen: {test_row.phenotype} Pred: {row_prediction: .3}",
     )
+    # - Annotate motif 1 and motif 2 location in heatmap, label their names/roles
+    plot_binary_string(
+        test_row.motif_mask_1,
+        test_row_plot_axes[1],
+        title=test_row.motif_names[0],
+    )
+    plot_binary_string(
+        test_row.motif_mask_2,
+        test_row_plot_axes[2],
+        title=test_row.motif_names[1],
+    )
+
+
+    # - Plot Integrated Gradients heatmap
+    plot_onehot(
+        sequence=test_row.nucleotides,
+        one_hot=attributions_permuted,
+        ax=test_row_plot_axes[3],
+        title=f"Integrated Gradients (Multiplied input: true), delta: {float(ig_delta): .3f}",
+        cmap="bwr",
+    )
+    # - Subset integrated gradients for existing nucleotides and show in heatmap
+    plot_heatmap(
+        matrix=real_attributions,
+        row_labels=["Real base"],
+        col_labels=list(test_row.nucleotides),
+        ax=test_row_plot_axes[4],
+        cmap="bwr",
+        title="Real Attributions",
+    )
+
 
     test_row_plot_fig
     return model, one_hot, one_hot_batched
@@ -199,7 +255,7 @@ def _(
     interpolate_onehot,
     jx,
     model,
-    one_hot: 'jx.Float[NDArray[np.float32], "alphabet_length sequence_length"]',
+    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
     plot_epistasis_subsetted,
     show_hessian,
     subset_onehot_hessian,
@@ -253,7 +309,7 @@ def _(mo, show_integrated_hessian):
 def _(
     get_integrated_hessians,
     model,
-    one_hot: 'jx.Float[NDArray[np.float32], "alphabet_length sequence_length"]',
+    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
     one_hot_batched,
     plot_epistasis_subsetted,
     plt,
@@ -314,7 +370,7 @@ def _(mo, show_integrated_hessian_janizeketal):
 def _(
     SEQLEN,
     model,
-    one_hot: 'jx.Float[NDArray[np.float32], "alphabet_length sequence_length"]',
+    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
     one_hot_batched,
     plot_epistasis_subsetted,
     sampling_steps_janizeketal,
