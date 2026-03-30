@@ -164,12 +164,13 @@ def _get_common_term(
 
     # this carries the riemann sum
     second_order_sensitivity = torch.zeros(
-        batch_shape, flattened_input_shape, flattened_input_shape
+        batch_shape,
+        flattened_input_shape,
+        flattened_input_shape,
+        device=inputs_flattened.device,
     )
 
-    get_second_order_grad = torch.vmap(
-        torch.func.hessian(func=func), chunk_size=batch_size
-    )
+    get_second_order_grad = torch.vmap(torch.func.hessian(func=func))
 
     alphabetas, weights = _get_interpolation_coefficients(
         mode=interpolation_coefficients_mode,
@@ -183,12 +184,23 @@ def _get_common_term(
             baselines_flattened + alphabeta * (inputs_flattened - baselines_flattened)
         )
 
-        second_order_grad: jx.Float[
-            Tensor, "batch_size input_shape_flattened input_shape_flattened"
-        ] = get_second_order_grad(interpolation)
+        if batch_size is None:
+            second_order_grad: jx.Float[
+                Tensor, "batch_size input_shape_flattened input_shape_flattened"
+            ] = get_second_order_grad(interpolation)
+        else:
+            batches_second_order_grads = []
+            for batch in interpolation.split(batch_size):
+                # this detach is important too in order to not overwhelm gpu memory
+                batches_second_order_grads.append(get_second_order_grad(batch).detach())
+
+            second_order_grad: jx.Float[
+                Tensor, "batch_size input_shape_flattened input_shape_flattened"
+            ] = torch.cat(batches_second_order_grads)
+
         # this is important to not get memory overflows
         # as otherwise the accumulated tensor will remember every graph
-        second_order_grad = second_order_grad.detach()
+        second_order_grad = second_order_grad.detach()  # .cpu()
 
         second_order_sensitivity += (
             second_order_grad
@@ -228,7 +240,9 @@ def _get_self_interaction_extra_term(
     flattened_input_shape = inputs_flattened.shape[1]
 
     # this carries the riemann sum
-    self_interaction_term = torch.zeros(batch_shape, flattened_input_shape)
+    self_interaction_term = torch.zeros(
+        batch_shape, flattened_input_shape, device=inputs_flattened.device
+    )
 
     get_jacobian = torch.vmap(torch.func.jacrev(func=func), chunk_size=batch_size)
 
@@ -305,11 +319,7 @@ def get_integrated_hessians(
 ]:
     """Computes integrated hessians for feature interaction attributions.
 
-    Calculates second-order interaction attributions between input features by
-    integrating the Hessian of the model output along a path from a baseline to
-    the input. This decomposes the model output into pairwise feature interaction
-    terms, analogous to how integrated gradients decompose outputs into first-order
-    feature attributions.
+    The function is device agnostic, only requirement is provided tensors should be on the same device.
 
     ReLU activations are replaced with softplus during computation to ensure
     smooth second-order derivatives.
@@ -376,6 +386,14 @@ def get_integrated_hessians(
     assert baselines.shape == (batch_shape, *input_shape), (
         "Input tensor and baseline tensor must have the same shape"
     )
+
+    assert inputs.device == baselines.device, (
+        "Model and the inputs should be on the same device"
+    )
+    if isinstance(model, torch.nn.Module):
+        assert inputs.device == next(model.parameters()).device, (
+            "Model and the inputs should be on the same device"
+        )
 
     # Reset the autograd history on the tensors
     # I am not sure if this is necessary, but I am doing it just in case
