@@ -13,40 +13,53 @@ from integrated_hessians.simulation.custom_additive_and_interactive_effects.conf
     OUT_BEST_MODEL,
     OUT_EXTRACTED_ADDITIVE_EFFECTS,
     OUT_EXTRACTED_INTERACTIVE_EFFECTS,
+    DEVICE,
 )
 import torch
 from torch import Tensor
 from captum.attr import IntegratedGradients
 import json
 from integrated_hessians.simulation.model import CNNMLP
+import numpy as np
+
+BATCH_SIZE = 50
 
 
 def main():
-    test_data: list[SimulatedSequence] = get_test_data(TEST_DATA)
+    test_data: list[SimulatedSequence] = get_test_data(TEST_DATA)[:1000]
 
     model = CNNMLP()
     model.load_state_dict(torch.load(OUT_BEST_MODEL))
     model.eval()
+    model = model.to(DEVICE)
 
     one_hots: jx.Float[Tensor, "batch_size seqlen 4"] = torch.tensor(
-        [row.one_hot for row in test_data], dtype=torch.float
-    )
+        np.array([row.one_hot for row in test_data]), dtype=torch.float
+    ).to(DEVICE)
     batch_size = one_hots.shape[0]
     seqlen = one_hots.shape[1]
     names1: list[str] = [row.motif_names[0] for row in test_data]
     names2: list[str] = [row.motif_names[1] for row in test_data]
     masks1: jx.Float[Tensor, "batch_shape seqlen"] = torch.tensor(
-        [[int(x) for x in list(row.motif_mask_1)] for row in test_data],
+        [[int(x) for x in list(row.motif_mask_1)] for row in test_data], device=DEVICE
     )
     masks2: jx.Float[Tensor, "batch_shape seqlen"] = torch.tensor(
-        [[int(x) for x in list(row.motif_mask_2)] for row in test_data],
+        [[int(x) for x in list(row.motif_mask_2)] for row in test_data], device=DEVICE
     )
     baselines: jx.Float[Tensor, "batch_size seqlen 4"] = torch.full_like(one_hots, 0.25)
+
+    # input_minus_baseline_preds: jx.Float[Tensor, " batch_shape "] = (
+    #     (model(one_hots) - model(baselines)).squeeze(-1).detach()
+    # )
+
     ig = IntegratedGradients(model, multiply_by_inputs=True)
     ig_attributions: jx.Float[Tensor, "batch_size seqlen 4"]
     ig_delta: jx.Float[Tensor, " batch_size "]
     ig_attributions, ig_delta = ig.attribute(
-        one_hots, baselines, return_convergence_delta=True
+        one_hots,
+        baselines,
+        return_convergence_delta=True,
+        internal_batch_size=20000,
     )
 
     integ_hess_interactions: jx.Float[Tensor, "batch_size seqlen 4 seqlen 4"]
@@ -58,7 +71,11 @@ def main():
         target=0,
         approximation_steps=INTEGRATED_HESSIANS_SAMPLING_STEPS,
         optimize_for_duplicate_interpolation_values=True,
+        batch_size=BATCH_SIZE,
     )
+
+    integ_hess_interactions = integ_hess_interactions.detach()
+    ih_delta = ih_delta.detach()
 
     # zero out unreal positions
     ig_attributions = ig_attributions * one_hots
@@ -87,6 +104,12 @@ def main():
 
     interactive_effects_masked = ih_interactions_masked.sum(dim=[1, 2, 3, 4])
 
+    # normalize based on f-f', which is equal to sum of ig/ih according to completeness axioms
+    # additive_effects_mask1 = additive_effects_mask1 / input_minus_baseline_preds
+    # additive_effects_mask2 = additive_effects_mask2 / input_minus_baseline_preds
+    # interactive_effects_masked = interactive_effects_masked / input_minus_baseline_preds
+    #
+
     motif_attribution_sums = defaultdict(float)
     motif_pairs_interactions_sums = defaultdict(float)
 
@@ -103,6 +126,10 @@ def main():
         )
 
     with open(OUT_EXTRACTED_ADDITIVE_EFFECTS, "w") as f:
+        # sort
+        motif_attribution_sums = dict(
+            sorted(motif_attribution_sums.items(), key=lambda item: item[1])
+        )
         json.dump(motif_attribution_sums, f, indent=4)
     with open(OUT_EXTRACTED_INTERACTIVE_EFFECTS, "w") as f:
         # as json cannot write frozenset as keys
@@ -117,7 +144,6 @@ def main():
         json.dump(motif_pairs_interactions_sums, f, indent=4)
 
     # also save deltas for integrated gradients and integrated hessians
-    breakpoint()
     with open(
         OUT_EXTRACTED_ADDITIVE_EFFECTS.with_stem(
             f"{OUT_EXTRACTED_ADDITIVE_EFFECTS.stem}_deltas"
@@ -133,10 +159,6 @@ def main():
         "w",
     ) as f:
         json.dump(ih_delta.tolist(), f, indent=4)
-
-
-def convert_onehot_string_to_bool_tensor(motif_mask):
-    return torch.tensor([int(x) for x in motif_mask], dtype=torch.bool)
 
 
 if __name__ == "__main__":
