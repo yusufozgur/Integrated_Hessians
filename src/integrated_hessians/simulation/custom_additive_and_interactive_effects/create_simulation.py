@@ -16,11 +16,11 @@ from integrated_hessians.simulation.custom_additive_and_interactive_effects.conf
 
 
 def main():
+    motifs = extract_motifs_from_jaspar_psm_file(jaspar_pfm_file=MOTIFS_FILE)
     for OUTPUT, NUM_OF_SEQUENCES in (
         (TRAIN_DATA, TRAIN_DATA_SIZE),
         (TEST_DATA, TEST_DATA_SIZE),
     ):
-        motifs = extract_motifs_from_jaspar_psm_file(jaspar_pfm_file=MOTIFS_FILE)
         sequences = [
             SimulatedSequence.from_motifs(
                 motif_pool=motifs,
