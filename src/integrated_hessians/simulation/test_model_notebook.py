@@ -15,8 +15,9 @@ def _():
     import numpy as np
     import matplotlib.pyplot as plt
     from matplotlib.figure import Figure
+    from sklearn.metrics import r2_score
 
-    return Figure, NDArray, jx, mo, np, plt, torch
+    return Figure, NDArray, jx, mo, np, plt, r2_score, torch
 
 
 @app.cell
@@ -36,7 +37,6 @@ def _():
     from integrated_hessians import get_hessian, get_integrated_hessians
     from integrated_hessians.simulation.simple_simulation.test_model import (
         get_test_data,
-        get_model,
         plot_training_metrics,
         plot_gif_hessians_from_baseline_to_real,
         get_prediction,
@@ -46,11 +46,11 @@ def _():
     )
 
     return (
+        CNNMLP,
         SimulatedSequence,
         get_attributions,
         get_hessian,
         get_integrated_hessians,
-        get_model,
         get_prediction,
         get_test_data,
         interpolate_onehot,
@@ -67,7 +67,7 @@ def _():
 @app.cell
 def _(mo):
     simulation_dropdown = mo.ui.dropdown(
-        options=["Simple", "Custom Additive and Interaction Effects"],
+        options=["Simple", "Custom Additive and Interaction Effects", "Randomized Additive and Interaction Effects"],
         value="Simple",
         label="Choose Simulation",
     )
@@ -83,14 +83,30 @@ def _(simulation_dropdown):
                 TEST_DATA,
                 OUT_BEST_MODEL,
                 SEQLEN,
+                MODEL_WIDTH_MULTIPLIER
             )
         case "Custom Additive and Interaction Effects":
             from integrated_hessians.simulation.custom_additive_and_interactive_effects.config import (
                 TEST_DATA,
                 OUT_BEST_MODEL,
                 SEQLEN,
+                MODEL_WIDTH_MULTIPLIER
             )
-    return OUT_BEST_MODEL, SEQLEN, TEST_DATA
+        case "Randomized Additive and Interaction Effects":
+            from integrated_hessians.simulation.randomized_additive_and_interactive_effects.config import (
+                TEST_DATA,
+                OUT_BEST_MODEL,
+                SEQLEN,
+                TRAIN_DATA,
+                MODEL_WIDTH_MULTIPLIER
+            )
+    return MODEL_WIDTH_MULTIPLIER, OUT_BEST_MODEL, SEQLEN, TEST_DATA
+
+
+@app.cell
+def _(TEST_DATA):
+    TEST_DATA
+    return
 
 
 @app.cell
@@ -101,7 +117,7 @@ def _(TEST_DATA, get_test_data):
 
 @app.cell
 def _(test_data):
-    set_of_names = list(set([x.motif_names[0] for x in test_data]))
+    set_of_names = sorted(list(set([x.motif_names[0] for x in test_data])))
     set_of_names
     return (set_of_names,)
 
@@ -109,7 +125,7 @@ def _(test_data):
 @app.cell
 def _(mo, set_of_names):
     motif1_choose = mo.ui.dropdown(options=set_of_names+["Any"], value="Any", label="Motif1:")
-    motif2_choose = mo.ui.dropdown(options=set_of_names+["Any"], value="Any", label="Motif1:")
+    motif2_choose = mo.ui.dropdown(options=set_of_names+["Any"], value="Any", label="Motif2:")
     motif1_choose, motif2_choose
     return motif1_choose, motif2_choose
 
@@ -125,6 +141,14 @@ def _(motif1_choose, motif2_choose, test_data):
 
 
 @app.cell
+def _(all_phens, all_preds, plt, r2_score):
+    plt.scatter(all_phens,all_preds, alpha=.01)
+    r2 = r2_score(all_phens,all_preds)
+    plt.title(f"phens vs preds. R2: {r2}")
+    return
+
+
+@app.cell
 def _(mo):
     SELECTEd_ROW = mo.ui.number(0, 200, 1, label="Choose Row")
     SELECTEd_ROW
@@ -133,14 +157,16 @@ def _(mo):
 
 @app.cell
 def _(
+    CNNMLP,
     Figure,
+    MODEL_WIDTH_MULTIPLIER,
     NDArray,
     OUT_BEST_MODEL,
     SELECTEd_ROW,
+    SEQLEN,
     SimulatedSequence,
     get_attributions,
     get_hessian,
-    get_model,
     get_prediction,
     jx,
     np,
@@ -154,7 +180,9 @@ def _(
     torch,
 ):
     test_row: SimulatedSequence = subsetted_data[SELECTEd_ROW.value]
-    model = get_model(OUT_BEST_MODEL)
+    model = CNNMLP(sequence_length=SEQLEN,width_multiplier=MODEL_WIDTH_MULTIPLIER)
+    model.load_state_dict(torch.load(OUT_BEST_MODEL))
+    model.eval()
     # TODO
     plot_training_metrics()
     plot_gif_hessians_from_baseline_to_real()
@@ -250,6 +278,15 @@ def _(
 
     test_row_plot_fig
     return model, one_hot, one_hot_batched, real_attributions, test_row
+
+
+@app.cell
+def _(model, test_data, torch):
+    onehot_all = torch.tensor([x.one_hot for x in test_data],dtype=torch.float)
+    all_phens = [x.phenotype for x in test_data]
+    with torch.no_grad():
+        all_preds = model(onehot_all)
+    return all_phens, all_preds
 
 
 @app.cell

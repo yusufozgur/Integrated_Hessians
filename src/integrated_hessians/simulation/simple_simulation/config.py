@@ -16,3 +16,4 @@ TEST_DATA = Path("data/simple_simulation/1k_test.json")
 TEST_OUTPUT = Path("src/integrated_hessians/simulation/simple_simulation/test/")
 INTEGRATED_HESSIANS_SAMPLING_STEPS = 100
 NUM_OF_ROWS_TESTED = 10
+MODEL_WIDTH_MULTIPLIER = 10
