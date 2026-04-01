@@ -19,6 +19,8 @@ class CNNMLP(nn.Module):
         super().__init__()
 
         self.sequence_length = sequence_length
+        assert sequence_length % 4 == 0
+        linear_layer_width = int(sequence_length * width_multiplier / 4)
 
         self.embedding = nn.Sequential(
             nn.Conv1d(
@@ -26,28 +28,26 @@ class CNNMLP(nn.Module):
             ),
             nn.GELU(),
             nn.Dropout(dropout),
+            nn.MaxPool1d(kernel_size=2, stride=2),
             nn.Conv1d(
                 width_multiplier, width_multiplier, 9, padding=4, padding_mode="reflect"
             ),
             nn.GELU(),
             nn.Dropout(dropout),
+            nn.MaxPool1d(kernel_size=2, stride=2),
             nn.Conv1d(
                 width_multiplier, width_multiplier, 9, padding=4, padding_mode="reflect"
             ),
             nn.GELU(),
             nn.Dropout(dropout),
             nn.Flatten(),
-            nn.Linear(
-                sequence_length * width_multiplier, sequence_length * width_multiplier
-            ),
+            nn.Linear(linear_layer_width, linear_layer_width),
             nn.GELU(),
             nn.Dropout(dropout),
-            nn.Linear(
-                sequence_length * width_multiplier, sequence_length * width_multiplier
-            ),
+            nn.Linear(linear_layer_width, linear_layer_width),
             nn.GELU(),
             nn.Dropout(dropout),
-            nn.Linear(sequence_length * width_multiplier, 1),
+            nn.Linear(linear_layer_width, 1),
         )
 
     @jaxtyped(typechecker=beartype)

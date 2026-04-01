@@ -31,7 +31,7 @@ ignore = ["F722"]
 [dependency-groups]
 dev = [
     "plotly[express]>=6.6.0",
-    "marimo>=0.20.4",
+    "marimo>=0.21.1",
     "captum>=0.7.0",
     "path-explain>=0.0.7",
     "tensorflow>=2.21.0",
