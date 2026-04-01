@@ -435,6 +435,27 @@ def _(
 
 @app.cell
 def _(
+    all_sum,
+    ihnp_masked_selfinteractmotif1,
+    ihnp_masked_selfinteractmotif2,
+    ihnp_masked_sum_pair1,
+    ihnp_masked_sum_pair2,
+    integ_hess_result,
+):
+    (
+        f"{integ_hess_result.sum() = :.3f}",
+        f"{ihnp_masked_sum_pair1 = :.3f}",
+        f"{ihnp_masked_sum_pair2 = :.3f}",
+        f"{ihnp_masked_sum_pair1 + ihnp_masked_sum_pair2 = :.3f}",
+        f"{ihnp_masked_selfinteractmotif1 = :.3f}",
+        f"{ihnp_masked_selfinteractmotif2 = :.3f}",
+        f"{all_sum = :.3f}",
+    )
+    return
+
+
+@app.cell
+def _(
     SEQLEN,
     integ_hess_result,
     mask1,
@@ -520,7 +541,13 @@ def _(
         f"{ihnp_masked_selfinteractmotif2 = :.3f}",
         f"{all_sum = :.3f}",
     )
-    return
+    return (
+        all_sum,
+        ihnp_masked_selfinteractmotif1,
+        ihnp_masked_selfinteractmotif2,
+        ihnp_masked_sum_pair1,
+        ihnp_masked_sum_pair2,
+    )
 
 
 @app.cell

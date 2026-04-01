@@ -84,6 +84,35 @@ def _(df_motif1_and_2_seperated, mo, pl):
     return (df_additive_effects,)
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ```
+    additive_effects = {
+        "Motif1": 0,
+        "Motif2": 0,
+        "Motif3": 0,
+        "Motif4": 0.25,
+        "Motif5": 0.5,
+        "Motif6": 0.25,
+        "Random1": 0,
+        "Random2": 0,
+    }
+    self.interactive_effects = {
+        ("Motif1", "Motif2"): 0.25,
+        ("Motif2", "Motif1"): 0.25,
+
+        ("Motif2", "Motif3"): 0.5,
+        ("Motif3", "Motif2"): 0.5,
+
+        ("Motif1", "Motif6"): 0.25,
+        ("Motif6", "Motif1"): 0.25,
+    }
+    ```
+    """)
+    return
+
+
 @app.cell
 def _(df_additive_effects, plt, sns):
     plt.figure(figsize=(8, 2))
