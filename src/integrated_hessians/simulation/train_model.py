@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 
 import torch
 import torch.nn as nn
@@ -9,7 +10,8 @@ from torch.utils.data import random_split
 from integrated_hessians.simulation.model import CNNMLP
 from tqdm import tqdm
 
-from integrated_hessians.simulation.simple_simulation.config import (
+
+def train_model(
     SEQLEN,
     TRAIN_DATA,
     BATCH_SIZE,
@@ -18,15 +20,13 @@ from integrated_hessians.simulation.simple_simulation.config import (
     EPOCHS,
     OUT_BEST_MODEL,
     OUT_BEST_MODEL_EVAL,
-)
-
-
-def main():
+    MODEL_WIDTH_MULTIPLIER,
+):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    dataset = MotifInteractionsDataset(input=TRAIN_DATA)
+    dataset = MotifInteractionsDataset(input=TRAIN_DATA, SEQLEN=SEQLEN)
 
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
@@ -35,7 +35,7 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
 
-    model = CNNMLP(sequence_length=SEQLEN)
+    model = CNNMLP(sequence_length=SEQLEN, width_multiplier=MODEL_WIDTH_MULTIPLIER)
     model = model.to(device)
 
     total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -90,7 +90,7 @@ def main():
 class MotifInteractionsDataset(Dataset):
     data: list[SimulatedSequence]
 
-    def __init__(self, input: Path):
+    def __init__(self, input: Path, SEQLEN):
         assert input.is_file()
         assert input.name.endswith(".json")
         with open(input, "r") as f:
@@ -162,4 +162,19 @@ def evaluate(model, loader, criterion, device):
 
 
 if __name__ == "__main__":
-    main()
+    config = sys.argv[1]
+
+    with open(config, "r") as f:
+        config = json.load(f)
+
+    train_model(
+        SEQLEN=config["SEQLEN"],
+        TRAIN_DATA=Path(config["TRAIN_DATA"]),
+        BATCH_SIZE=config["BATCH_SIZE"],
+        LR=config["LR"],
+        L2_WEIGHT_DECAY=config["L2_WEIGHT_DECAY"],
+        EPOCHS=config["EPOCHS"],
+        OUT_BEST_MODEL=config["OUT_BEST_MODEL"],
+        OUT_BEST_MODEL_EVAL=config["OUT_BEST_MODEL_EVAL"],
+        MODEL_WIDTH_MULTIPLIER=config["MODEL_WIDTH_MULTIPLIER"],
+    )

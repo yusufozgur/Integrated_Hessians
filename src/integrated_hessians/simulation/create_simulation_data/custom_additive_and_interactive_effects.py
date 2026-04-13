@@ -1,22 +1,27 @@
+import itertools
+import json
+from pathlib import Path
+import random
+import sys
+
 from integrated_hessians.simulation import (
     Motif,
     PhenotypeStrategy,
-    extract_motifs_from_jaspar_psm_file,
     SimulatedSequence,
-)
-import json
-from integrated_hessians.simulation.custom_additive_and_interactive_effects.config import (
-    MOTIFS_FILE,
-    SEQLEN,
-    TRAIN_DATA,
-    TRAIN_DATA_SIZE,
-    TEST_DATA,
-    TEST_DATA_SIZE,
+    extract_motifs_from_jaspar_psm_file,
 )
 
 
-def main():
+def simulate_custom_additive_and_interactive_values(
+    TRAIN_DATA, TRAIN_DATA_SIZE, TEST_DATA, TEST_DATA_SIZE, MOTIFS_FILE, SEQLEN
+):
+
+    TRAIN_DATA_SIZE, TEST_DATA_SIZE = int(TRAIN_DATA_SIZE), int(TEST_DATA_SIZE)
+    TRAIN_DATA = Path(TRAIN_DATA)
+    TEST_DATA = Path(TEST_DATA)
+
     motifs = extract_motifs_from_jaspar_psm_file(jaspar_pfm_file=MOTIFS_FILE)
+
     for OUTPUT, NUM_OF_SEQUENCES in (
         (TRAIN_DATA, TRAIN_DATA_SIZE),
         (TEST_DATA, TEST_DATA_SIZE),
@@ -80,4 +85,16 @@ class Additive_And_Interactive(PhenotypeStrategy):
 
 
 if __name__ == "__main__":
-    main()
+    config = sys.argv[1]
+
+    with open(config, "r") as f:
+        config = json.load(f)
+
+    simulate_custom_additive_and_interactive_values(
+        TRAIN_DATA=config["TRAIN_DATA"],
+        TRAIN_DATA_SIZE=config["TRAIN_DATA_SIZE"],
+        TEST_DATA=config["TEST_DATA"],
+        TEST_DATA_SIZE=config["TEST_DATA_SIZE"],
+        MOTIFS_FILE=config["MOTIFS_FILE"],
+        SEQLEN=config["SEQLEN"],
+    )

@@ -1,26 +1,32 @@
 import itertools
+import json
+from pathlib import Path
 import random
+import sys
 
 from integrated_hessians.simulation import (
     Motif,
     PhenotypeStrategy,
-    extract_motifs_from_jaspar_psm_file,
     SimulatedSequence,
+    extract_motifs_from_jaspar_psm_file,
 )
-import json
-from integrated_hessians.simulation.randomized_additive_and_interactive_effects.config import (
-    MOTIFS_FILE,
-    SEQLEN,
+
+
+def simulate_random_additive_and_interactive_values(
     TRAIN_DATA,
     TRAIN_DATA_SIZE,
     TEST_DATA,
     TEST_DATA_SIZE,
+    MOTIFS_FILE,
+    SEQLEN,
     OUT_ADDITIVE_DEFINED_EFFECTS,
     OUT_INTERACTIVE_DEFINED_EFFECTS,
-)
+):
+    TRAIN_DATA_SIZE, TEST_DATA_SIZE = int(TRAIN_DATA_SIZE), int(TEST_DATA_SIZE)
+    TRAIN_DATA = Path(TRAIN_DATA)
+    TEST_DATA = Path(TEST_DATA)
+    OUT_ADDITIVE_DEFINED_EFFECTS = Path(OUT_ADDITIVE_DEFINED_EFFECTS)
 
-
-def main():
     motifs: list[Motif] = extract_motifs_from_jaspar_psm_file(
         jaspar_pfm_file=MOTIFS_FILE
     )
@@ -60,7 +66,7 @@ def main():
             SimulatedSequence.from_motifs(
                 motif_pool=motifs,
                 length=SEQLEN,
-                phenotype_strategy=Additive_And_Interactive(
+                phenotype_strategy=RandomizedAdditive_And_Interactive(
                     additive_effects=additive_effects,
                     interactive_effects=interactive_effects,
                 ),
@@ -73,7 +79,7 @@ def main():
             json.dump(sequences_dict, f, indent=4)
 
 
-class Additive_And_Interactive(PhenotypeStrategy):
+class RandomizedAdditive_And_Interactive(PhenotypeStrategy):
     def __init__(
         self,
         additive_effects: dict[str, float],
@@ -101,4 +107,18 @@ class Additive_And_Interactive(PhenotypeStrategy):
 
 
 if __name__ == "__main__":
-    main()
+    config = sys.argv[1]
+
+    with open(config, "r") as f:
+        config = json.load(f)
+
+    simulate_random_additive_and_interactive_values(
+        TRAIN_DATA=config["TRAIN_DATA"],
+        TRAIN_DATA_SIZE=config["TRAIN_DATA_SIZE"],
+        TEST_DATA=config["TEST_DATA"],
+        TEST_DATA_SIZE=config["TEST_DATA_SIZE"],
+        MOTIFS_FILE=config["MOTIFS_FILE"],
+        SEQLEN=config["SEQLEN"],
+        OUT_ADDITIVE_DEFINED_EFFECTS=config["OUT_ADDITIVE_DEFINED_EFFECTS"],
+        OUT_INTERACTIVE_DEFINED_EFFECTS=config["OUT_INTERACTIVE_DEFINED_EFFECTS"],
+    )

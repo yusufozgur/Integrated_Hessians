@@ -1,15 +1,17 @@
 import jaxtyping as jx
 from integrated_hessians import get_integrated_hessians
 from integrated_hessians.simulation import SimulatedSequence
-from integrated_hessians.simulation.custom_additive_and_interactive_effects.test_model import (
+from integrated_hessians.simulation.test_model.test_model_random import (
     get_test_data,
 )
-from integrated_hessians.simulation.custom_additive_and_interactive_effects.config import (
+from integrated_hessians.simulation.randomized_additive_and_interactive_effects.config import (
     INTEGRATED_HESSIANS_SAMPLING_STEPS,
     TEST_DATA,
     OUT_BEST_MODEL,
     OUT_EXTRACTED_self_interactions_and_pair_interactions_sums,
     DEVICE,
+    MODEL_WIDTH_MULTIPLIER,
+    SEQLEN,
 )
 import torch
 from torch import Tensor
@@ -17,14 +19,14 @@ import json
 from integrated_hessians.simulation.model import CNNMLP
 import numpy as np
 
-BATCH_SIZE = 50
+BATCH_SIZE = 20
 
 
 def main():
     # setup
     test_data: list[SimulatedSequence] = get_test_data(TEST_DATA)[:3000]
 
-    model = CNNMLP()
+    model = CNNMLP(sequence_length=SEQLEN, width_multiplier=MODEL_WIDTH_MULTIPLIER)
     model.load_state_dict(torch.load(OUT_BEST_MODEL))
     model.eval()
     model = model.to(DEVICE)

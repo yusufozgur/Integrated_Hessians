@@ -49,6 +49,11 @@ Integrated Gradients is an interpretability method in deep learning, focused on 
 ```
 # Create the venv
 uv sync
+# Snakemake is the workflow manager
+# this command creates simulation data, trains models, runs analyses and saves analysis results
+uv run snakemake --cores all --jobs 1
+
+
 # Save the simulation train and test data
 uv run python '/home/fgsasse_lrs_4/Integrated_Hessians/src/integrated_hessians/simulation/simple_simulation/create_simulation.py'
 # Train the model
