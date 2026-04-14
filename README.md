@@ -65,6 +65,14 @@ uv run python src/integrated_hessians/simulation/simple_simulation/test_model.py
 uv run src/integrated_hessians/simulation/custom_additive_and_interactive_effects/run_all.py
 ```
 
+# Compiling documentation
+
+This command runs typst to update/create the documentation.pdf.
+
+```
+uv run typst compile documentation.typ
+```
+
 ## References
 
 Janizek , J. D., Sturmfels, P., & Lee, S. I. (2021). Explaining Explanations: Axiomatic Feature Interactions for Deep Networks. *Journal of Machine Learning Research*, 22(104), 1-54. http://jmlr.org/papers/v22/20-1223.html
