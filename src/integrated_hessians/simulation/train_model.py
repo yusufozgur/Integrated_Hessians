@@ -161,7 +161,7 @@ def evaluate(model, loader, criterion, device):
     return avg_loss, r2, mae
 
 
-if __name__ == "__main__":
+def main():
     config = sys.argv[1]
 
     with open(config, "r") as f:
@@ -178,3 +178,7 @@ if __name__ == "__main__":
         OUT_BEST_MODEL_EVAL=config["OUT_BEST_MODEL_EVAL"],
         MODEL_WIDTH_MULTIPLIER=config["MODEL_WIDTH_MULTIPLIER"],
     )
+
+
+if __name__ == "__main__":
+    main()

@@ -84,7 +84,7 @@ class Additive_And_Interactive(PhenotypeStrategy):
         return added_phenotype_by_current_motif
 
 
-if __name__ == "__main__":
+def main():
     config = sys.argv[1]
 
     with open(config, "r") as f:
@@ -98,3 +98,7 @@ if __name__ == "__main__":
         MOTIFS_FILE=config["MOTIFS_FILE"],
         SEQLEN=config["SEQLEN"],
     )
+
+
+if __name__ == "__main__":
+    main()

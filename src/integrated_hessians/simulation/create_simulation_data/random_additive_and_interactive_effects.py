@@ -106,7 +106,7 @@ class RandomizedAdditive_And_Interactive(PhenotypeStrategy):
         return added_phenotype_by_current_motif
 
 
-if __name__ == "__main__":
+def main():
     config = sys.argv[1]
 
     with open(config, "r") as f:
@@ -122,3 +122,7 @@ if __name__ == "__main__":
         OUT_ADDITIVE_DEFINED_EFFECTS=config["OUT_ADDITIVE_DEFINED_EFFECTS"],
         OUT_INTERACTIVE_DEFINED_EFFECTS=config["OUT_INTERACTIVE_DEFINED_EFFECTS"],
     )
+
+
+if __name__ == "__main__":
+    main()
