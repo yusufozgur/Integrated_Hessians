@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.20.4"
+__generated_with = "0.23.1"
 app = marimo.App(width="medium")
 
 
@@ -16,15 +16,16 @@ def _():
     import matplotlib.pyplot as plt
     from matplotlib.figure import Figure
     from sklearn.metrics import r2_score
+    import json
 
-    return Figure, NDArray, jx, mo, np, plt, r2_score, torch
+    return Figure, NDArray, Path, json, jx, mo, np, plt, r2_score, torch
 
 
 @app.cell
 def _():
     from integrated_hessians.simulation import Nucleotide_Sequence, SimulatedSequence
     from integrated_hessians.simulation.model import CNNMLP
-    from integrated_hessians.simulation.simple_simulation.train_model import (
+    from integrated_hessians.simulation.train_model import (
         MotifInteractionsDataset,
     )
     from integrated_hessians.simulation.plot import (
@@ -35,7 +36,7 @@ def _():
         plot_heatmap,
     )
     from integrated_hessians import get_hessian, get_integrated_hessians
-    from integrated_hessians.simulation.test_model.test_model_simple import (
+    from integrated_hessians.simulation.test_model import (
         get_test_data,
         plot_training_metrics,
         plot_gif_hessians_from_baseline_to_real,
@@ -80,30 +81,20 @@ def _(mo):
 
 
 @app.cell
-def _(simulation_dropdown):
-    match simulation_dropdown.value:
-        case "Simple":
-            from integrated_hessians.simulation.simple_simulation.config import (
-                TEST_DATA,
-                OUT_BEST_MODEL,
-                SEQLEN,
-                MODEL_WIDTH_MULTIPLIER,
-            )
-        case "Custom Additive and Interaction Effects":
-            from integrated_hessians.simulation.custom_additive_and_interactive_effects.config import (
-                TEST_DATA,
-                OUT_BEST_MODEL,
-                SEQLEN,
-                MODEL_WIDTH_MULTIPLIER,
-            )
-        case "Randomized Additive and Interaction Effects":
-            from integrated_hessians.simulation.randomized_additive_and_interactive_effects.config import (
-                TEST_DATA,
-                OUT_BEST_MODEL,
-                SEQLEN,
-                TRAIN_DATA,
-                MODEL_WIDTH_MULTIPLIER,
-            )
+def _(Path, json, simulation_dropdown):
+    config_paths = {
+        "Simple": "src/integrated_hessians/simulation/configs/simple.json",
+        "Custom Additive and Interaction Effects": "src/integrated_hessians/simulation/configs/custom.json",
+        "Randomized Additive and Interaction Effects": "src/integrated_hessians/simulation/configs/random.json",
+    }
+    chosen_config_path = config_paths[simulation_dropdown.value]
+    with open(chosen_config_path,"r") as f:
+        config = json.load(f)
+    TEST_DATA = Path(config["TEST_DATA"])
+    OUT_BEST_MODEL = config["OUT_BEST_MODEL"]
+    SEQLEN = config["SEQLEN"]
+    TRAIN_DATA = config["TRAIN_DATA"]
+    MODEL_WIDTH_MULTIPLIER = config["MODEL_WIDTH_MULTIPLIER"]
     return MODEL_WIDTH_MULTIPLIER, OUT_BEST_MODEL, SEQLEN, TEST_DATA
 
 
@@ -114,8 +105,8 @@ def _(TEST_DATA):
 
 
 @app.cell
-def _(TEST_DATA, get_test_data):
-    test_data = get_test_data(TEST_DATA)
+def _(SEQLEN, TEST_DATA, get_test_data):
+    test_data = get_test_data(TEST_DATA, SEQLEN)
     return (test_data,)
 
 
@@ -346,7 +337,7 @@ def _(
     interpolate_onehot,
     jx,
     model,
-    one_hot: 'jx.Float[NDArray[np.float32], "alphabet_length sequence_length"]',
+    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
     plot_epistasis_subsetted,
     show_hessian,
     subset_onehot_hessian,
@@ -380,11 +371,6 @@ def _(
 
 
 @app.cell
-def _():
-    return
-
-
-@app.cell
 def _(mo, show_integrated_hessian):
     sampling_steps = mo.ui.number(0, 200, 1, label="Sampling steps", value=10)
     mo.vstack(
@@ -400,7 +386,7 @@ def _(mo, show_integrated_hessian):
 def _(
     get_integrated_hessians,
     model,
-    one_hot: 'jx.Float[NDArray[np.float32], "alphabet_length sequence_length"]',
+    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
     one_hot_batched,
     plot_epistasis_subsetted,
     plt,
@@ -451,6 +437,7 @@ def _(
     ihnp_masked_sum_pair1,
     ihnp_masked_sum_pair2,
     integ_hess_result,
+    show_integrated_hessian_janizeketal,
 ):
     (
         f"{integ_hess_result.sum() = :.3f}",
@@ -460,7 +447,7 @@ def _(
         f"{ihnp_masked_selfinteractmotif1 = :.3f}",
         f"{ihnp_masked_selfinteractmotif2 = :.3f}",
         f"{all_sum = :.3f}",
-    )
+    ) if show_integrated_hessian_janizeketal.value else None
     return
 
 
@@ -470,61 +457,63 @@ def _(
     integ_hess_result,
     mask1,
     mask2,
-    one_hot: 'jx.Float[NDArray[np.float32], "alphabet_length sequence_length"]',
+    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
+    show_integrated_hessian,
     subset_onehot_hessian,
     torch,
 ):
-    ihnp = integ_hess_result.squeeze(0).numpy()
-    ihrealnp = (
-        subset_onehot_hessian(
-            calculated_hessian=integ_hess_result.squeeze(0),
-            one_hot_mask=torch.tensor(one_hot),
+    if show_integrated_hessian.value:
+        ihnp = integ_hess_result.squeeze(0).numpy()
+        ihrealnp = (
+            subset_onehot_hessian(
+                calculated_hessian=integ_hess_result.squeeze(0),
+                one_hot_mask=torch.tensor(one_hot),
+            )
+        ).numpy()
+    
+        ihrealnp_masked_sum_pair1 = (
+            ihrealnp * mask1.reshape(SEQLEN, 1) * mask2.reshape(1, SEQLEN)
+        ).sum()
+        ihrealnp_masked_sum_pair2 = (
+            ihrealnp * mask2.reshape(SEQLEN, 1) * mask1.reshape(1, SEQLEN)
+        ).sum()
+    
+        ihnp_masked_sum_pair1 = (
+            ihnp * mask1.reshape(SEQLEN, 1, 1, 1) * mask2.reshape(1, 1, SEQLEN, 1)
+        ).sum()
+        ihnp_masked_sum_pair2 = (
+            ihnp * mask1.reshape(1, 1, SEQLEN, 1) * mask2.reshape(SEQLEN, 1, 1, 1)
+        ).sum()
+    
+        ihrealnp_masked_selfinteractmotif1 = (
+            ihrealnp * mask1.reshape(SEQLEN, 1) * mask1.reshape(1, SEQLEN)
+        ).sum()
+    
+        ihrealnp_masked_selfinteractmotif2 = (
+            ihrealnp * mask2.reshape(SEQLEN, 1) * mask2.reshape(1, SEQLEN)
+        ).sum()
+    
+        ihnp_masked_selfinteractmotif1 = (
+            ihnp * mask1.reshape(1, 1, SEQLEN, 1) * mask1.reshape(SEQLEN, 1, 1, 1)
+        ).sum()
+    
+        ihnp_masked_selfinteractmotif2 = (
+            ihnp * mask2.reshape(1, 1, SEQLEN, 1) * mask2.reshape(SEQLEN, 1, 1, 1)
+        ).sum()
+    
+        allrealsum = (
+            ihrealnp_masked_sum_pair1
+            + ihrealnp_masked_sum_pair2
+            + ihrealnp_masked_selfinteractmotif1
+            + ihrealnp_masked_selfinteractmotif2
         )
-    ).numpy()
-
-    ihrealnp_masked_sum_pair1 = (
-        ihrealnp * mask1.reshape(SEQLEN, 1) * mask2.reshape(1, SEQLEN)
-    ).sum()
-    ihrealnp_masked_sum_pair2 = (
-        ihrealnp * mask2.reshape(SEQLEN, 1) * mask1.reshape(1, SEQLEN)
-    ).sum()
-
-    ihnp_masked_sum_pair1 = (
-        ihnp * mask1.reshape(SEQLEN, 1, 1, 1) * mask2.reshape(1, 1, SEQLEN, 1)
-    ).sum()
-    ihnp_masked_sum_pair2 = (
-        ihnp * mask1.reshape(1, 1, SEQLEN, 1) * mask2.reshape(SEQLEN, 1, 1, 1)
-    ).sum()
-
-    ihrealnp_masked_selfinteractmotif1 = (
-        ihrealnp * mask1.reshape(SEQLEN, 1) * mask1.reshape(1, SEQLEN)
-    ).sum()
-
-    ihrealnp_masked_selfinteractmotif2 = (
-        ihrealnp * mask2.reshape(SEQLEN, 1) * mask2.reshape(1, SEQLEN)
-    ).sum()
-
-    ihnp_masked_selfinteractmotif1 = (
-        ihnp * mask1.reshape(1, 1, SEQLEN, 1) * mask1.reshape(SEQLEN, 1, 1, 1)
-    ).sum()
-
-    ihnp_masked_selfinteractmotif2 = (
-        ihnp * mask2.reshape(1, 1, SEQLEN, 1) * mask2.reshape(SEQLEN, 1, 1, 1)
-    ).sum()
-
-    allrealsum = (
-        ihrealnp_masked_sum_pair1
-        + ihrealnp_masked_sum_pair2
-        + ihrealnp_masked_selfinteractmotif1
-        + ihrealnp_masked_selfinteractmotif2
-    )
-
-    all_sum = (
-        ihnp_masked_sum_pair1
-        + ihnp_masked_sum_pair2
-        + ihnp_masked_selfinteractmotif1
-        + ihnp_masked_selfinteractmotif2
-    )
+    
+        all_sum = (
+            ihnp_masked_sum_pair1
+            + ihnp_masked_sum_pair2
+            + ihnp_masked_selfinteractmotif1
+            + ihnp_masked_selfinteractmotif2
+        )
 
     (
         f"{ihrealnp_masked_sum_pair1 = :.3f}",
@@ -541,7 +530,7 @@ def _(
         f"{ihnp_masked_selfinteractmotif1 = :.3f}",
         f"{ihnp_masked_selfinteractmotif2 = :.3f}",
         f"{all_sum = :.3f}",
-    )
+    ) if show_integrated_hessian.value else None
     return (
         all_sum,
         ihnp_masked_selfinteractmotif1,
@@ -569,7 +558,7 @@ def _(mo, show_integrated_hessian_janizeketal):
 def _(
     SEQLEN,
     model,
-    one_hot: 'jx.Float[NDArray[np.float32], "alphabet_length sequence_length"]',
+    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
     one_hot_batched,
     plot_epistasis_subsetted,
     sampling_steps_janizeketal,

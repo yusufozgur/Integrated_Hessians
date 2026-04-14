@@ -1,4 +1,5 @@
 {
+    "NAME": "Simple Simulation",
     "MOTIFS_FILE": "src/integrated_hessians/simulation/motifs/simple_motifs.pfm",
     "TRAIN_DATA": "data/simple_simulation/100k.json",
     "TRAIN_DATA_SIZE": 1E5,
@@ -6,14 +7,16 @@
     "TEST_DATA_SIZE": 1E3,
     "OUT_BEST_MODEL": "data/simple_simulation/model_best.pth",
     "OUT_BEST_MODEL_EVAL": "data/simple_simulation/model_best_evaluation.json",
+    "OUT_TRAINING_METRICS_PLOT": "data/simple_simulation/training_metrics.svg",
     "TEST_OUTPUT": "src/integrated_hessians/simulation/simple_simulation/test/",
     "SEQLEN": 100,
     "BATCH_SIZE": 1000,
-    "EPOCHS": 20,
+    "EPOCHS": 40,
     "LR": 0.001,
     "L2_WEIGHT_DECAY": 1e-05,
     "INTEGRATED_HESSIANS_SAMPLING_STEPS": 100,
     "NUM_OF_ROWS_TESTED": 10,
     "DEVICE": "cuda",
-    "MODEL_WIDTH_MULTIPLIER": 10
+    "MODEL_WIDTH_MULTIPLIER": 10,
+    "BASELINE_FILL_VALUE": 0.25
 }

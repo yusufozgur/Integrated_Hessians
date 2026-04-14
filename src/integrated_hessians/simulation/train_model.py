@@ -1,6 +1,5 @@
 from pathlib import Path
 import sys
-
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
@@ -22,7 +21,6 @@ def train_model(
     OUT_BEST_MODEL_EVAL,
     MODEL_WIDTH_MULTIPLIER,
 ):
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
@@ -47,14 +45,32 @@ def train_model(
     )
 
     best_val_loss = float("inf")
-    train_losses = []
-    val_losses = []
+
+    # Tracking containers
+    all_train_epoch_losses = []
+    all_train_step_losses = []
+    all_val_epoch_losses = []
+    all_val_step_losses = []
+    # New tracking containers for R2 and MAE
+    all_val_r2 = []
+    all_val_mae = []
 
     for epoch in range(1, EPOCHS + 1):
-        train_loss = train(model, train_loader, optimizer, criterion, device)
-        train_losses.append(train_loss)
-        val_loss, val_r2, val_mae = evaluate(model, val_loader, criterion, device)
-        val_losses.append(val_loss)
+        # Training
+        train_loss, train_steps = train(
+            model, train_loader, optimizer, criterion, device
+        )
+        all_train_epoch_losses.append(train_loss)
+        all_train_step_losses.extend(train_steps)
+
+        # Validation
+        val_loss, val_r2, val_mae, val_steps = evaluate(
+            model, val_loader, criterion, device
+        )
+        all_val_epoch_losses.append(val_loss)
+        all_val_step_losses.extend(val_steps)
+        all_val_r2.append(val_r2)
+        all_val_mae.append(val_mae)
 
         print(
             f"Epoch {epoch:02d}/{EPOCHS} | "
@@ -72,8 +88,12 @@ def train_model(
                 "val_loss": round(val_loss, 4),
                 "val_r2": round(val_r2, 4),
                 "val_mae": round(val_mae, 4),
-                "train_losses": train_losses,
-                "val_losses": val_losses,
+                "train_epoch_losses": all_train_epoch_losses,
+                "train_step_losses": all_train_step_losses,
+                "val_epoch_losses": all_val_epoch_losses,
+                "val_step_losses": all_val_step_losses,
+                "val_r2_per_epoch": all_val_r2,
+                "val_mae_per_epoch": all_val_mae,
             }
             torch.save(model.state_dict(), OUT_BEST_MODEL)
             with open(OUT_BEST_MODEL_EVAL, "w") as f:
@@ -82,9 +102,10 @@ def train_model(
 
     model.load_state_dict(torch.load(OUT_BEST_MODEL))
     print(f"\nBest model (val_loss={best_val_loss:.4f}) saved to {OUT_BEST_MODEL}")
+
+    # Final save of the metrics for the best model state
     with open(OUT_BEST_MODEL_EVAL, "w") as f:
         json.dump(best_metrics, f, indent=2)  # pyright: ignore[reportPossiblyUnboundVariable]
-    print(f"Best metrics: {best_metrics}")  # pyright: ignore[reportPossiblyUnboundVariable]
 
 
 class MotifInteractionsDataset(Dataset):
@@ -114,8 +135,9 @@ class MotifInteractionsDataset(Dataset):
 def train(model, loader, optimizer, criterion, device):
     model.train()
     total_loss = 0.0
+    step_losses = []
 
-    for samples, labels in tqdm(loader):
+    for samples, labels in tqdm(loader, desc="Training"):
         samples = samples.to(device, dtype=torch.float32)
         labels = labels.to(device, dtype=torch.float32).unsqueeze(1)
 
@@ -125,14 +147,18 @@ def train(model, loader, optimizer, criterion, device):
         loss.backward()
         optimizer.step()
 
-        total_loss += loss.item() * len(samples)
+        batch_loss = loss.item()
+        step_losses.append(batch_loss)
+        total_loss += batch_loss * len(samples)
 
-    return total_loss / len(loader.dataset)
+    epoch_loss = total_loss / len(loader.dataset)
+    return epoch_loss, step_losses
 
 
 def evaluate(model, loader, criterion, device):
     model.eval()
     total_loss = 0.0
+    step_losses = []
     all_preds = []
     all_labels = []
 
@@ -142,7 +168,10 @@ def evaluate(model, loader, criterion, device):
             labels = labels.to(device, dtype=torch.float32).unsqueeze(1)
 
             outputs = model(samples)
-            total_loss += criterion(outputs, labels).item() * len(samples)
+            batch_loss_val = criterion(outputs, labels).item()
+
+            step_losses.append(batch_loss_val)
+            total_loss += batch_loss_val * len(samples)
 
             all_preds.append(outputs)
             all_labels.append(labels)
@@ -158,13 +187,16 @@ def evaluate(model, loader, criterion, device):
 
     mae = (all_labels - all_preds).abs().mean().item()
 
-    return avg_loss, r2, mae
+    return avg_loss, r2, mae, step_losses
 
 
 def main():
-    config = sys.argv[1]
+    if len(sys.argv) < 2:
+        print("Usage: python script.py <config_path>")
+        return
 
-    with open(config, "r") as f:
+    config_path = sys.argv[1]
+    with open(config_path, "r") as f:
         config = json.load(f)
 
     train_model(

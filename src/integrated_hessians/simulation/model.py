@@ -1,3 +1,5 @@
+from math import ceil
+
 from torch import nn
 from torch import Tensor
 from jaxtyping import Float, jaxtyped
@@ -19,24 +21,24 @@ class CNNMLP(nn.Module):
         super().__init__()
 
         self.sequence_length = sequence_length
-        assert sequence_length % 4 == 0
-        linear_layer_width = int(sequence_length * width_multiplier / 4)
+        linear_layer_width = ceil(sequence_length / 4) * width_multiplier
+        print(linear_layer_width)
 
         self.embedding = nn.Sequential(
             nn.Conv1d(
-                alphabet_size, width_multiplier, 15, padding=7, padding_mode="reflect"
+                alphabet_size, width_multiplier, 15, padding=7, padding_mode="zeros"
             ),
             nn.GELU(),
             nn.Dropout(dropout),
             nn.MaxPool1d(kernel_size=2, stride=2),
             nn.Conv1d(
-                width_multiplier, width_multiplier, 9, padding=4, padding_mode="reflect"
+                width_multiplier, width_multiplier, 9, padding=4, padding_mode="zeros"
             ),
             nn.GELU(),
             nn.Dropout(dropout),
             nn.MaxPool1d(kernel_size=2, stride=2),
             nn.Conv1d(
-                width_multiplier, width_multiplier, 9, padding=4, padding_mode="reflect"
+                width_multiplier, width_multiplier, 9, padding=4, padding_mode="zeros"
             ),
             nn.GELU(),
             nn.Dropout(dropout),

@@ -1,6 +1,7 @@
 {
+    "NAME": "Simulation: Random Additive and Interactive Effects",
     "MOTIFS_FILE": "src/integrated_hessians/simulation/motifs/custom_motifs.pfm",
-    "TRAIN_DATA": "data/randomized_additive_and_interactive_effects/1M.json",
+    "TRAIN_DATA": "data/randomized_additive_and_interactive_effects/100k.json",
     "OUT_BEST_MODEL": "data/randomized_additive_and_interactive_effects/model_best.pth",
     "OUT_BEST_MODEL_EVAL": "data/randomized_additive_and_interactive_effects/model_best_evaluation.json",
     "OUT_ADDITIVE_DEFINED_EFFECTS": "data/randomized_additive_and_interactive_effects/additive_defined_effects.json",
@@ -10,15 +11,17 @@
     "OUT_EXTRACTED_self_interactions_and_pair_interactions_sums": "data/randomized_additive_and_interactive_effects/self_interactions_and_pair_interactions_sums.json",
     "TEST_DATA": "data/randomized_additive_and_interactive_effects/10k_test.json",
     "TEST_OUTPUT": "src/integrated_hessians/simulation/randomized_additive_and_interactive_effects/test/",
-    "TRAIN_DATA_SIZE": 1E6,
+    "OUT_TRAINING_METRICS_PLOT": "data/randomized_additive_and_interactive_effects/training_metrics.svg",
+    "TRAIN_DATA_SIZE": 1E5,
     "TEST_DATA_SIZE": 1E4,
     "SEQLEN": 100,
     "BATCH_SIZE": 1000,
-    "EPOCHS": 20,
+    "EPOCHS": 40,
     "LR": 0.001,
     "L2_WEIGHT_DECAY": 1e-05,
     "INTEGRATED_HESSIANS_SAMPLING_STEPS": 100,
     "NUM_OF_ROWS_TESTED": 3,
     "DEVICE": "cuda",
-    "MODEL_WIDTH_MULTIPLIER": 30
+    "MODEL_WIDTH_MULTIPLIER": 10,
+    "BASELINE_FILL_VALUE": 0.25
 }

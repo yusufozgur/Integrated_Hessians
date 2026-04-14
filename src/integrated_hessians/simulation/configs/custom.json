@@ -1,4 +1,5 @@
 {
+    "NAME": "Simulation: Custom Additive and Interactive Effects",
     "MOTIFS_FILE": "src/integrated_hessians/simulation/motifs/custom_motifs.pfm",
     "TRAIN_DATA": "data/custom_additive_and_interactive_effects/100k.json",
     "TRAIN_DATA_SIZE": 1E5,
@@ -10,13 +11,15 @@
     "OUT_EXTRACTED_INTERACTIVE_EFFECTS": "data/custom_additive_and_interactive_effects/interactive_effects_extracted_from_integrated_hessians.json",
     "OUT_EXTRACTED_self_interactions_and_pair_interactions_sums": "data/custom_additive_and_interactive_effects/self_interactions_and_pair_interactions_sums.json",
     "TEST_OUTPUT": "src/integrated_hessians/simulation/custom_additive_and_interactive_effects/test/",
+    "OUT_TRAINING_METRICS_PLOT": "data/custom_additive_and_interactive_effects/training_metrics.svg",
     "SEQLEN": 100,
     "BATCH_SIZE": 1000,
-    "EPOCHS": 20,
+    "EPOCHS": 40,
     "LR": 0.001,
     "L2_WEIGHT_DECAY": 1e-05,
     "INTEGRATED_HESSIANS_SAMPLING_STEPS": 30,
     "NUM_OF_ROWS_TESTED": 3,
     "DEVICE": "cuda",
-    "MODEL_WIDTH_MULTIPLIER": 10
+    "MODEL_WIDTH_MULTIPLIER": 10,
+    "BASELINE_FILL_VALUE": 0.25
 }

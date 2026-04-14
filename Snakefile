@@ -20,14 +20,17 @@ rule all:
     input:
         [CONFIGS[s]["OUT_BEST_MODEL"] for s in SIM_NAMES],
         [CONFIGS[s]["OUT_BEST_MODEL_EVAL"] for s in SIM_NAMES],
+        [CONFIGS[s]["OUT_TRAINING_METRICS_PLOT"] for s in SIM_NAMES],
 
 # Instead of a normal for loop, we have a for loop with a function call. This prevents a bug where wrong configs being passed to scripts.
 def make_rules(sim):
     rule:
         name: f"simulate_dataset_{sim}"
-        input: CONFIG_PATHS[sim]
+        input: 
+            config=CONFIG_PATHS[sim],
+            script=SIMULATE_SCRIPTS[sim] # This line tracks the script as a dependency
         output: CONFIGS[sim]["TRAIN_DATA"], CONFIGS[sim]["TEST_DATA"]
-        shell: f"uv run {SIMULATE_SCRIPTS[sim]} {{input}}"
+        shell: f"uv run {{input.script}} {{input.config}}"
 
     rule:
         name: f"train_model_{sim}"
@@ -35,11 +38,24 @@ def make_rules(sim):
             CONFIGS[sim]["TRAIN_DATA"],
             CONFIGS[sim]["TEST_DATA"],
             config=CONFIG_PATHS[sim],
+            script="src/integrated_hessians/simulation/train_model.py", # This line tracks the script as a dependency
+            model="src/integrated_hessians/simulation/model.py"
         output:
             CONFIGS[sim]["OUT_BEST_MODEL"],
             CONFIGS[sim]["OUT_BEST_MODEL_EVAL"],
         shell:
-            f"uv run src/integrated_hessians/simulation/train_model.py {{input.config}}"
+            f"uv run {{input.script}} {{input.config}}"
+
+    rule:
+        name: f"test_{sim}"
+        input:
+            CONFIGS[sim]["OUT_BEST_MODEL_EVAL"],
+            config=CONFIG_PATHS[sim],
+            script="src/integrated_hessians/simulation/test_model/test_model.py"
+        output:
+            CONFIGS[sim]["OUT_TRAINING_METRICS_PLOT"],
+        shell:
+            f"uv run {{input.script}} {{input.config}}"
 
 for sim in SIM_NAMES:
     make_rules(sim)

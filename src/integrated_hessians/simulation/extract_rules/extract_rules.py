@@ -1,17 +1,10 @@
+import sys
+
 import jaxtyping as jx
 from integrated_hessians import get_integrated_hessians
 from integrated_hessians.simulation import SimulatedSequence
-from integrated_hessians.simulation.test_model.test_model_random import (
+from integrated_hessians.simulation.test_model.test_model import (
     get_test_data,
-)
-from integrated_hessians.simulation.randomized_additive_and_interactive_effects.config import (
-    INTEGRATED_HESSIANS_SAMPLING_STEPS,
-    TEST_DATA,
-    OUT_BEST_MODEL,
-    OUT_EXTRACTED_self_interactions_and_pair_interactions_sums,
-    DEVICE,
-    MODEL_WIDTH_MULTIPLIER,
-    SEQLEN,
 )
 import torch
 from torch import Tensor
@@ -24,7 +17,22 @@ BATCH_SIZE = 20
 
 def main():
     # setup
-    test_data: list[SimulatedSequence] = get_test_data(TEST_DATA)[:3000]
+    config = sys.argv[1]
+    with open(config, "r") as f:
+        config = json.load(f)
+
+    INTEGRATED_HESSIANS_SAMPLING_STEPS = config["INTEGRATED_HESSIANS_SAMPLING_STEPS"]
+    TEST_DATA = config["TEST_DATA"]
+    OUT_BEST_MODEL = config["OUT_BEST_MODEL"]
+    OUT_EXTRACTED_self_interactions_and_pair_interactions_sums = config[
+        "OUT_EXTRACTED_self_interactions_and_pair_interactions_sums"
+    ]
+    DEVICE = config["DEVICE"]
+    MODEL_WIDTH_MULTIPLIER = config["MODEL_WIDTH_MULTIPLIER"]
+    SEQLEN = config["SEQLEN"]
+    test_data: list[SimulatedSequence] = get_test_data(
+        test_path=TEST_DATA, SEQLEN=SEQLEN
+    )[:3000]
 
     model = CNNMLP(sequence_length=SEQLEN, width_multiplier=MODEL_WIDTH_MULTIPLIER)
     model.load_state_dict(torch.load(OUT_BEST_MODEL))
