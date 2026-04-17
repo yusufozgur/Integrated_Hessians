@@ -12,12 +12,11 @@ from tqdm import tqdm
 from tqdm.contrib import tzip
 
 from integrated_hessians.simulation import SimulatedSequence
-from integrated_hessians.simulation.plot import (
+from integrated_hessians.simulation.plots.interaction import (
     plot_epistasis,
     plot_epistasis_subsetted,
     plot_onehot,
     plot_binary_string,
-    plot_heatmap,
 )
 from integrated_hessians import get_integrated_hessians
 from integrated_hessians.simulation.test_model import (
@@ -125,7 +124,7 @@ def test_model():
     #         NDArray[np.float32], "alphabet_length sequence_length"
     #     ] = one_hot.transpose((1, 0))
     #     one_hot_batched: jx.Float[torch.Tensor, "1 alphabet_length sequence_length"] = (
-    #         torch.tensor(one_hot).type(torch.float32).unsqueeze(0)
+    #         torch.tensor(one_hot).type(torch.float).unsqueeze(0)
     #     )
 
     #     row_prediction = get_prediction(model=model, one_hot=one_hot)

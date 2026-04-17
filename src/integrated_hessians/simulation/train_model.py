@@ -138,8 +138,8 @@ def train(model, loader, optimizer, criterion, device):
     step_losses = []
 
     for samples, labels in tqdm(loader, desc="Training"):
-        samples = samples.to(device, dtype=torch.float32)
-        labels = labels.to(device, dtype=torch.float32).unsqueeze(1)
+        samples = samples.to(device, dtype=torch.float)
+        labels = labels.to(device, dtype=torch.float).unsqueeze(1)
 
         optimizer.zero_grad()
         outputs = model(samples)
@@ -164,8 +164,8 @@ def evaluate(model, loader, criterion, device):
 
     with torch.no_grad():
         for samples, labels in loader:
-            samples = samples.to(device, dtype=torch.float32)
-            labels = labels.to(device, dtype=torch.float32).unsqueeze(1)
+            samples = samples.to(device, dtype=torch.float)
+            labels = labels.to(device, dtype=torch.float).unsqueeze(1)
 
             outputs = model(samples)
             batch_loss_val = criterion(outputs, labels).item()

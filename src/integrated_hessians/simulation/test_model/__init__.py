@@ -30,11 +30,10 @@ def get_model(best_model: Path) -> torch.nn.Module:
 @jx.jaxtyped(typechecker=beartype)
 def get_prediction(
     model: torch.nn.Module,
-    one_hot: jx.Float[NDArray[np.float32], "sequence_length alphabet_length"],
+    batched_one_hot_input: jx.Float[torch.Tensor, "batch_size sequence_length alphabet_length"],
 ) -> float:
-    batched_input = torch.tensor(one_hot).unsqueeze(0)
     with torch.no_grad():
-        pred = model(batched_input.type(torch.float))
+        pred = model(batched_one_hot_input.type(torch.float))
     pred = float(pred[0, 0])
     return pred
 
@@ -42,13 +41,13 @@ def get_prediction(
 @jx.jaxtyped(typechecker=beartype)
 def get_attributions(
     model: torch.nn.Module,
-    one_hot: jx.Float[NDArray[np.float32], "alphabet_length sequence_length"],
+    batched_one_hot_input: jx.Float[torch.Tensor, "batch_size sequence_length alphabet_length"],
+    baseline = None,
 ):
-
-    input = torch.tensor(one_hot).unsqueeze(0).type(torch.float)
-    baseline = torch.full_like(input, 0)
+    if not baseline:
+        baseline = torch.full_like(batched_one_hot_input, .25)
     ig = IntegratedGradients(model, multiply_by_inputs=True)
-    attributions, delta = ig.attribute(input, baseline, return_convergence_delta=True)
+    attributions, delta = ig.attribute(batched_one_hot_input, baseline, return_convergence_delta=True)
     return attributions, delta
 
 
@@ -56,12 +55,6 @@ def interpolate_onehot(onehot_tensor, alpha):
     uniform = torch.full_like(onehot_tensor, 0.25)
     return (1 - alpha) * uniform + alpha * onehot_tensor
 
-
-def plot_training_metrics():
-    """
-    Plot test and validation losses, R2 vs epoch. Also plot phenotype vs predictions on test set alongisde R2.
-    """
-    pass
 
 
 @jx.jaxtyped(typechecker=beartype)

@@ -6,6 +6,23 @@ app = marimo.App(width="medium")
 
 @app.cell
 def _():
+    config_paths = {
+        "Simple": "src/integrated_hessians/simulation/configs/simple.json",
+        "Custom Additive and Interaction Effects": "src/integrated_hessians/simulation/configs/custom.json",
+        "Randomized Additive and Interaction Effects": "src/integrated_hessians/simulation/configs/random.json",
+    }
+    evaluation_paths = {
+        "Simple": "data/simple_simulation/model_best_evaluation.json",
+        "Custom Additive and Interaction Effects": "data/custom_additive_and_interactive_effects/model_best_evaluation.json",
+        "Randomized Additive and Interaction Effects": "data/randomized_additive_and_interactive_effects/model_best_evaluation.json",
+    }
+    fig_width = 14
+    fig_genomic_line_height = .125
+    return config_paths, evaluation_paths, fig_genomic_line_height, fig_width
+
+
+@app.cell
+def _():
     import marimo as mo
     from pathlib import Path
     from captum.attr import IntegratedGradients
@@ -17,8 +34,9 @@ def _():
     from matplotlib.figure import Figure
     from sklearn.metrics import r2_score
     import json
+    from torch import Tensor
 
-    return Figure, NDArray, Path, json, jx, mo, np, plt, r2_score, torch
+    return Path, Tensor, json, jx, mo, np, plt, r2_score, torch
 
 
 @app.cell
@@ -28,17 +46,14 @@ def _():
     from integrated_hessians.simulation.train_model import (
         MotifInteractionsDataset,
     )
-    from integrated_hessians.simulation.plot import (
-        plot_epistasis,
-        plot_epistasis_subsetted,
-        plot_onehot,
-        plot_binary_string,
-        plot_heatmap,
-    )
+    from integrated_hessians.simulation import NUCLEOTIDE_ORDER
+    from integrated_hessians.simulation.plots.heatmap import plot_heatmap
+    from integrated_hessians.simulation.plots.training_metrics import plot_training_metrics
+    from integrated_hessians.simulation.plots.interaction import plot_interaction_subsetted
+
     from integrated_hessians import get_hessian, get_integrated_hessians
     from integrated_hessians.simulation.test_model import (
         get_test_data,
-        plot_training_metrics,
         plot_gif_hessians_from_baseline_to_real,
         get_prediction,
         get_attributions,
@@ -48,6 +63,7 @@ def _():
 
     return (
         CNNMLP,
+        NUCLEOTIDE_ORDER,
         SimulatedSequence,
         get_attributions,
         get_hessian,
@@ -55,11 +71,8 @@ def _():
         get_prediction,
         get_test_data,
         interpolate_onehot,
-        plot_binary_string,
-        plot_epistasis_subsetted,
-        plot_gif_hessians_from_baseline_to_real,
         plot_heatmap,
-        plot_onehot,
+        plot_interaction_subsetted,
         plot_training_metrics,
         subset_onehot_hessian,
     )
@@ -81,12 +94,7 @@ def _(mo):
 
 
 @app.cell
-def _(Path, json, simulation_dropdown):
-    config_paths = {
-        "Simple": "src/integrated_hessians/simulation/configs/simple.json",
-        "Custom Additive and Interaction Effects": "src/integrated_hessians/simulation/configs/custom.json",
-        "Randomized Additive and Interaction Effects": "src/integrated_hessians/simulation/configs/random.json",
-    }
+def _(Path, config_paths, json, simulation_dropdown):
     chosen_config_path = config_paths[simulation_dropdown.value]
     with open(chosen_config_path,"r") as f:
         config = json.load(f)
@@ -99,21 +107,15 @@ def _(Path, json, simulation_dropdown):
 
 
 @app.cell
-def _(TEST_DATA):
-    TEST_DATA
-    return
-
-
-@app.cell
 def _(SEQLEN, TEST_DATA, get_test_data):
     test_data = get_test_data(TEST_DATA, SEQLEN)
     return (test_data,)
 
 
 @app.cell
-def _(test_data):
+def _(mo, test_data):
     set_of_names = sorted(list(set([x.motif_names[0] for x in test_data])))
-    set_of_names
+    mo.vstack(["Motif names:", set_of_names])
     return (set_of_names,)
 
 
@@ -125,7 +127,7 @@ def _(mo, set_of_names):
     motif2_choose = mo.ui.dropdown(
         options=set_of_names + ["Any"], value="Any", label="Motif2:"
     )
-    motif1_choose, motif2_choose
+    mo.vstack(["Subset sequences",motif1_choose, motif2_choose])
     return motif1_choose, motif2_choose
 
 
@@ -152,6 +154,23 @@ def _(all_phens, all_preds, plt, r2_score):
 
 
 @app.cell
+def _(evaluation_paths, json, plot_training_metrics, simulation_dropdown):
+    # Updated file path per your request
+    with open(evaluation_paths[simulation_dropdown.value]) as ff:
+        data = json.load(ff)
+    plot_training_metrics(
+        "Training metrics",
+        data["train_epoch_losses"],
+        data["train_step_losses"],
+        data["val_epoch_losses"],
+        data["val_step_losses"],
+        data["val_r2_per_epoch"],
+        data["val_mae_per_epoch"],
+    )
+    return
+
+
+@app.cell
 def _(mo):
     SELECTEd_ROW = mo.ui.number(0, 200, 1, label="Choose Row")
     SELECTEd_ROW
@@ -161,24 +180,11 @@ def _(mo):
 @app.cell
 def _(
     CNNMLP,
-    Figure,
     MODEL_WIDTH_MULTIPLIER,
-    NDArray,
     OUT_BEST_MODEL,
     SELECTEd_ROW,
     SEQLEN,
     SimulatedSequence,
-    get_attributions,
-    get_hessian,
-    get_prediction,
-    jx,
-    np,
-    plot_binary_string,
-    plot_gif_hessians_from_baseline_to_real,
-    plot_heatmap,
-    plot_onehot,
-    plot_training_metrics,
-    plt,
     subsetted_data,
     torch,
 ):
@@ -186,99 +192,145 @@ def _(
     model = CNNMLP(sequence_length=SEQLEN, width_multiplier=MODEL_WIDTH_MULTIPLIER)
     model.load_state_dict(torch.load(OUT_BEST_MODEL))
     model.eval()
-    # TODO
-    plot_training_metrics()
-    plot_gif_hessians_from_baseline_to_real()
-    one_hot: jx.Float[NDArray[np.float32], "alphabet_length sequence_length"] = (
-        test_row.one_hot
-    )
-    row_prediction = get_prediction(model=model, one_hot=one_hot)
-    attributions, ig_delta = get_attributions(model=model, one_hot=one_hot)
-    one_hot_permuted: jx.Float[
-        NDArray[np.float32], "alphabet_length sequence_length"
-    ] = one_hot.transpose((1, 0))
-    attributions_permuted: jx.Float[
-        NDArray[np.float32], "alphabet_length sequence_length"
-    ] = attributions.squeeze(0).numpy().transpose((1, 0))
-    real_attributions = np.sum(
-        one_hot_permuted * attributions_permuted, axis=0
-    ).reshape(1, -1)
-    one_hot_batched = torch.tensor(one_hot).type(torch.float32).unsqueeze(0)
+    None
+    return model, test_row
+
+
+@app.cell
+def _(
+    Tensor,
+    get_attributions,
+    get_prediction,
+    jx,
+    model,
+    test_row: "SimulatedSequence",
+    torch,
+):
+    one_hot: jx.Float[Tensor, "alphabet_length sequence_length"] = torch.from_numpy(test_row.one_hot).unsqueeze(0).type(torch.float)
+    row_prediction = get_prediction(model=model, batched_one_hot_input=one_hot)
+    attributions, ig_delta = get_attributions(model=model, batched_one_hot_input=one_hot)
+    return attributions, ig_delta, one_hot, row_prediction
+
+
+@app.cell
+def _():
+    # attributions_permuted: jx.Float[
+    #     NDArray[np.float32], "alphabet_length sequence_length"
+    # ] = attributions.squeeze(0).numpy().transpose((1, 0))
+    return
+
+
+@app.cell
+def _(
+    get_hessian,
+    jx,
+    model,
+    one_hot: "jx.Float[Tensor, \"alphabet_length sequence_length\"]",
+    torch,
+):
     calculated_hessian: jx.Float[
         torch.Tensor,
         "batch_size alphabet_length sequence_length batch_size alphabet_length sequence_length",
-    ] = get_hessian(model=model, input=one_hot_batched, target=0)
+    ] = get_hessian(model=model, input=one_hot, target=0)
     # batch size is 1, so remove that dimension
     calculated_hessian: jx.Float[
         torch.Tensor,
         "alphabet_length sequence_length alphabet_length sequence_length",
     ] = calculated_hessian.squeeze(0).squeeze(2)
+    return
 
-    # test_row_plot_fig, _ = test_and_plot_selected_row(
-    #     sequence=test_row.nucleotides,
-    #     one_hot=one_hot_permuted,
-    #     attributions=attributions_permuted,
-    #     integrated_gradients_delta=float(ig_delta),
-    #     real_attributions=real_attributions,
-    #     phenotype=test_row.phenotype,
-    #     prediction=row_prediction,
-    #     motif_mask_1=test_row.motif_mask_1,
-    #     motif_type_1=test_row.motif_types[0].name,
-    #     motif_mask_2=test_row.motif_mask_2,
-    #     motif_type_2=test_row.motif_types[1].name,
-    #     calculated_hessian=calculated_hessian,
-    # )
 
-    test_row_plot_fig: Figure
-    test_row_plot_axes: np.ndarray
-    test_row_plot_fig, test_row_plot_axes = plt.subplots(
-        ncols=1,
-        nrows=5,
-        figsize=(10, 6),
-        sharex=True,  # guarantees column alignment
-        height_ratios=[8, 1, 1, 8, 1],
-        layout="constrained",
-    )
-
+@app.cell
+def _(
+    NUCLEOTIDE_ORDER,
+    fig_genomic_line_height,
+    one_hot: "jx.Float[Tensor, \"alphabet_length sequence_length\"]",
+    plot_heatmap,
+    row_prediction,
+    test_row: "SimulatedSequence",
+):
     # - One hot encoded sequence heatmap
-    plot_onehot(
-        sequence=test_row.nucleotides,
-        one_hot=one_hot_permuted,
-        ax=test_row_plot_axes[0],
-        title=f"Phen: {test_row.phenotype} Pred: {row_prediction: .3}",
-    )
-    # - Annotate motif 1 and motif 2 location in heatmap, label their names/roles
-    plot_binary_string(
-        test_row.motif_mask_1,
-        test_row_plot_axes[1],
-        title=test_row.motif_names[0],
-    )
-    plot_binary_string(
-        test_row.motif_mask_2,
-        test_row_plot_axes[2],
-        title=test_row.motif_names[1],
-    )
-
-    # - Plot Integrated Gradients heatmap
-    plot_onehot(
-        sequence=test_row.nucleotides,
-        one_hot=attributions_permuted,
-        ax=test_row_plot_axes[3],
-        title=f"Integrated Gradients (Multiplied input: true), delta: {float(ig_delta): .3f}",
-        cmap="bwr",
-    )
-    # - Subset integrated gradients for existing nucleotides and show in heatmap
     plot_heatmap(
-        matrix=real_attributions,
-        row_labels=["Real base"],
-        col_labels=list(test_row.nucleotides),
-        ax=test_row_plot_axes[4],
-        cmap="bwr",
-        title="Real Attributions",
+        one_hot[0].permute((1, 0)),
+        cmap="Grays", 
+        title=f"Phen: {test_row.phenotype} Pred: {row_prediction: .3}",
+        fig_height=fig_genomic_line_height*4, 
+        fig_width=14, 
+        row_labels=NUCLEOTIDE_ORDER,
+        col_labels=list(test_row.nucleotides)
     )
+    return
 
-    test_row_plot_fig
-    return model, one_hot, one_hot_batched, real_attributions, test_row
+
+@app.cell
+def _(
+    fig_genomic_line_height,
+    fig_width,
+    mo,
+    np,
+    plot_heatmap,
+    test_row: "SimulatedSequence",
+):
+    # - Annotate motif 1 and motif 2 location in heatmap, label their names/roles
+    motif1 = plot_heatmap(
+        np.array([list(map(int,list(test_row.motif_mask_1)))]),
+        title=test_row.motif_names[0], 
+        row_labels=[" "], # for well alignment with onehot plot
+        cmap="Grays",
+        fig_height=fig_genomic_line_height, 
+        fig_width=fig_width)
+    motif2 = plot_heatmap(
+        np.array([list(map(int,list(test_row.motif_mask_2)))]),
+        title=test_row.motif_names[1], 
+        row_labels=[" "],
+        cmap="Grays",
+        fig_height=fig_genomic_line_height, 
+        fig_width=fig_width)
+    mo.vstack([motif1, motif2])
+    return
+
+
+@app.cell
+def _(
+    NUCLEOTIDE_ORDER,
+    attributions,
+    ig_delta,
+    plot_heatmap,
+    test_row: "SimulatedSequence",
+):
+    # - One hot encoded Integrated Gradients
+    plot_heatmap(
+        attributions.squeeze(0).numpy().transpose((1, 0)),
+        cmap="bwr", 
+        title=f"Integrated Gradients (Multiplied input: true), delta: {float(ig_delta): .3f}",
+        fig_height=1, 
+        fig_width=14, 
+        row_labels=NUCLEOTIDE_ORDER,
+        col_labels=list(test_row.nucleotides)
+    )
+    None # Uncomment this to show integrated gradients in one hot form
+    return
+
+
+@app.cell
+def _(
+    attributions,
+    fig_genomic_line_height,
+    ig_delta,
+    plot_heatmap,
+    test_row: "SimulatedSequence",
+):
+    # - Dimensional reduced Integrated Gradients
+    plot_heatmap(
+        attributions.squeeze(0).sum(dim=1)[None,:].numpy(),
+        cmap="bwr", 
+        title=f"Integrated Gradients first dim summed (Real Positions), delta: {float(ig_delta): .3f}",
+        fig_height=fig_genomic_line_height, 
+        fig_width=14, 
+        row_labels=[" "],
+        col_labels=list(test_row.nucleotides)
+    )
+    return
 
 
 @app.cell
@@ -291,12 +343,12 @@ def _(model, test_data, torch):
 
 
 @app.cell
-def _(np, real_attributions, test_row: "SimulatedSequence"):
-    mask1 = np.array([int(x) for x in test_row.motif_mask_1])
-    mask2 = np.array([int(x) for x in test_row.motif_mask_2])
+def _(attributions, test_row: "SimulatedSequence", torch):
+    mask1 = torch.tensor([int(x) for x in test_row.motif_mask_1])
+    mask2 = torch.tensor([int(x) for x in test_row.motif_mask_2])
     (
-        f"First motif with name: {test_row.motif_names[0]} has attr sum: {(real_attributions[0] * mask1).sum(): .3f}",
-        f"Second motif with name: {test_row.motif_names[1]} has attr sum: {(real_attributions[0] * mask2).sum(): .3f}",
+        f"First motif with name: {test_row.motif_names[0]} has attr sum: {(attributions[0] * mask1[:,None]).sum(): .3f}",
+        f"Second motif with name: {test_row.motif_names[1]} has attr sum: {(attributions[0] * mask2[:,None]).sum(): .3f}",
     )
     return mask1, mask2
 
@@ -337,32 +389,32 @@ def _(
     interpolate_onehot,
     jx,
     model,
-    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
-    plot_epistasis_subsetted,
+    one_hot: "jx.Float[Tensor, \"alphabet_length sequence_length\"]",
+    plot_interaction_subsetted,
     show_hessian,
     subset_onehot_hessian,
     torch,
 ):
     interpolation = interpolate_onehot(
-        torch.tensor(one_hot), baseline_to_input_alpha.value
+        one_hot, baseline_to_input_alpha.value
     )
 
     interpolation_hessian: jx.Float[
         torch.Tensor,
         "alphabet_length sequence_length alphabet_length sequence_length",
     ] = get_hessian(
-        model=model, input=interpolation.unsqueeze(0).type(torch.float32), target=0
+        model=model, input=interpolation, target=0
     )
 
     interpolation_hessian = interpolation_hessian.squeeze(0).squeeze(2)
     interpolation_hessian.shape
 
-    pred_interpolation = get_prediction(model, interpolation.numpy())
+    pred_interpolation = get_prediction(model, interpolation)
 
-    hessian_interaction_plot = plot_epistasis_subsetted(
+    hessian_interaction_plot = plot_interaction_subsetted(
         hessian_onehot_subsetted=subset_onehot_hessian(
             calculated_hessian=interpolation_hessian,
-            one_hot_mask=torch.tensor(one_hot),
+            one_hot_mask=one_hot[0],
         ).numpy(),
         title=f"Hessian of input with prediction {pred_interpolation: .3f}",
     )
@@ -386,9 +438,8 @@ def _(mo, show_integrated_hessian):
 def _(
     get_integrated_hessians,
     model,
-    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
-    one_hot_batched,
-    plot_epistasis_subsetted,
+    one_hot: "jx.Float[Tensor, \"alphabet_length sequence_length\"]",
+    plot_interaction_subsetted,
     plt,
     sampling_steps,
     show_integrated_hessian,
@@ -398,8 +449,8 @@ def _(
     if show_integrated_hessian.value:
         integ_hess_result, ih_delta = get_integrated_hessians(
             model=model,
-            inputs=one_hot_batched,
-            baselines=torch.full_like(one_hot_batched, 0.25),
+            inputs=one_hot,
+            baselines=torch.full_like(one_hot, 0.25),
             target=0,
             approximation_steps=sampling_steps.value,
             optimize_for_duplicate_interpolation_values=True,
@@ -409,10 +460,10 @@ def _(
             nrows=1, ncols=2, figsize=(10, 4)
         )
 
-        ih_interaction_plot_subsetted = plot_epistasis_subsetted(
+        ih_interaction_plot_subsetted = plot_interaction_subsetted(
             hessian_onehot_subsetted=subset_onehot_hessian(
                 calculated_hessian=integ_hess_result.squeeze(0),
-                one_hot_mask=torch.tensor(one_hot),
+                one_hot_mask=one_hot[0],
             )
             .detach()
             .numpy(),
@@ -431,83 +482,60 @@ def _(
 
 @app.cell
 def _(
-    all_sum,
-    ihnp_masked_selfinteractmotif1,
-    ihnp_masked_selfinteractmotif2,
-    ihnp_masked_sum_pair1,
-    ihnp_masked_sum_pair2,
-    integ_hess_result,
-    show_integrated_hessian_janizeketal,
-):
-    (
-        f"{integ_hess_result.sum() = :.3f}",
-        f"{ihnp_masked_sum_pair1 = :.3f}",
-        f"{ihnp_masked_sum_pair2 = :.3f}",
-        f"{ihnp_masked_sum_pair1 + ihnp_masked_sum_pair2 = :.3f}",
-        f"{ihnp_masked_selfinteractmotif1 = :.3f}",
-        f"{ihnp_masked_selfinteractmotif2 = :.3f}",
-        f"{all_sum = :.3f}",
-    ) if show_integrated_hessian_janizeketal.value else None
-    return
-
-
-@app.cell
-def _(
     SEQLEN,
     integ_hess_result,
     mask1,
     mask2,
-    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
+    one_hot: "jx.Float[Tensor, \"alphabet_length sequence_length\"]",
     show_integrated_hessian,
     subset_onehot_hessian,
-    torch,
 ):
     if show_integrated_hessian.value:
-        ihnp = integ_hess_result.squeeze(0).numpy()
+        ihnp = integ_hess_result[None,...]
         ihrealnp = (
             subset_onehot_hessian(
                 calculated_hessian=integ_hess_result.squeeze(0),
-                one_hot_mask=torch.tensor(one_hot),
+                one_hot_mask=one_hot[0],
             )
-        ).numpy()
-    
+        )
+
         ihrealnp_masked_sum_pair1 = (
             ihrealnp * mask1.reshape(SEQLEN, 1) * mask2.reshape(1, SEQLEN)
         ).sum()
         ihrealnp_masked_sum_pair2 = (
             ihrealnp * mask2.reshape(SEQLEN, 1) * mask1.reshape(1, SEQLEN)
         ).sum()
-    
+
         ihnp_masked_sum_pair1 = (
             ihnp * mask1.reshape(SEQLEN, 1, 1, 1) * mask2.reshape(1, 1, SEQLEN, 1)
         ).sum()
         ihnp_masked_sum_pair2 = (
             ihnp * mask1.reshape(1, 1, SEQLEN, 1) * mask2.reshape(SEQLEN, 1, 1, 1)
         ).sum()
-    
+
         ihrealnp_masked_selfinteractmotif1 = (
             ihrealnp * mask1.reshape(SEQLEN, 1) * mask1.reshape(1, SEQLEN)
         ).sum()
-    
+
         ihrealnp_masked_selfinteractmotif2 = (
             ihrealnp * mask2.reshape(SEQLEN, 1) * mask2.reshape(1, SEQLEN)
         ).sum()
-    
+
         ihnp_masked_selfinteractmotif1 = (
             ihnp * mask1.reshape(1, 1, SEQLEN, 1) * mask1.reshape(SEQLEN, 1, 1, 1)
         ).sum()
-    
+
         ihnp_masked_selfinteractmotif2 = (
             ihnp * mask2.reshape(1, 1, SEQLEN, 1) * mask2.reshape(SEQLEN, 1, 1, 1)
         ).sum()
-    
+
         allrealsum = (
             ihrealnp_masked_sum_pair1
             + ihrealnp_masked_sum_pair2
             + ihrealnp_masked_selfinteractmotif1
             + ihrealnp_masked_selfinteractmotif2
         )
-    
+
         all_sum = (
             ihnp_masked_sum_pair1
             + ihnp_masked_sum_pair2
@@ -531,13 +559,7 @@ def _(
         f"{ihnp_masked_selfinteractmotif2 = :.3f}",
         f"{all_sum = :.3f}",
     ) if show_integrated_hessian.value else None
-    return (
-        all_sum,
-        ihnp_masked_selfinteractmotif1,
-        ihnp_masked_selfinteractmotif2,
-        ihnp_masked_sum_pair1,
-        ihnp_masked_sum_pair2,
-    )
+    return
 
 
 @app.cell
@@ -558,7 +580,7 @@ def _(mo, show_integrated_hessian_janizeketal):
 def _(
     SEQLEN,
     model,
-    one_hot: "jx.Float[NDArray[np.float32], \"alphabet_length sequence_length\"]",
+    one_hot: "jx.Float[Tensor, \"alphabet_length sequence_length\"]",
     one_hot_batched,
     plot_epistasis_subsetted,
     sampling_steps_janizeketal,

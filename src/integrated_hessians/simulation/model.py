@@ -22,7 +22,6 @@ class CNNMLP(nn.Module):
 
         self.sequence_length = sequence_length
         linear_layer_width = ceil(sequence_length / 4) * width_multiplier
-        print(linear_layer_width)
 
         self.embedding = nn.Sequential(
             nn.Conv1d(
