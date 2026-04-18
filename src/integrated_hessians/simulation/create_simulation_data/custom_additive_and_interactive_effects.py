@@ -48,25 +48,25 @@ class Additive_And_Interactive(PhenotypeStrategy):
         # full additive: 5
         # half interaction half additive: 6, 6,1
         self.additive_effects = {
-            "Motif1": 0,
-            "Motif2": 0,
-            "Motif3": 0,
-            "Motif4": 0.25,
-            "Motif5": 0.5,
-            "Motif6": 0.25,
-            "Random1": 0,
-            "Random2": 0,
+            "no_1_weak_interactive": 0,
+            "no_2_dynamic_interactive": 0,
+            "no_3_strong_interactive": 0,
+            "no_4_weak_additive": 0.25,
+            "no_5_strong_additive": 0.5,
+            "no_6_weak_interactive_weak_additive": 0.25,
+            "no_7_random": 0,
+            "no_8_random": 0,
         }
         self.interactive_effects = {
-            #
-            ("Motif1", "Motif2"): 0.25,
-            ("Motif2", "Motif1"): 0.25,
-            #
-            ("Motif2", "Motif3"): 0.5,
-            ("Motif3", "Motif2"): 0.5,
-            #
-            ("Motif1", "Motif6"): 0.25,
-            ("Motif6", "Motif1"): 0.25,
+            # weak interaction
+            ("no_1_weak_interactive", "no_2_dynamic_interactive"): 0.25,
+            ("Motif2", "no_1_weak_interactive"): 0.25,
+            # strong interaction
+            ("no_2_dynamic_interactive", "no_3_strong_interactive"): 0.5,
+            ("no_3_strong_interactive", "no_2_dynamic_interactive"): 0.5,
+            # weak interaction with hybrid
+            ("no_1_weak_interactive", "no_6_weak_interactive_weak_additive"): 0.25,
+            ("no_6_weak_interactive_weak_additive", "no_1_weak_interactive"): 0.25,
         }
 
     def get_phenotype_contribution(
