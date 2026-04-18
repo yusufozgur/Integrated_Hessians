@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.colors as mcolors
 
+
 def plot_heatmap(
     matrix: np.ndarray,
     row_labels: list[str] = [],
@@ -12,14 +13,13 @@ def plot_heatmap(
     ax: Optional[Axes] = None,
     cmap: str = "bwr",
     text: bool = False,
-    fig_width = 6,
-    fig_height = 4
-    # add_colorbar: bool = True,
+    fig_width=6,
+    fig_height=4,
+    add_colorbar: bool = True,
 ) -> Axes:
     """Generic heatmap with borders. matrix shape: (n_rows x n_cols)."""
     if ax is None:
-        _, ax = plt.subplots(figsize=(fig_width,fig_height))
-
+        _, ax = plt.subplots(figsize=(fig_width, fig_height))
 
     n_rows, n_cols = matrix.shape
     for x in range(n_cols + 1):
@@ -61,7 +61,7 @@ def plot_heatmap(
 
     im = ax.imshow(matrix, cmap=cmap, aspect="auto", norm=norm)
     # if add_colorbar:
-        # divider = make_axes_locatable(ax)
-        # cax = divider.append_axes("right", size="3%", pad=0.05)
-        # plt.colorbar(im, cax=cax)
+    # divider = make_axes_locatable(ax)
+    # cax = divider.append_axes("right", size="3%", pad=0.05)
+    # plt.colorbar(im, cax=cax)
     return ax

@@ -16,9 +16,14 @@ def _():
         "Custom Additive and Interaction Effects": "data/custom_additive_and_interactive_effects/model_best_evaluation.json",
         "Randomized Additive and Interaction Effects": "data/randomized_additive_and_interactive_effects/model_best_evaluation.json",
     }
-    fig_width = 14
+    figs_common_width = 14
     fig_genomic_line_height = .125
-    return config_paths, evaluation_paths, fig_genomic_line_height, fig_width
+    return (
+        config_paths,
+        evaluation_paths,
+        fig_genomic_line_height,
+        figs_common_width,
+    )
 
 
 @app.cell
@@ -107,9 +112,43 @@ def _(Path, config_paths, json, simulation_dropdown):
 
 
 @app.cell
+def _(evaluation_paths, json, plot_training_metrics, simulation_dropdown):
+    # Updated file path per your request
+    with open(evaluation_paths[simulation_dropdown.value]) as ff:
+        data = json.load(ff)
+    plot_training_metrics(
+        "Training metrics",
+        data["train_epoch_losses"],
+        data["train_step_losses"],
+        data["val_epoch_losses"],
+        data["val_step_losses"],
+        data["val_r2_per_epoch"],
+        data["val_mae_per_epoch"],
+    )
+    return
+
+
+@app.cell
 def _(SEQLEN, TEST_DATA, get_test_data):
     test_data = get_test_data(TEST_DATA, SEQLEN)
     return (test_data,)
+
+
+@app.cell
+def _(all_phens, all_preds, plt, r2_score):
+    plt.scatter(all_phens, all_preds, alpha=0.01)
+    r2 = r2_score(all_phens, all_preds)
+    plt.title(f"phens vs preds. R2: {r2}")
+    return
+
+
+@app.cell
+def _(model, test_data, torch):
+    onehot_all = torch.tensor([x.one_hot for x in test_data], dtype=torch.float)
+    all_phens = [x.phenotype for x in test_data]
+    with torch.no_grad():
+        all_preds = model(onehot_all)
+    return all_phens, all_preds
 
 
 @app.cell
@@ -117,18 +156,6 @@ def _(mo, test_data):
     set_of_names = sorted(list(set([x.motif_names[0] for x in test_data])))
     mo.vstack(["Motif names:", set_of_names])
     return (set_of_names,)
-
-
-@app.cell
-def _(mo, set_of_names):
-    motif1_choose = mo.ui.dropdown(
-        options=set_of_names + ["Any"], value="Any", label="Motif1:"
-    )
-    motif2_choose = mo.ui.dropdown(
-        options=set_of_names + ["Any"], value="Any", label="Motif2:"
-    )
-    mo.vstack(["Subset sequences",motif1_choose, motif2_choose])
-    return motif1_choose, motif2_choose
 
 
 @app.cell
@@ -146,28 +173,15 @@ def _(motif1_choose, motif2_choose, test_data):
 
 
 @app.cell
-def _(all_phens, all_preds, plt, r2_score):
-    plt.scatter(all_phens, all_preds, alpha=0.01)
-    r2 = r2_score(all_phens, all_preds)
-    plt.title(f"phens vs preds. R2: {r2}")
-    return
-
-
-@app.cell
-def _(evaluation_paths, json, plot_training_metrics, simulation_dropdown):
-    # Updated file path per your request
-    with open(evaluation_paths[simulation_dropdown.value]) as ff:
-        data = json.load(ff)
-    plot_training_metrics(
-        "Training metrics",
-        data["train_epoch_losses"],
-        data["train_step_losses"],
-        data["val_epoch_losses"],
-        data["val_step_losses"],
-        data["val_r2_per_epoch"],
-        data["val_mae_per_epoch"],
+def _(mo, set_of_names):
+    motif1_choose = mo.ui.dropdown(
+        options=set_of_names + ["Any"], value="Any", label="Motif1:"
     )
-    return
+    motif2_choose = mo.ui.dropdown(
+        options=set_of_names + ["Any"], value="Any", label="Motif2:"
+    )
+    mo.vstack(["Subset sequences",motif1_choose, motif2_choose])
+    return motif1_choose, motif2_choose
 
 
 @app.cell
@@ -244,6 +258,7 @@ def _(
 def _(
     NUCLEOTIDE_ORDER,
     fig_genomic_line_height,
+    figs_common_width,
     one_hot: "jx.Float[Tensor, \"alphabet_length sequence_length\"]",
     plot_heatmap,
     row_prediction,
@@ -255,9 +270,10 @@ def _(
         cmap="Grays", 
         title=f"Phen: {test_row.phenotype} Pred: {row_prediction: .3}",
         fig_height=fig_genomic_line_height*4, 
-        fig_width=14, 
+        fig_width=figs_common_width, 
         row_labels=NUCLEOTIDE_ORDER,
-        col_labels=list(test_row.nucleotides)
+        col_labels=list(test_row.nucleotides),
+        add_colorbar=False
     )
     return
 
@@ -265,7 +281,7 @@ def _(
 @app.cell
 def _(
     fig_genomic_line_height,
-    fig_width,
+    figs_common_width,
     mo,
     np,
     plot_heatmap,
@@ -278,14 +294,16 @@ def _(
         row_labels=[" "], # for well alignment with onehot plot
         cmap="Grays",
         fig_height=fig_genomic_line_height, 
-        fig_width=fig_width)
+        fig_width=figs_common_width
+        ,add_colorbar=False)
     motif2 = plot_heatmap(
         np.array([list(map(int,list(test_row.motif_mask_2)))]),
         title=test_row.motif_names[1], 
         row_labels=[" "],
         cmap="Grays",
         fig_height=fig_genomic_line_height, 
-        fig_width=fig_width)
+        fig_width=figs_common_width
+        ,add_colorbar=False)
     mo.vstack([motif1, motif2])
     return
 
@@ -294,6 +312,7 @@ def _(
 def _(
     NUCLEOTIDE_ORDER,
     attributions,
+    figs_common_width,
     ig_delta,
     plot_heatmap,
     test_row: "SimulatedSequence",
@@ -304,7 +323,7 @@ def _(
         cmap="bwr", 
         title=f"Integrated Gradients (Multiplied input: true), delta: {float(ig_delta): .3f}",
         fig_height=1, 
-        fig_width=14, 
+        fig_width=figs_common_width, 
         row_labels=NUCLEOTIDE_ORDER,
         col_labels=list(test_row.nucleotides)
     )
@@ -316,6 +335,7 @@ def _(
 def _(
     attributions,
     fig_genomic_line_height,
+    figs_common_width,
     ig_delta,
     plot_heatmap,
     test_row: "SimulatedSequence",
@@ -326,20 +346,11 @@ def _(
         cmap="bwr", 
         title=f"Integrated Gradients first dim summed (Real Positions), delta: {float(ig_delta): .3f}",
         fig_height=fig_genomic_line_height, 
-        fig_width=14, 
+        fig_width=figs_common_width, 
         row_labels=[" "],
         col_labels=list(test_row.nucleotides)
     )
     return
-
-
-@app.cell
-def _(model, test_data, torch):
-    onehot_all = torch.tensor([x.one_hot for x in test_data], dtype=torch.float)
-    all_phens = [x.phenotype for x in test_data]
-    with torch.no_grad():
-        all_preds = model(onehot_all)
-    return all_phens, all_preds
 
 
 @app.cell
@@ -481,17 +492,53 @@ def _(
 
 
 @app.cell
+def _(ih):
+    ih.shape
+    return
+
+
+@app.cell
+def _(figs_common_width, ih, plot_heatmap):
+    tmp = ih.clone()
+    print(tmp.shape)
+    tmp[:,0,:,3] = 1
+    tmp = tmp.diagonal(dim1=0,dim2=2)
+    plot_heatmap(tmp.reshape(16,100),fig_width=figs_common_width)
+    return
+
+
+@app.cell
+def _(ih):
+    ih.diagonal(dim1=0,dim2=2).shape
+    return
+
+
+@app.cell
+def _(SEQLEN, torch):
+    diagg = torch.eye(SEQLEN)#.reshape(SEQLEN, 1, SEQLEN, 1)
+    diagg.shape
+    return (diagg,)
+
+
+@app.cell
+def _(diagg, ih):
+    ih[diagg[0].bool(),:,diagg[1].bool(),:].shape
+    return
+
+
+@app.cell
 def _(
     SEQLEN,
     integ_hess_result,
     mask1,
     mask2,
+    mo,
     one_hot: "jx.Float[Tensor, \"alphabet_length sequence_length\"]",
     show_integrated_hessian,
     subset_onehot_hessian,
 ):
     if show_integrated_hessian.value:
-        ihnp = integ_hess_result[None,...]
+        ih = integ_hess_result[0]
         ihrealnp = (
             subset_onehot_hessian(
                 calculated_hessian=integ_hess_result.squeeze(0),
@@ -499,66 +546,78 @@ def _(
             )
         )
 
-        ihrealnp_masked_sum_pair1 = (
-            ihrealnp * mask1.reshape(SEQLEN, 1) * mask2.reshape(1, SEQLEN)
+        # ihrealnp_masked_sum_pair1 = (
+        #     ihrealnp * mask1.reshape(SEQLEN, 1) * mask2.reshape(1, SEQLEN)
+        # ).sum()
+        # ihrealnp_masked_sum_pair2 = (
+        #     ihrealnp * mask2.reshape(SEQLEN, 1) * mask1.reshape(1, SEQLEN)
+        # ).sum()
+
+        ih_masked_sum_pair1 = (
+            ih * mask1.reshape(SEQLEN, 1, 1, 1) * mask2.reshape(1, 1, SEQLEN, 1)
         ).sum()
-        ihrealnp_masked_sum_pair2 = (
-            ihrealnp * mask2.reshape(SEQLEN, 1) * mask1.reshape(1, SEQLEN)
+        ih_masked_sum_pair2 = (
+            ih * mask1.reshape(1, 1, SEQLEN, 1) * mask2.reshape(SEQLEN, 1, 1, 1)
         ).sum()
 
-        ihnp_masked_sum_pair1 = (
-            ihnp * mask1.reshape(SEQLEN, 1, 1, 1) * mask2.reshape(1, 1, SEQLEN, 1)
-        ).sum()
-        ihnp_masked_sum_pair2 = (
-            ihnp * mask1.reshape(1, 1, SEQLEN, 1) * mask2.reshape(SEQLEN, 1, 1, 1)
+        # ihrealnp_masked_selfinteractmotif1 = (
+        #     ihrealnp * mask1.reshape(SEQLEN, 1) * mask1.reshape(1, SEQLEN)
+        # ).sum()
+
+        # ihrealnp_masked_selfinteractmotif2 = (
+        #     ihrealnp * mask2.reshape(SEQLEN, 1) * mask2.reshape(1, SEQLEN)
+        # ).sum()
+
+        ih_masked_selfinteractmotif1 = (
+            ih * mask1.reshape(1, 1, SEQLEN, 1) * mask1.reshape(SEQLEN, 1, 1, 1)
         ).sum()
 
-        ihrealnp_masked_selfinteractmotif1 = (
-            ihrealnp * mask1.reshape(SEQLEN, 1) * mask1.reshape(1, SEQLEN)
+        ih_masked_selfinteractmotif2 = (
+            ih * mask2.reshape(1, 1, SEQLEN, 1) * mask2.reshape(SEQLEN, 1, 1, 1)
         ).sum()
 
-        ihrealnp_masked_selfinteractmotif2 = (
-            ihrealnp * mask2.reshape(SEQLEN, 1) * mask2.reshape(1, SEQLEN)
-        ).sum()
-
-        ihnp_masked_selfinteractmotif1 = (
-            ihnp * mask1.reshape(1, 1, SEQLEN, 1) * mask1.reshape(SEQLEN, 1, 1, 1)
-        ).sum()
-
-        ihnp_masked_selfinteractmotif2 = (
-            ihnp * mask2.reshape(1, 1, SEQLEN, 1) * mask2.reshape(SEQLEN, 1, 1, 1)
-        ).sum()
-
-        allrealsum = (
-            ihrealnp_masked_sum_pair1
-            + ihrealnp_masked_sum_pair2
-            + ihrealnp_masked_selfinteractmotif1
-            + ihrealnp_masked_selfinteractmotif2
-        )
+        # allrealsum = (
+        #     ihrealnp_masked_sum_pair1
+        #     + ihrealnp_masked_sum_pair2
+        #     + ihrealnp_masked_selfinteractmotif1
+        #     + ihrealnp_masked_selfinteractmotif2
+        # )
 
         all_sum = (
-            ihnp_masked_sum_pair1
-            + ihnp_masked_sum_pair2
-            + ihnp_masked_selfinteractmotif1
-            + ihnp_masked_selfinteractmotif2
+            ih_masked_sum_pair1
+            + ih_masked_sum_pair2
+            + ih_masked_selfinteractmotif1
+            + ih_masked_selfinteractmotif2
         )
 
-    (
-        f"{ihrealnp_masked_sum_pair1 = :.3f}",
-        f"{ihrealnp_masked_sum_pair2 = :.3f}",
-        f"{ihrealnp_masked_sum_pair1 + ihrealnp_masked_sum_pair2 = :.3f}",
-        f"{ihrealnp_masked_selfinteractmotif1 = :.3f}",
-        f"{ihrealnp_masked_selfinteractmotif2 = :.3f}",
-        f"{allrealsum = :.3f}",
-        f"{ihrealnp.sum() = :.3f}",
-        f"{integ_hess_result.sum() = :.3f}",
-        f"{ihnp_masked_sum_pair1 = :.3f}",
-        f"{ihnp_masked_sum_pair2 = :.3f}",
-        f"{ihnp_masked_sum_pair1 + ihnp_masked_sum_pair2 = :.3f}",
-        f"{ihnp_masked_selfinteractmotif1 = :.3f}",
-        f"{ihnp_masked_selfinteractmotif2 = :.3f}",
-        f"{all_sum = :.3f}",
-    ) if show_integrated_hessian.value else None
+    mo.vstack([
+        "For integrated hessian:",
+        # f"{ihrealnp_masked_sum_pair1 = :.3f}",
+        # f"{ihrealnp_masked_sum_pair2 = :.3f}",
+        # f"{ihrealnp_masked_sum_pair1 + ihrealnp_masked_sum_pair2 = :.3f}",
+        # f"{ihrealnp_masked_selfinteractmotif1 = :.3f}",
+        # f"{ihrealnp_masked_selfinteractmotif2 = :.3f}",
+        # f"{allrealsum = :.3f}",
+        # f"{ihrealnp.sum() = :.3f}",
+        f"Overall sum of integrated hessian is {integ_hess_result.sum() :.3f}",
+        # f"{ih_masked_sum_pair1 = :.3f}",
+        # f"{ih_masked_sum_pair2 = :.3f}",
+        # f"{ih_masked_sum_pair1 + ih_masked_sum_pair2 = :.3f}",
+        f"Sum of fist motif pair region {ih_masked_sum_pair1:.3f}",
+        f"Sum of second motif pair region {ih_masked_sum_pair2:.3f}",
+        f"Sum of both Motif Pair regions in {ih_masked_sum_pair1 + ih_masked_sum_pair2:.3f}",
+        f"IH sum for motif1 only (self interaction) {ih_masked_selfinteractmotif1 :.3f}",
+        f"IH sum for motif2 only (self interaction)  {ih_masked_selfinteractmotif2 :.3f}",
+        f"Sum of selft interacitons and pair interactions: {all_sum:.3f}",
+    ]) if show_integrated_hessian.value else None
+    return (ih,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Janizek comparison
+    """)
     return
 
 

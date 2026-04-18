@@ -12,12 +12,7 @@ from tqdm import tqdm
 from tqdm.contrib import tzip
 
 from integrated_hessians.simulation import SimulatedSequence
-from integrated_hessians.simulation.plots.interaction import (
-    plot_epistasis,
-    plot_epistasis_subsetted,
-    plot_onehot,
-    plot_binary_string,
-)
+from integrated_hessians.simulation.plots.interaction import plot_interaction_subsetted
 from integrated_hessians import get_integrated_hessians
 from integrated_hessians.simulation.test_model import (
     get_attributions,
