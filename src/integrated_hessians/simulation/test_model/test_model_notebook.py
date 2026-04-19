@@ -111,6 +111,14 @@ def _(Path, config_paths, json, simulation_dropdown):
     return MODEL_WIDTH_MULTIPLIER, OUT_BEST_MODEL, SEQLEN, TEST_DATA
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Training Metrics
+    """)
+    return
+
+
 @app.cell
 def _(evaluation_paths, json, plot_training_metrics, simulation_dropdown):
     # Updated file path per your request
@@ -149,6 +157,14 @@ def _(model, test_data, torch):
     with torch.no_grad():
         all_preds = model(onehot_all)
     return all_phens, all_preds
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Interpretability
+    """)
+    return
 
 
 @app.cell
@@ -217,13 +233,54 @@ def _(
     get_prediction,
     jx,
     model,
+    sampling_options,
     test_row: "SimulatedSequence",
     torch,
 ):
-    one_hot: jx.Float[Tensor, "alphabet_length sequence_length"] = torch.from_numpy(test_row.one_hot).unsqueeze(0).type(torch.float)
+    one_hot: jx.Float[Tensor, "1 alphabet_length sequence_length"] = torch.from_numpy(test_row.one_hot).unsqueeze(0).type(torch.float)
+    mask1 = torch.tensor([int(x) for x in test_row.motif_mask_1])
+    mask2 = torch.tensor([int(x) for x in test_row.motif_mask_2])
+
+    match sampling_options.value:
+        case "None":
+            pass
+        case "Keep motif1, shuffle the rest":
+            shuffle_indices = torch.where(~mask1.bool())[0] # only shuffle outside mask1
+            permuted_indices = shuffle_indices[torch.randperm(shuffle_indices.size(0))]
+            shuffled_one_hot = one_hot.clone()
+            shuffled_one_hot[:, shuffle_indices, :] = one_hot[:, permuted_indices, :]
+            one_hot = shuffled_one_hot
+
+            mask2 = torch.zeros_like(mask2)
+        case "Keep motif2, shuffle the rest":
+            shuffle_indices = torch.where(~mask2.bool())[0] # only shuffle outside mask1
+            permuted_indices = shuffle_indices[torch.randperm(shuffle_indices.size(0))]
+            shuffled_one_hot = one_hot.clone()
+            shuffled_one_hot[:, shuffle_indices, :] = one_hot[:, permuted_indices, :]
+            one_hot = shuffled_one_hot
+        
+            mask1 = torch.zeros_like(mask1)
+        case "Shuffle Everything":
+            #shuffling, this is only suitable for batch size 1 tensors as otherwise all samples will be shuffled the same
+            # Generate random indices for the target dimension (dim 1)
+            shuffling_indices = torch.randperm(one_hot.size(1))
+            # Index into the tensor along dimension 1
+            one_hot = one_hot[:, shuffling_indices, :]
+        
+            mask1 = torch.zeros_like(mask1)
+            mask2 = torch.zeros_like(mask2)
+        case _:
+            raise Exception("Invalid option")
+
+
     row_prediction = get_prediction(model=model, batched_one_hot_input=one_hot)
     attributions, ig_delta = get_attributions(model=model, batched_one_hot_input=one_hot)
-    return attributions, ig_delta, one_hot, row_prediction
+    return attributions, ig_delta, mask1, mask2, one_hot, row_prediction
+
+
+@app.cell
+def _():
+    return
 
 
 @app.cell
@@ -239,7 +296,7 @@ def _(
     get_hessian,
     jx,
     model,
-    one_hot: "jx.Float[Tensor, \"alphabet_length sequence_length\"]",
+    one_hot: "jx.Float[Tensor, \"1 alphabet_length sequence_length\"]",
     torch,
 ):
     calculated_hessian: jx.Float[
@@ -259,7 +316,7 @@ def _(
     NUCLEOTIDE_ORDER,
     fig_genomic_line_height,
     figs_common_width,
-    one_hot: "jx.Float[Tensor, \"alphabet_length sequence_length\"]",
+    one_hot: "jx.Float[Tensor, \"1 alphabet_length sequence_length\"]",
     plot_heatmap,
     row_prediction,
     test_row: "SimulatedSequence",
@@ -279,17 +336,24 @@ def _(
 
 
 @app.cell
+def _(np, test_row: "SimulatedSequence"):
+    np.array([list(map(int,list(test_row.motif_mask_1)))])
+    return
+
+
+@app.cell
 def _(
     fig_genomic_line_height,
     figs_common_width,
+    mask1,
+    mask2,
     mo,
-    np,
     plot_heatmap,
     test_row: "SimulatedSequence",
 ):
     # - Annotate motif 1 and motif 2 location in heatmap, label their names/roles
     motif1 = plot_heatmap(
-        np.array([list(map(int,list(test_row.motif_mask_1)))]),
+        mask1.unsqueeze(0),
         title=test_row.motif_names[0], 
         row_labels=[" "], # for well alignment with onehot plot
         cmap="Grays",
@@ -297,7 +361,7 @@ def _(
         fig_width=figs_common_width
         ,add_colorbar=False)
     motif2 = plot_heatmap(
-        np.array([list(map(int,list(test_row.motif_mask_2)))]),
+        mask2.unsqueeze(0),
         title=test_row.motif_names[1], 
         row_labels=[" "],
         cmap="Grays",
@@ -306,6 +370,13 @@ def _(
         ,add_colorbar=False)
     mo.vstack([motif1, motif2])
     return
+
+
+@app.cell
+def _(mo):
+    sampling_options = mo.ui.radio(options=["None","Keep motif1, shuffle the rest","Keep motif2, shuffle the rest","Shuffle Everything"], label="Sampling Options", value="None")
+    sampling_options
+    return (sampling_options,)
 
 
 @app.cell
@@ -354,14 +425,12 @@ def _(
 
 
 @app.cell
-def _(attributions, test_row: "SimulatedSequence", torch):
-    mask1 = torch.tensor([int(x) for x in test_row.motif_mask_1])
-    mask2 = torch.tensor([int(x) for x in test_row.motif_mask_2])
+def _(attributions, mask1, mask2, test_row: "SimulatedSequence"):
     (
         f"First motif with name: {test_row.motif_names[0]} has attr sum: {(attributions[0] * mask1[:,None]).sum(): .3f}",
         f"Second motif with name: {test_row.motif_names[1]} has attr sum: {(attributions[0] * mask2[:,None]).sum(): .3f}",
     )
-    return mask1, mask2
+    return
 
 
 @app.cell
@@ -400,7 +469,7 @@ def _(
     interpolate_onehot,
     jx,
     model,
-    one_hot: "jx.Float[Tensor, \"alphabet_length sequence_length\"]",
+    one_hot: "jx.Float[Tensor, \"1 alphabet_length sequence_length\"]",
     plot_interaction_subsetted,
     show_hessian,
     subset_onehot_hessian,
@@ -449,7 +518,7 @@ def _(mo, show_integrated_hessian):
 def _(
     get_integrated_hessians,
     model,
-    one_hot: "jx.Float[Tensor, \"alphabet_length sequence_length\"]",
+    one_hot: "jx.Float[Tensor, \"1 alphabet_length sequence_length\"]",
     plot_interaction_subsetted,
     plt,
     sampling_steps,
@@ -499,9 +568,10 @@ def _(ih):
 
 @app.cell
 def _(figs_common_width, ih, plot_heatmap):
+    #trying to get diagonals
     tmp = ih.clone()
     print(tmp.shape)
-    tmp[:,0,:,3] = 1
+    # tmp[:,0,:,3] = 1
     tmp = tmp.diagonal(dim1=0,dim2=2)
     plot_heatmap(tmp.reshape(16,100),fig_width=figs_common_width)
     return
@@ -533,7 +603,7 @@ def _(
     mask1,
     mask2,
     mo,
-    one_hot: "jx.Float[Tensor, \"alphabet_length sequence_length\"]",
+    one_hot: "jx.Float[Tensor, \"1 alphabet_length sequence_length\"]",
     show_integrated_hessian,
     subset_onehot_hessian,
 ):
@@ -603,7 +673,7 @@ def _(
         # f"{ih_masked_sum_pair1 = :.3f}",
         # f"{ih_masked_sum_pair2 = :.3f}",
         # f"{ih_masked_sum_pair1 + ih_masked_sum_pair2 = :.3f}",
-        f"Sum of fist motif pair region {ih_masked_sum_pair1:.3f}",
+        f"Sum of first motif pair region {ih_masked_sum_pair1:.3f}",
         f"Sum of second motif pair region {ih_masked_sum_pair2:.3f}",
         f"Sum of both Motif Pair regions in {ih_masked_sum_pair1 + ih_masked_sum_pair2:.3f}",
         f"IH sum for motif1 only (self interaction) {ih_masked_selfinteractmotif1 :.3f}",
@@ -639,7 +709,7 @@ def _(mo, show_integrated_hessian_janizeketal):
 def _(
     SEQLEN,
     model,
-    one_hot: "jx.Float[Tensor, \"alphabet_length sequence_length\"]",
+    one_hot: "jx.Float[Tensor, \"1 alphabet_length sequence_length\"]",
     one_hot_batched,
     plot_epistasis_subsetted,
     sampling_steps_janizeketal,
