@@ -60,7 +60,7 @@ class Additive_And_Interactive(PhenotypeStrategy):
         self.interactive_effects = {
             # weak interaction
             ("no_1_weak_interactive", "no_2_dynamic_interactive"): 0.25,
-            ("Motif2", "no_1_weak_interactive"): 0.25,
+            ("no_2_dynamic_interactive", "no_1_weak_interactive"): 0.25,
             # strong interaction
             ("no_2_dynamic_interactive", "no_3_strong_interactive"): 0.5,
             ("no_3_strong_interactive", "no_2_dynamic_interactive"): 0.5,

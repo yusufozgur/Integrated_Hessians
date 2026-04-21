@@ -52,17 +52,6 @@ uv sync
 # Snakemake is the workflow manager
 # this command creates simulation data, trains models, runs analyses and saves analysis results
 uv run snakemake --cores all --jobs 1
-
-
-# Save the simulation train and test data
-uv run python '/home/fgsasse_lrs_4/Integrated_Hessians/src/integrated_hessians/simulation/simple_simulation/create_simulation.py'
-# Train the model
-uv run python src/integrated_hessians/simulation/simple_simulation/train_model.py
-# Test the model and create plots
-uv run python src/integrated_hessians/simulation/simple_simulation/test_model.py
-
-# or
-uv run src/integrated_hessians/simulation/custom_additive_and_interactive_effects/run_all.py
 ```
 
 # Compiling documentation

@@ -258,7 +258,7 @@ def _(
             shuffled_one_hot = one_hot.clone()
             shuffled_one_hot[:, shuffle_indices, :] = one_hot[:, permuted_indices, :]
             one_hot = shuffled_one_hot
-        
+
             mask1 = torch.zeros_like(mask1)
         case "Shuffle Everything":
             #shuffling, this is only suitable for batch size 1 tensors as otherwise all samples will be shuffled the same
@@ -266,7 +266,7 @@ def _(
             shuffling_indices = torch.randperm(one_hot.size(1))
             # Index into the tensor along dimension 1
             one_hot = one_hot[:, shuffling_indices, :]
-        
+
             mask1 = torch.zeros_like(mask1)
             mask2 = torch.zeros_like(mask2)
         case _:
@@ -279,7 +279,23 @@ def _(
 
 
 @app.cell
-def _():
+def _(
+    get_prediction,
+    model,
+    one_hot: "jx.Float[Tensor, \"1 alphabet_length sequence_length\"]",
+    torch,
+):
+    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,-1)))
+    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,-.5)))
+    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,0)))
+    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,.05)))
+    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,.075)))
+    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,.1)))
+    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,.2)))
+    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,.25)))
+    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,.5)))
+    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,.75)))
+    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,1)))
     return
 
 
@@ -332,12 +348,6 @@ def _(
         col_labels=list(test_row.nucleotides),
         add_colorbar=False
     )
-    return
-
-
-@app.cell
-def _(np, test_row: "SimulatedSequence"):
-    np.array([list(map(int,list(test_row.motif_mask_1)))])
     return
 
 
@@ -515,6 +525,13 @@ def _(mo, show_integrated_hessian):
 
 
 @app.cell
+def _():
+    # sampling_options = mo.ui.radio(options=["None","Keep motif1, shuffle the rest","Keep motif2, shuffle the rest","Shuffle Everything"], label="Sampling Options", value="None")
+    # sampling_options
+    return
+
+
+@app.cell
 def _(
     get_integrated_hessians,
     model,
@@ -526,11 +543,12 @@ def _(
     subset_onehot_hessian,
     torch,
 ):
+    baseline_fill = 0.25
     if show_integrated_hessian.value:
         integ_hess_result, ih_delta = get_integrated_hessians(
             model=model,
             inputs=one_hot,
-            baselines=torch.full_like(one_hot, 0.25),
+            baselines=torch.full_like(one_hot, baseline_fill),
             target=0,
             approximation_steps=sampling_steps.value,
             optimize_for_duplicate_interpolation_values=True,
@@ -557,42 +575,50 @@ def _(
         integ_hess_plots_fig = None
 
     integ_hess_plots_fig
-    return (integ_hess_result,)
+    return baseline_fill, integ_hess_result
 
 
 @app.cell
-def _(ih):
-    ih.shape
+def _():
     return
 
 
 @app.cell
-def _(figs_common_width, ih, plot_heatmap):
+def _(integ_hess_result, show_integrated_hessian):
+    from integrated_hessians.simulation.plots.interaction import plot_genomic_interaction
+    plot_genomic_interaction(
+        integ_hess_result.squeeze(0).permute(0,2,1,3),
+        fig_height=50,fig_width=50
+    ) if show_integrated_hessian.value else None
+    return
+
+
+@app.cell
+def _(
+    NUCLEOTIDE_ORDER,
+    figs_common_width,
+    ih,
+    plot_heatmap,
+    show_integrated_hessian,
+    test_row: "SimulatedSequence",
+):
     #trying to get diagonals
-    tmp = ih.clone()
-    print(tmp.shape)
-    # tmp[:,0,:,3] = 1
-    tmp = tmp.diagonal(dim1=0,dim2=2)
-    plot_heatmap(tmp.reshape(16,100),fig_width=figs_common_width)
-    return
-
-
-@app.cell
-def _(ih):
-    ih.diagonal(dim1=0,dim2=2).shape
-    return
-
-
-@app.cell
-def _(SEQLEN, torch):
-    diagg = torch.eye(SEQLEN)#.reshape(SEQLEN, 1, SEQLEN, 1)
-    diagg.shape
-    return (diagg,)
-
-
-@app.cell
-def _(diagg, ih):
-    ih[diagg[0].bool(),:,diagg[1].bool(),:].shape
+    if show_integrated_hessian.value:
+        tmp = ih.clone()
+        print(tmp.shape)
+        # tmp[:,3,:,0] = 1 # testing
+        tmp = tmp.diagonal(dim1=0,dim2=2)
+        row_labels = []
+        for n1 in NUCLEOTIDE_ORDER:
+            for n2 in NUCLEOTIDE_ORDER:
+                row_labels.append(n1+n2)
+    plot_heatmap(
+        tmp.reshape(16,100),
+        fig_width=figs_common_width, 
+        title="Diagonals of IH",
+        row_labels=row_labels,
+        col_labels=list(test_row.nucleotides)
+    ) if show_integrated_hessian.value else None
     return
 
 
@@ -678,9 +704,58 @@ def _(
         f"Sum of both Motif Pair regions in {ih_masked_sum_pair1 + ih_masked_sum_pair2:.3f}",
         f"IH sum for motif1 only (self interaction) {ih_masked_selfinteractmotif1 :.3f}",
         f"IH sum for motif2 only (self interaction)  {ih_masked_selfinteractmotif2 :.3f}",
-        f"Sum of selft interacitons and pair interactions: {all_sum:.3f}",
+        f"Sum of self interacitons and pair interactions: {all_sum:.3f}",
     ]) if show_integrated_hessian.value else None
-    return (ih,)
+    return (
+        all_sum,
+        ih,
+        ih_masked_selfinteractmotif1,
+        ih_masked_selfinteractmotif2,
+        ih_masked_sum_pair1,
+        ih_masked_sum_pair2,
+    )
+
+
+@app.cell
+def _(
+    all_sum,
+    ih_masked_selfinteractmotif1,
+    ih_masked_selfinteractmotif2,
+    ih_masked_sum_pair1,
+    ih_masked_sum_pair2,
+    integ_hess_result,
+    np,
+    plt,
+    show_integrated_hessian,
+):
+    if show_integrated_hessian.value:
+        attr_plot_data = np.array(
+            [
+                [
+                    ih_masked_selfinteractmotif1,
+                    ih_masked_sum_pair1
+                ],[
+                    ih_masked_sum_pair2,
+                    ih_masked_selfinteractmotif2
+                ]]
+        )
+        attr_plot_fig, attr_plot_ax = plt.subplots(figsize=(6, 6))
+        attr_plot_ax.imshow(attr_plot_data, cmap="bwr", vmin=-1, vmax=1)
+        attr_plot_ax.text(0,0,f"self interact 1: {ih_masked_selfinteractmotif1 :.3f}",ha="center",va="center",fontsize=14,)
+        attr_plot_ax.text(1,0,f"pair1: {ih_masked_sum_pair1: .3f}",ha="center",va="center",fontsize=14,)
+        attr_plot_ax.text(0,1,f"pair2: {ih_masked_sum_pair2: .3f}",ha="center",va="center",fontsize=14,)
+        attr_plot_ax.text(1,1,f"self interact 2: {ih_masked_selfinteractmotif2 :.3f}",ha="center",va="center",fontsize=14,)
+        attr_plot_ax.set_xticks([0, 1])
+        attr_plot_ax.set_xticklabels(["motif1", "motif2"])
+        attr_plot_ax.set_yticks([0, 1])
+        attr_plot_ax.set_yticklabels(["motif1", "motif2"])
+        attr_plot_ax.set_title(f"Sums of Regions in IH \nOverall IH Sum: {integ_hess_result.sum() :.3f} \nSum of these four regions: {all_sum:.3f}")
+        attr_plot_ax.set_xticks([-0.5, 0.5, 1.5], minor=True)
+        attr_plot_ax.set_yticks(np.arange(-0.5, 2, 1), minor=True)
+        attr_plot_ax.grid(which="minor", color="black", linewidth=1)
+        attr_plot_ax.tick_params(which="minor", length=0)
+    attr_plot_ax if show_integrated_hessian.value else None
+    return
 
 
 @app.cell(hide_code=True)
@@ -708,6 +783,7 @@ def _(mo, show_integrated_hessian_janizeketal):
 @app.cell
 def _(
     SEQLEN,
+    baseline_fill,
     model,
     one_hot: "jx.Float[Tensor, \"1 alphabet_length sequence_length\"]",
     one_hot_batched,
@@ -729,7 +805,7 @@ def _(
         exp = PathExplainerTorch(exp_reshaper)
 
         exp_input = one_hot_batched.reshape(1, SEQLEN * 4)
-        exp_baseline = torch.full_like(exp_input, 0.25)
+        exp_baseline = torch.full_like(exp_input, baseline_fill)
         exp_baseline.shape
 
         exp_input.requires_grad_(True)
@@ -744,7 +820,7 @@ def _(
 
         exp_ih_delta = (
             model(one_hot_batched)
-            - model(torch.full_like(one_hot_batched, 0.25))
+            - model(torch.full_like(one_hot_batched, baseline_fill))
             - exp_ih.sum()
         )
 
