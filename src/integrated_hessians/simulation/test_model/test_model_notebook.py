@@ -279,31 +279,43 @@ def _(
 
 
 @app.cell
-def _(
-    get_prediction,
-    model,
-    one_hot: "jx.Float[Tensor, \"1 alphabet_length sequence_length\"]",
-    torch,
-):
-    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,-1)))
-    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,-.5)))
-    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,0)))
-    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,.05)))
-    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,.075)))
-    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,.1)))
-    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,.2)))
-    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,.25)))
-    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,.5)))
-    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,.75)))
-    print(get_prediction(model=model, batched_one_hot_input=torch.full_like(one_hot,1)))
-    return
-
-
-@app.cell
 def _():
     # attributions_permuted: jx.Float[
     #     NDArray[np.float32], "alphabet_length sequence_length"
     # ] = attributions.squeeze(0).numpy().transpose((1, 0))
+    return
+
+
+@app.cell
+def _(
+    model,
+    one_hot: "jx.Float[Tensor, \"1 alphabet_length sequence_length\"]",
+    plt,
+    torch,
+):
+    from integrated_hessians import _get_interpolation_coefficients
+    interpolation_coeffs = _get_interpolation_coefficients(approximation_steps=20,mode="default", verbose=True)[0]
+    interpolation_coeffs = torch.tensor(interpolation_coeffs)
+    interpolation_coeffs.shape
+    
+    onehot_baseline = torch.full_like(one_hot.squeeze(0),fill_value=.25)
+    direction_baseline_to_input = (one_hot.squeeze(0) - onehot_baseline)
+    path_from_baseline_to_input = (interpolation_coeffs.reshape(-1,1,1) * direction_baseline_to_input) + onehot_baseline
+
+    with torch.no_grad():
+        pred_path_from_baseline_to_input = model(path_from_baseline_to_input.type(torch.float))
+    pred_path_from_baseline_to_input = pred_path_from_baseline_to_input.squeeze(-1)
+
+    interpolation_preds_plot_fig, interpolation_preds_plot_ax = plt.subplots(nrows=1,ncols=2,figsize=(12,4))
+    interpolation_preds_plot_ax[0].scatter(interpolation_coeffs,pred_path_from_baseline_to_input,alpha=.1,s=50)
+    interpolation_preds_plot_ax[0].set_title("From baseline to input")
+    interpolation_preds_plot_ax[0].set_ylabel("prediction")
+    interpolation_preds_plot_ax[0].set_xlabel("interpolation coeff")
+
+    interpolation_preds_plot_ax[1].plot(path_from_baseline_to_input[:,0,:])
+    interpolation_preds_plot_ax[1].set_title("Interpolation values for nucleotides")
+    interpolation_preds_plot_ax[1].set_ylabel("Value of nucleotide")
+    interpolation_preds_plot_ax[1].set_xlabel("Interpolation index")
     return
 
 
