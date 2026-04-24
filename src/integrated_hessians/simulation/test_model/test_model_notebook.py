@@ -9,11 +9,13 @@ def _():
     config_paths = {
         "Simple": "src/integrated_hessians/simulation/configs/simple.json",
         "Custom Additive and Interaction Effects": "src/integrated_hessians/simulation/configs/custom.json",
+        "Custom with Expanded Distribution": "src/integrated_hessians/simulation/configs/custom_expanded_distribution.json",
         "Randomized Additive and Interaction Effects": "src/integrated_hessians/simulation/configs/random.json",
     }
     evaluation_paths = {
         "Simple": "data/simple_simulation/model_best_evaluation.json",
-        "Custom Additive and Interaction Effects": "data/custom_additive_and_interactive_effects/model_best_evaluation.json",
+        "Custom Additive and Interaction Effects": "data/custom_additive_and_interactive_effects/normal_sim/model_best_evaluation.json",
+        "Custom with Expanded Distribution": "data/custom_additive_and_interactive_effects/expanded_distribution/model_best_evaluation.json",
         "Randomized Additive and Interaction Effects": "data/randomized_additive_and_interactive_effects/model_best_evaluation.json",
     }
     figs_common_width = 14
@@ -109,6 +111,12 @@ def _(Path, config_paths, json, simulation_dropdown):
     TRAIN_DATA = config["TRAIN_DATA"]
     MODEL_WIDTH_MULTIPLIER = config["MODEL_WIDTH_MULTIPLIER"]
     return MODEL_WIDTH_MULTIPLIER, OUT_BEST_MODEL, SEQLEN, TEST_DATA
+
+
+@app.cell
+def _(torch):
+    torch.softmax(torch.tensor([0,0,1,0]).type(torch.float),dim=0)
+    return
 
 
 @app.cell(hide_code=True)
@@ -297,7 +305,7 @@ def _(
     interpolation_coeffs = _get_interpolation_coefficients(approximation_steps=20,mode="default", verbose=True)[0]
     interpolation_coeffs = torch.tensor(interpolation_coeffs)
     interpolation_coeffs.shape
-    
+
     onehot_baseline = torch.full_like(one_hot.squeeze(0),fill_value=.25)
     direction_baseline_to_input = (one_hot.squeeze(0) - onehot_baseline)
     path_from_baseline_to_input = (interpolation_coeffs.reshape(-1,1,1) * direction_baseline_to_input) + onehot_baseline
@@ -316,6 +324,17 @@ def _(
     interpolation_preds_plot_ax[1].set_title("Interpolation values for nucleotides")
     interpolation_preds_plot_ax[1].set_ylabel("Value of nucleotide")
     interpolation_preds_plot_ax[1].set_xlabel("Interpolation index")
+    return
+
+
+@app.cell
+def _(np):
+    def label_smoothing(one_hot, epsilon=0.1):
+        n_classes = 4
+        return (1 - epsilon) * one_hot + epsilon / n_classes
+
+    one_hot2 = np.array([0, 0, 1, 0], dtype=float)
+    print(label_smoothing(one_hot2, epsilon=0))
     return
 
 

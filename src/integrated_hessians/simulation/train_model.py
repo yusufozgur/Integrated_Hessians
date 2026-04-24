@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+from polars import Unknown
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
@@ -8,6 +9,9 @@ from integrated_hessians.simulation import SimulatedSequence
 from torch.utils.data import random_split
 from integrated_hessians.simulation.model import CNNMLP
 from tqdm import tqdm
+import random
+from os import cpu_count
+import numpy as np
 
 
 def train_model(
@@ -20,18 +24,30 @@ def train_model(
     OUT_BEST_MODEL,
     OUT_BEST_MODEL_EVAL,
     MODEL_WIDTH_MULTIPLIER,
+    EXPAND_DATA_DISTRIBUTION_ALONG_BASELINE_TO_INPUT_PATH,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    dataset = MotifInteractionsDataset(input=TRAIN_DATA, SEQLEN=SEQLEN)
+    dataset = MotifInteractionsDataset(
+        input=TRAIN_DATA,
+        SEQLEN=SEQLEN,
+        EXPAND_DATA_DISTRIBUTION_ALONG_BASELINE_TO_INPUT_PATH=EXPAND_DATA_DISTRIBUTION_ALONG_BASELINE_TO_INPUT_PATH,
+    )
 
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE)
+    num_of_cores = cpu_count()
+    if num_of_cores is None:
+        num_of_cores = 1
+    train_loader = DataLoader(
+        train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=num_of_cores
+    )
+    val_loader = DataLoader(
+        val_dataset, batch_size=BATCH_SIZE, num_workers=num_of_cores
+    )
 
     model = CNNMLP(sequence_length=SEQLEN, width_multiplier=MODEL_WIDTH_MULTIPLIER)
     model = model.to(device)
@@ -111,7 +127,12 @@ def train_model(
 class MotifInteractionsDataset(Dataset):
     data: list[SimulatedSequence]
 
-    def __init__(self, input: Path, SEQLEN):
+    def __init__(
+        self,
+        input: Path,
+        SEQLEN: int,
+        EXPAND_DATA_DISTRIBUTION_ALONG_BASELINE_TO_INPUT_PATH: bool,
+    ):
         assert input.is_file()
         assert input.name.endswith(".json")
         with open(input, "r") as f:
@@ -122,14 +143,52 @@ class MotifInteractionsDataset(Dataset):
         self.data = data
         assert self.data[0].one_hot.shape == (SEQLEN, 4)
 
+        self.data_augmentation = EXPAND_DATA_DISTRIBUTION_ALONG_BASELINE_TO_INPUT_PATH
+
     def __getitem__(self, idx):
-        datapoint = self.data[idx]
+        datapoint: SimulatedSequence = self.data[idx]
+        assert isinstance(datapoint, SimulatedSequence)
         sequence = datapoint.one_hot
         phenotype = datapoint.phenotype
+
+        if self.data_augmentation:
+            choose_augmentation = random.choices(
+                ["baseline", "smooth_labels", "do_nothing"], weights=[0.1, 0.4, 0.5]
+            )[0]
+            match choose_augmentation:
+                case "baseline":
+                    sequence = np.full_like(sequence, 0.25)
+                    phenotype = 0.0
+                case "smooth_labels":
+                    # convert the one hot encoding into a sampling along the path from full 0.25 vectors to the input
+                    # this will help with out of distribution errors seen while using methods like Integrated Gradients or Integrated Hessians
+                    # For example, if baseline of .25s is not 0, but 1, then the attributions values will not reflect the expectations
+                    random_float_between_01_ends_not_inclusive = random.uniform(
+                        1e-10, 1 - 1e-10
+                    )
+                    # 0 is not included as phenotype has to be made 0 then, its handled in choose_augmentation == "baseline" case
+                    # 1 is not included as its the same as input, handled in "do_nothing" case
+                    sequence = label_smoothing(
+                        one_hot=sequence,
+                        smoothing_coefficient=random_float_between_01_ends_not_inclusive,
+                    )
+                case "do_nothing":
+                    pass
+                case _:
+                    raise Exception()
         return sequence, phenotype
 
     def __len__(self):
         return len(self.data)
+
+
+def label_smoothing(one_hot, smoothing_coefficient: float):
+    """
+    smoothing_coefficient == 1 is all 0.25 and == 0 is equal to one_hot
+    """
+    n_classes = 4
+    add_term = smoothing_coefficient / n_classes
+    return (1 - smoothing_coefficient) * one_hot + add_term
 
 
 def train(model, loader, optimizer, criterion, device):
@@ -209,6 +268,9 @@ def main():
         OUT_BEST_MODEL=config["OUT_BEST_MODEL"],
         OUT_BEST_MODEL_EVAL=config["OUT_BEST_MODEL_EVAL"],
         MODEL_WIDTH_MULTIPLIER=config["MODEL_WIDTH_MULTIPLIER"],
+        EXPAND_DATA_DISTRIBUTION_ALONG_BASELINE_TO_INPUT_PATH=config[
+            "EXPAND_DATA_DISTRIBUTION_ALONG_BASELINE_TO_INPUT_PATH"
+        ],
     )
 
 

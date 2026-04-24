@@ -3,11 +3,13 @@ import json
 CONFIG_PATHS = {
     "simple": "src/integrated_hessians/simulation/configs/simple.json",
     "custom": "src/integrated_hessians/simulation/configs/custom.json",
+    "custom_expanded_distribution": "src/integrated_hessians/simulation/configs/custom_expanded_distribution.json",
     "random": "src/integrated_hessians/simulation/configs/random.json",
 }
 SIMULATE_SCRIPTS = {
     "simple": "src/integrated_hessians/simulation/create_simulation_data/simple.py",
     "custom": "src/integrated_hessians/simulation/create_simulation_data/custom_additive_and_interactive_effects.py",
+    "custom_expanded_distribution": "src/integrated_hessians/simulation/create_simulation_data/custom_additive_and_interactive_effects.py",
     "random": "src/integrated_hessians/simulation/create_simulation_data/random_additive_and_interactive_effects.py",
 }
 SIM_NAMES = list(CONFIG_PATHS.keys())

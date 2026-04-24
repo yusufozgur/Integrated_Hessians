@@ -16,7 +16,11 @@ from beartype import beartype
 def get_test_data(test_path: Path, SEQLEN: int) -> list[SimulatedSequence]:
     assert test_path.exists()
     assert test_path.is_file()
-    seqs = MotifInteractionsDataset(input=test_path, SEQLEN=SEQLEN).data
+    seqs = MotifInteractionsDataset(
+        input=test_path,
+        SEQLEN=SEQLEN,
+        EXPAND_DATA_DISTRIBUTION_ALONG_BASELINE_TO_INPUT_PATH=False,
+    ).data
     return seqs
 
 
@@ -30,7 +34,9 @@ def get_model(best_model: Path) -> torch.nn.Module:
 @jx.jaxtyped(typechecker=beartype)
 def get_prediction(
     model: torch.nn.Module,
-    batched_one_hot_input: jx.Float[torch.Tensor, "batch_size sequence_length alphabet_length"],
+    batched_one_hot_input: jx.Float[
+        torch.Tensor, "batch_size sequence_length alphabet_length"
+    ],
 ) -> float:
     with torch.no_grad():
         pred = model(batched_one_hot_input.type(torch.float))
@@ -41,20 +47,23 @@ def get_prediction(
 @jx.jaxtyped(typechecker=beartype)
 def get_attributions(
     model: torch.nn.Module,
-    batched_one_hot_input: jx.Float[torch.Tensor, "batch_size sequence_length alphabet_length"],
-    baseline = None,
+    batched_one_hot_input: jx.Float[
+        torch.Tensor, "batch_size sequence_length alphabet_length"
+    ],
+    baseline=None,
 ):
     if not baseline:
-        baseline = torch.full_like(batched_one_hot_input, .25)
+        baseline = torch.full_like(batched_one_hot_input, 0.25)
     ig = IntegratedGradients(model, multiply_by_inputs=True)
-    attributions, delta = ig.attribute(batched_one_hot_input, baseline, return_convergence_delta=True)
+    attributions, delta = ig.attribute(
+        batched_one_hot_input, baseline, return_convergence_delta=True
+    )
     return attributions, delta
 
 
 def interpolate_onehot(onehot_tensor, alpha):
     uniform = torch.full_like(onehot_tensor, 0.25)
     return (1 - alpha) * uniform + alpha * onehot_tensor
-
 
 
 @jx.jaxtyped(typechecker=beartype)
