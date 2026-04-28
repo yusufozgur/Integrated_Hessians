@@ -91,6 +91,7 @@ def _(mo):
         options=[
             "Simple",
             "Custom Additive and Interaction Effects",
+            "Custom with Expanded Distribution",
             "Randomized Additive and Interaction Effects",
         ],
         value="Simple",
@@ -545,7 +546,7 @@ def _(
 
 @app.cell
 def _(mo, show_integrated_hessian):
-    sampling_steps = mo.ui.number(0, 200, 1, label="Sampling steps", value=10)
+    sampling_steps = mo.ui.number(0, 300, 1, label="Sampling steps", value=10)
     mo.vstack(
         [
             "Increasing the sampling steps will make integrated hessians approximation more accurate",
@@ -615,41 +616,34 @@ def _():
 
 
 @app.cell
-def _(integ_hess_result, show_integrated_hessian):
-    from integrated_hessians.simulation.plots.interaction import plot_genomic_interaction
-    plot_genomic_interaction(
-        integ_hess_result.squeeze(0).permute(0,2,1,3),
-        fig_height=50,fig_width=50
-    ) if show_integrated_hessian.value else None
+def _():
+    # from integrated_hessians.simulation.plots.interaction import plot_genomic_interaction
+    # plot_genomic_interaction(
+    #     integ_hess_result.squeeze(0).permute(0,2,1,3),
+    #     fig_height=50,fig_width=50
+    # ) if show_integrated_hessian.value else None
     return
 
 
 @app.cell
-def _(
-    NUCLEOTIDE_ORDER,
-    figs_common_width,
-    ih,
-    plot_heatmap,
-    show_integrated_hessian,
-    test_row: "SimulatedSequence",
-):
-    #trying to get diagonals
-    if show_integrated_hessian.value:
-        tmp = ih.clone()
-        print(tmp.shape)
-        # tmp[:,3,:,0] = 1 # testing
-        tmp = tmp.diagonal(dim1=0,dim2=2)
-        row_labels = []
-        for n1 in NUCLEOTIDE_ORDER:
-            for n2 in NUCLEOTIDE_ORDER:
-                row_labels.append(n1+n2)
-    plot_heatmap(
-        tmp.reshape(16,100),
-        fig_width=figs_common_width, 
-        title="Diagonals of IH",
-        row_labels=row_labels,
-        col_labels=list(test_row.nucleotides)
-    ) if show_integrated_hessian.value else None
+def _():
+    # #trying to get diagonals
+    # if show_integrated_hessian.value:
+    #     tmp = ih.clone()
+    #     print(tmp.shape)
+    #     # tmp[:,3,:,0] = 1 # testing
+    #     tmp = tmp.diagonal(dim1=0,dim2=2)
+    #     row_labels = []
+    #     for n1 in NUCLEOTIDE_ORDER:
+    #         for n2 in NUCLEOTIDE_ORDER:
+    #             row_labels.append(n1+n2)
+    # plot_heatmap(
+    #     tmp.reshape(16,100),
+    #     fig_width=figs_common_width, 
+    #     title="Diagonals of IH",
+    #     row_labels=row_labels,
+    #     col_labels=list(test_row.nucleotides)
+    # ) if show_integrated_hessian.value else None
     return
 
 
@@ -739,7 +733,6 @@ def _(
     ]) if show_integrated_hessian.value else None
     return (
         all_sum,
-        ih,
         ih_masked_selfinteractmotif1,
         ih_masked_selfinteractmotif2,
         ih_masked_sum_pair1,

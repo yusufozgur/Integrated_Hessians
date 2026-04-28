@@ -21,6 +21,8 @@ Integrated Gradients is an interpretability method in deep learning, focused on 
   <figcaption>An example interaction attribution plot from <a href="#references">Seitz et al. (2021)</a></figcaption>
 </figure>
 
+- quadrature: path_explain doesnt have.
+
 ## API
 **WIP**
 

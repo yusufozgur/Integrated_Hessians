@@ -153,25 +153,26 @@ class MotifInteractionsDataset(Dataset):
 
         if self.data_augmentation:
             choose_augmentation = random.choices(
-                ["baseline", "smooth_labels", "do_nothing"], weights=[0.1, 0.4, 0.5]
+                ["baseline", "smooth_labels", "do_nothing"], weights=[0.2, 0.6, 0.2]
             )[0]
             match choose_augmentation:
                 case "baseline":
                     sequence = np.full_like(sequence, 0.25)
                     phenotype = 0.0
                 case "smooth_labels":
-                    # convert the one hot encoding into a sampling along the path from full 0.25 vectors to the input
-                    # this will help with out of distribution errors seen while using methods like Integrated Gradients or Integrated Hessians
-                    # For example, if baseline of .25s is not 0, but 1, then the attributions values will not reflect the expectations
-                    random_float_between_01_ends_not_inclusive = random.uniform(
-                        1e-10, 1 - 1e-10
-                    )
-                    # 0 is not included as phenotype has to be made 0 then, its handled in choose_augmentation == "baseline" case
-                    # 1 is not included as its the same as input, handled in "do_nothing" case
-                    sequence = label_smoothing(
-                        one_hot=sequence,
-                        smoothing_coefficient=random_float_between_01_ends_not_inclusive,
-                    )
+                    # # convert the one hot encoding into a sampling along the path from full 0.25 vectors to the input
+                    # # this will help with out of distribution errors seen while using methods like Integrated Gradients or Integrated Hessians
+                    # # For example, if baseline of .25s is not 0, but 1, then the attributions values will not reflect the expectations
+                    # random_float_between_01_ends_not_inclusive = random.uniform(
+                    #     1e-10, 1 - 1e-10
+                    # )
+                    # # 0 is not included as phenotype has to be made 0 then, its handled in choose_augmentation == "baseline" case
+                    # # 1 is not included as its the same as input, handled in "do_nothing" case
+                    # sequence = label_smoothing(
+                    #     one_hot=sequence,
+                    #     smoothing_coefficient=random_float_between_01_ends_not_inclusive,
+                    # )
+                    pass
                 case "do_nothing":
                     pass
                 case _:
