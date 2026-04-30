@@ -53,12 +53,14 @@ def _():
     from integrated_hessians.simulation.train_model import (
         MotifInteractionsDataset,
     )
+    from integrated_hessians import IntegratedHessians
+    from integrated_hessians import RiemannIH
     from integrated_hessians.simulation import NUCLEOTIDE_ORDER
     from integrated_hessians.simulation.plots.heatmap import plot_heatmap
     from integrated_hessians.simulation.plots.training_metrics import plot_training_metrics
     from integrated_hessians.simulation.plots.interaction import plot_interaction_subsetted
 
-    from integrated_hessians import get_hessian, get_integrated_hessians
+    from integrated_hessians import get_hessian
     from integrated_hessians.simulation.test_model import (
         get_test_data,
         plot_gif_hessians_from_baseline_to_real,
@@ -70,11 +72,12 @@ def _():
 
     return (
         CNNMLP,
+        IntegratedHessians,
         NUCLEOTIDE_ORDER,
+        RiemannIH,
         SimulatedSequence,
         get_attributions,
         get_hessian,
-        get_integrated_hessians,
         get_prediction,
         get_test_data,
         interpolate_onehot,
@@ -302,8 +305,8 @@ def _(
     plt,
     torch,
 ):
-    from integrated_hessians import _get_interpolation_coefficients
-    interpolation_coeffs = _get_interpolation_coefficients(approximation_steps=20,mode="default", verbose=True)[0]
+    from integrated_hessians.algorithm.strategies.riemann import _get_riemann_interpolation_coefficients
+    interpolation_coeffs = _get_riemann_interpolation_coefficients(approximation_steps=20,mode="default", verbose=True)[0]
     interpolation_coeffs = torch.tensor(interpolation_coeffs)
     interpolation_coeffs.shape
 
@@ -591,8 +594,14 @@ def _():
 
 
 @app.cell
+def _():
+    return
+
+
+@app.cell
 def _(
-    get_integrated_hessians,
+    IntegratedHessians,
+    RiemannIH,
     model,
     one_hot: "jx.Float[Tensor, \"1 alphabet_length sequence_length\"]",
     plot_interaction_subsetted,
@@ -604,13 +613,17 @@ def _(
 ):
     baseline_fill = 0.25
     if show_integrated_hessian.value:
-        integ_hess_result, ih_delta = get_integrated_hessians(
-            model=model,
+        IH = IntegratedHessians(
+            forward_func=model,
+            path_integral_strategy=RiemannIH(
+    
+            )
+        )
+        integ_hess_result, ih_delta = IH.get_integrated_hessians(
             inputs=one_hot,
             baselines=torch.full_like(one_hot, baseline_fill),
             target=0,
             approximation_steps=sampling_steps.value,
-            optimize_for_duplicate_interpolation_values=True,
         )
 
         integ_hess_plots_fig, integ_hess_plots_ax = plt.subplots(

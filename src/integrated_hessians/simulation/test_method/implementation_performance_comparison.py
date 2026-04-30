@@ -26,7 +26,7 @@ import torch
 from torch import Tensor
 from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
-from integrated_hessians import get_integrated_hessians
+from integrated_hessians import IntegratedHessians, RiemannIH
 from integrated_hessians.simulation import SimulatedSequence
 from integrated_hessians.simulation.model import CNNMLP
 from integrated_hessians.simulation.test_method.path_explain_wrapper import (
@@ -48,30 +48,37 @@ BASELINE_FILL = 0.25
 SAVE_perf_comparison = "src/integrated_hessians/simulation/test_method/implementation_performance_comparison.json"
 
 
-implementations = {
-    "ih_naive_riemann": {
-        "f": functools.partial(
-            get_integrated_hessians,
-            target=0,
-            optimize_for_duplicate_interpolation_values=False,
-        ),
-        "approx_steps": 20,
-    },
-    "ih_cached_riemann": {
-        "f": functools.partial(
-            get_integrated_hessians,
-            target=0,
-            optimize_for_duplicate_interpolation_values=True,
-        ),
-        "approx_steps": 20,
-    },
-    "janizeketal": {
-        "f": functools.partial(
-            path_explain_wrapper,
-        ),
-        "approx_steps": 200,
-    },
-}
+def get_implementations(model):
+    return {
+        "ih_naive_riemann": {
+            "f": functools.partial(
+                IntegratedHessians(
+                    forward_func=model,
+                    path_integral_strategy=RiemannIH(
+                        optimize_for_duplicate_interpolation_values=False,
+                    ),
+                ).get_integrated_hessians,
+                target=0,
+            ),
+            "approx_steps": 20,
+        },
+        "ih_cached_riemann": {
+            "f": functools.partial(
+                IntegratedHessians(
+                    forward_func=model,
+                    path_integral_strategy=RiemannIH(
+                        optimize_for_duplicate_interpolation_values=True,
+                    ),
+                ).get_integrated_hessians,
+                target=0,
+            ),
+            "approx_steps": 20,
+        },
+        "janizeketal": {
+            "f": functools.partial(path_explain_wrapper, model=model),
+            "approx_steps": 200,
+        },
+    }
 
 
 @dataclass
@@ -102,6 +109,7 @@ def main():
     print(f"Test data size: {len(test_data)}")
     print(f"Config: {config['NAME']}")
 
+    implementations = get_implementations(model)
     # Run performance comparisons
     perf_comparisons = dict()
     for impl_name, impl_config in implementations.items():
@@ -159,7 +167,6 @@ def get_delta_per_test_row(
             approximation_steps=implementation_config["approx_steps"],
             inputs=inputs,
             baselines=baselines,
-            model=model_call_counter,
         )
         ih_deltas = ih_delta.detach().tolist()  # [0] to remove the batch dim
 
