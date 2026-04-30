@@ -42,19 +42,20 @@ CONFIGPATH = (
     "src/integrated_hessians/simulation/configs/custom_expanded_distribution.json"
 )
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-BATCH_SIZE = 1  # keep batch size at 1 as otherwise the deltas of the janizek method just are bad, probably due to bad seperation of samples inside the implementation
-NUM_OF_ROWS = 10
+BATCH_SIZE = 50  # keep batch size at 1 as otherwise the deltas of the janizek method just are bad, probably due to bad seperation of samples inside the implementation
+NUM_OF_ROWS = 50
 BASELINE_FILL = 0.25
 SAVE_perf_comparison = "src/integrated_hessians/simulation/test_method/implementation_performance_comparison.json"
 
 
 def get_implementations(model):
     return {
-        "ih_naive_riemann": {
+        "ih_naive_riemann_midpoint": {
             "f": functools.partial(
                 IntegratedHessians(
                     forward_func=model,
                     path_integral_strategy=RiemannIH(
+                        riemann_flavor="midpoint_rule",
                         optimize_for_duplicate_interpolation_values=False,
                     ),
                 ).get_integrated_hessians,
@@ -62,11 +63,25 @@ def get_implementations(model):
             ),
             "approx_steps": 20,
         },
-        "ih_cached_riemann": {
+        "ih_naive_riemann_trapezoid": {
             "f": functools.partial(
                 IntegratedHessians(
                     forward_func=model,
                     path_integral_strategy=RiemannIH(
+                        riemann_flavor="trapezoid_rule",
+                        optimize_for_duplicate_interpolation_values=False,
+                    ),
+                ).get_integrated_hessians,
+                target=0,
+            ),
+            "approx_steps": 20,
+        },
+        "ih_cached_riemann_midpoint": {
+            "f": functools.partial(
+                IntegratedHessians(
+                    forward_func=model,
+                    path_integral_strategy=RiemannIH(
+                        riemann_flavor="midpoint_rule",
                         optimize_for_duplicate_interpolation_values=True,
                     ),
                 ).get_integrated_hessians,
@@ -74,10 +89,23 @@ def get_implementations(model):
             ),
             "approx_steps": 20,
         },
-        "janizeketal": {
-            "f": functools.partial(path_explain_wrapper, model=model),
-            "approx_steps": 200,
+        "ih_cached_riemann_trapezoid": {
+            "f": functools.partial(
+                IntegratedHessians(
+                    forward_func=model,
+                    path_integral_strategy=RiemannIH(
+                        riemann_flavor="trapezoid_rule",
+                        optimize_for_duplicate_interpolation_values=True,
+                    ),
+                ).get_integrated_hessians,
+                target=0,
+            ),
+            "approx_steps": 20,
         },
+        # "janizeketal": {
+        #     "f": functools.partial(path_explain_wrapper, model=model),
+        #     "approx_steps": 200,
+        # },
     }
 
 

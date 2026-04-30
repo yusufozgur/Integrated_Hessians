@@ -21,26 +21,24 @@ flattened_forward_func_type = Callable[
     [flattened_input_type],
     jx.Float[Tensor, " batch_size"],
 ]
+riemann_flavors = Literal["midpoint_rule", "trapezoid_rule"]
 
 
 class RiemannIH(PathIntegralStrategy):
-    interpolation_coefficients_mode: Literal[
-        "default", "multiplication_table_optimized"
-    ]
+    riemann_flavor: riemann_flavors
 
     @jx.jaxtyped(typechecker=beartype)
     def __init__(
         self,
+        riemann_flavor: riemann_flavors = "midpoint_rule",
         optimize_for_duplicate_interpolation_values: bool = True,
         batch_size: Optional[int] = None,
     ):
         self.batch_size = batch_size
-
-        match optimize_for_duplicate_interpolation_values:
-            case True:
-                self.interpolation_coefficients_mode = "multiplication_table_optimized"
-            case False:
-                self.interpolation_coefficients_mode = "default"
+        self.riemann_flavor = riemann_flavor
+        self.optimize_for_duplicate_interpolation_values = (
+            optimize_for_duplicate_interpolation_values
+        )
 
     @jx.jaxtyped(typechecker=beartype)
     def get_integrated_hessians(
@@ -93,8 +91,9 @@ class RiemannIH(PathIntegralStrategy):
             inputs_flattened=inputs_flattened,
             baselines_flattened=baselines_flattened,
             approximation_steps=approximation_steps,
-            interpolation_coefficients_mode=self.interpolation_coefficients_mode,
             batch_size=self.batch_size,
+            riemann_flavor=self.riemann_flavor,
+            optimize_for_duplicate_interpolation_values=self.optimize_for_duplicate_interpolation_values,
         ).detach()
 
         # self_interaction_extra_terms are calculated for diagonals(i==j), it exists due to the chain rule of calculus when you take d(IG(xi))/dxi.
@@ -105,7 +104,8 @@ class RiemannIH(PathIntegralStrategy):
             inputs_flattened=inputs_flattened,
             baselines_flattened=baselines_flattened,
             approximation_steps=approximation_steps,
-            interpolation_coefficients_mode=self.interpolation_coefficients_mode,
+            riemann_flavor=self.riemann_flavor,
+            optimize_for_duplicate_interpolation_values=self.optimize_for_duplicate_interpolation_values,
             batch_size=self.batch_size,
         ).detach()
 
@@ -176,10 +176,9 @@ class RiemannIH(PathIntegralStrategy):
         inputs_flattened: jx.Float[Tensor, "batch_size input_shape_flattened"],
         baselines_flattened: jx.Float[Tensor, "batch_size input_shape_flattened "],
         approximation_steps: int,
-        interpolation_coefficients_mode: Literal[
-            "default", "multiplication_table_optimized"
-        ],
         batch_size: Optional[int],
+        riemann_flavor: riemann_flavors,
+        optimize_for_duplicate_interpolation_values: bool,
     ) -> jx.Float[Tensor, "batch_size input_shape_flattened input_shape_flattened"]:
         """
         If i != j, then
@@ -202,9 +201,10 @@ class RiemannIH(PathIntegralStrategy):
         get_second_order_grad = torch.vmap(torch.func.hessian(func=func))
 
         alphabetas, weights = _get_riemann_interpolation_coefficients(
-            mode=interpolation_coefficients_mode,
             approximation_steps=approximation_steps,
             verbose=True,
+            riemann_flavor=riemann_flavor,
+            optimize_for_duplicate_interpolation_values=optimize_for_duplicate_interpolation_values,
         )
 
         for alphabeta, weight in tqdm(zip(alphabetas, weights), total=len(alphabetas)):
@@ -256,10 +256,9 @@ class RiemannIH(PathIntegralStrategy):
         inputs_flattened: jx.Float[Tensor, "batch_size input_shape_flattened"],
         baselines_flattened: jx.Float[Tensor, "batch_size input_shape_flattened "],
         approximation_steps: int,
-        interpolation_coefficients_mode: Literal[
-            "default", "multiplication_table_optimized"
-        ],
         batch_size: Optional[int],
+        riemann_flavor: riemann_flavors,
+        optimize_for_duplicate_interpolation_values: bool,
     ) -> jx.Float[Tensor, "batch_size input_shape_flattened"]:
         """
         if i == j, then
@@ -280,9 +279,10 @@ class RiemannIH(PathIntegralStrategy):
 
         for alphabeta, weight in zip(
             *_get_riemann_interpolation_coefficients(
-                mode=interpolation_coefficients_mode,
                 approximation_steps=approximation_steps,
                 verbose=False,
+                riemann_flavor=riemann_flavor,
+                optimize_for_duplicate_interpolation_values=optimize_for_duplicate_interpolation_values,
             )
         ):
             # This is one point on the path integral
@@ -311,54 +311,77 @@ class RiemannIH(PathIntegralStrategy):
 
 @jx.jaxtyped(typechecker=beartype)
 def _get_riemann_interpolation_coefficients(
-    mode: Literal["default", "multiplication_table_optimized"],
+    riemann_flavor: riemann_flavors,
+    optimize_for_duplicate_interpolation_values: bool,
     approximation_steps: int,
     verbose: bool,
 ):
-    """
-    For example, in a multiplication table, there are multiple ways to get 16, 2*8, 4*4 or 8*2. Similarly, we do not need to calculate hessians if the interpolated value will be the same. mode == "multiplication_table_optimized" acccounts for that
-    """
-
     k = approximation_steps
     m = approximation_steps
+    alphabetas: list[float] = []
+    weights: list[float] = []
 
-    assert mode in ["default", "multiplication_table_optimized"], (
-        "You must provide a valid value for mode parameter."
-    )
+    match riemann_flavor:
+        case "midpoint_rule":
+            for l in range(1, k + 1):  # noqa: E741
+                beta: float = (l - 0.5) / k
+                for p in range(1, m + 1):
+                    alpha: float = (p - 0.5) / m
+                    alphabetas.append(beta * alpha)
+                    weights.append(1)
+        case "trapezoid_rule":
+            for l in range(0, k + 1):
+                beta: float = l / k
+                w_beta = 0.5 if (l == 0 or l == k) else 1.0
+                for p in range(0, m + 1):
+                    alpha: float = p / m
+                    w_alpha = 0.5 if (p == 0 or p == m) else 1.0
+                    alphabetas.append(beta * alpha)
+                    weights.append(w_beta * w_alpha)  # no /k/m here
 
-    if mode == "default":
-        alphabetas: list[float] = []
-        weights: list[float] = []
-        # Important: we use the middle riemann sum, because it approximates better than right riemann sum. Usage of (l - .5) and (p - .5) is due to the middle riemann sum.
-        for l in range(1, k + 1):  # noqa: E741
-            beta: float = (l - 0.5) / k  # -.5 is for getting the middle riemann sum
-            for p in range(1, m + 1):
-                alpha: float = (p - 0.5) / m
+        case _:
+            raise ValueError(f"Invalid riemann_flavor: {riemann_flavor!r}")
 
-                # alphabeta is the combined interpolation coefficient
-                alphabeta: float = beta * alpha
+    if optimize_for_duplicate_interpolation_values:
+        # Use integer keys to avoid float equality issues.
+        # For midpoint: key = (2l-1) * (2p-1), which is exact and unique per unique alphabeta.
+        # For trapezoid: key = l * m + p * k (scaled grid indices), same idea.
+        # Instead, we bucket by rounding to a safe precision and summing weights.
+        merged: dict[int, float] = defaultdict(float)
+        # Represent alphabeta as a fraction scaled to avoid floats as keys.
+        # alphabeta = (num_l / k) * (num_p / m) = (num_l * num_p) / (k * m)
+        # So the unique integer key is just the numerator product.
+        # For midpoint: num_l = 2l-1, num_p = 2p-1 → key = (2l-1)*(2p-1)
+        # For trapezoid: num_l = l, num_p = p → key = l*m + p  (use pairing, not product,
+        # since l*p collisions exist e.g. 1*4 == 2*2)
+        #
+        # Simpler and flavor-agnostic: recompute integer indices from alphabeta.
+        # Just use a dict keyed on the exact rational numerator.
+        # We scale alphabeta by k*m (or 2k*2m for midpoint) to get an integer.
 
-                alphabetas.append(alphabeta)
-                weights.append(1)
-        return alphabetas, weights
-    elif mode == "multiplication_table_optimized":
-        alphabetas_dict = defaultdict(int)
+        scale = (2 * k) * (
+            2 * m
+        )  # works for both: midpoint gives odd*odd, trapezoid even*even
+        merged_weights: dict[int, float] = defaultdict(float)
+        merged_alphabetas: dict[int, float] = {}
 
-        for l in range(1, k + 1):  # noqa: E741
-            beta: float = (l - 0.5) / k  # -.5 is for getting the middle riemann sum
-            for p in range(1, m + 1):
-                alpha: float = (p - 0.5) / m
+        for ab, w in zip(alphabetas, weights):
+            key = round(
+                ab * scale
+            )  # exact for both flavors since ab is a ratio of small ints
+            merged_weights[key] += w
+            merged_alphabetas[key] = ab  # same ab for all duplicates, safe to overwrite
 
-                # alphabeta is a float, hence, I dont wanna use it as dictionary key due to floating point imprecision.
-                alphabeta_key = l * p
-                alphabetas_dict[alphabeta_key] += 1
-
-        alphabetas = [(l_times_k / k / m) for l_times_k in alphabetas_dict.keys()]
-        weights = list(alphabetas_dict.values())
+        before = len(alphabetas)
+        alphabetas = list(merged_alphabetas.values())
+        weights = list(merged_weights.values())
 
         if verbose:
+            after = len(alphabetas)
+            reduction = (1 - after / before) * 100
             print(
-                f"multiplication table deduplication reduced calculations by {(1 - len(alphabetas) / approximation_steps**2) * 100}%"
+                f"[{riemann_flavor}] deduplication reduced calculations by {reduction:.1f}% "
+                f"({before} → {after} unique interpolation points)"
             )
 
-        return alphabetas, weights
+    return alphabetas, weights
