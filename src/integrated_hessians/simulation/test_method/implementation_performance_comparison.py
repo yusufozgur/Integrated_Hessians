@@ -38,10 +38,10 @@ CONFIGPATH = (
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 TARGET_DELTA = 0.01
 TARGET_DELTA_TOLERANCE = 0.001
-NUM_OF_ROWS = 5
+NUM_OF_ROWS = 1
 BASELINE_FILL = 0.25
-MIN_SAMPLING_SIZE = 1
-MAX_SAMPLING_SIZE = 50
+MIN_SAMPLING_SIZE = 20
+MAX_SAMPLING_SIZE = 500
 MAXITER = 10
 SAVE_sample_sizes_where_target_delta_is_reached = "src/integrated_hessians/simulation/test_method/sample_sizes_where_target_delta_is_reached.json"
 
@@ -70,20 +70,7 @@ def main():
     print(f"Config: {config['NAME']}")
 
     # prepare implementations
-    implementations = {
-        "ih_naive_riemann": functools.partial(
-            get_integrated_hessians,
-            model=model,
-            target=0,
-            optimize_for_duplicate_interpolation_values=False,
-        ),
-        "ih_cached_riemann": functools.partial(
-            get_integrated_hessians,
-            model=model,
-            target=0,
-            optimize_for_duplicate_interpolation_values=True,
-        ),
-    }
+    implementations = get_implementations(model)
 
     # Run performance comparisons
 
@@ -92,6 +79,65 @@ def main():
             test_data=test_data, implementations=implementations
         )
     )
+
+
+def get_implementations(model):
+    return {
+        # "ih_naive_riemann": functools.partial(
+        #     get_integrated_hessians,
+        #     model=model,
+        #     target=0,
+        #     optimize_for_duplicate_interpolation_values=False,
+        # ),
+        # "ih_cached_riemann": functools.partial(
+        #     get_integrated_hessians,
+        #     model=model,
+        #     target=0,
+        #     optimize_for_duplicate_interpolation_values=True,
+        # ),
+        "janizeketal": functools.partial(
+            path_explain_wrapper,
+            model=model,
+        ),
+    }
+
+
+def path_explain_wrapper(
+    inputs: jx.Float[Tensor, "batchsize SEQLEN 4"],
+    baselines: jx.Float[Tensor, "batchsize SEQLEN 4"],
+    model: Callable,
+    approximation_steps: int,
+):
+    seqlen = inputs.shape[1]
+
+    def exp_reshaper(x: Tensor):
+        x = x.reshape((1, seqlen, 4))
+        x = model(x)
+        return x
+
+    exp = PathExplainerTorch(exp_reshaper)
+
+    exp_input = inputs.reshape(1, seqlen * 4)
+    exp_baseline = baselines.reshape(1, seqlen * 4)
+
+    exp_input.requires_grad_(True)
+    exp_baseline.requires_grad_(True)
+
+    exp_ih = exp.interactions(
+        exp_input,
+        exp_baseline,
+        num_samples=approximation_steps,
+        use_expectation=False,
+    )
+
+    exp_ih_delta = (
+        model(inputs) - model(torch.full_like(inputs, BASELINE_FILL)) - exp_ih.sum()
+    )
+
+    exp_ih_reshaped = exp_ih.reshape(1, seqlen, 4, seqlen, 4)
+    exp_ih_reshaped.shape
+
+    return exp_ih_reshaped, exp_ih_delta
 
 
 def get_sample_sizes_where_target_delta_is_reached(
@@ -137,7 +183,7 @@ def loop_over_test_datapoints(implementation: Callable, test_data) -> list[RootR
         input: jx.Float[Tensor, "1 alphabet_length sequence_length"] = (
             torch.from_numpy(test_row.one_hot).unsqueeze(0).type(torch.float).to(DEVICE)
         )
-        baseline = torch.full_like(input, fill_value=BASELINE_FILL)
+        baseline = torch.full_like(input, fill_value=BASELINE_FILL).to(DEVICE)
 
         # root finding algos do not work with integers, they work with floats.
         # so, we round the x to integer
@@ -170,7 +216,7 @@ def loop_over_test_datapoints(implementation: Callable, test_data) -> list[RootR
 
 def find_convergence_point(
     f,
-):
+) -> Exception | RootResults:
     """
     Given a function, we use root finding algorithms to find for which sampling size the function f returns a target scalar of desired value, which will be the delta from the path integral method. For example, if target_delta == 0.01, we will find at which sampling size it becomes that value.
     """

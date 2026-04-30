@@ -1,72 +1,12 @@
 {
-    "ih_naive_riemann": [
+    "janizeketal": [
         {
             "idx": 0,
             "converged": true,
             "flag": "converged",
-            "function_calls": 17,
-            "iterations": 8,
-            "root": 3
-        },
-        {
-            "idx": 1,
-            "converged": true,
-            "flag": "converged",
-            "function_calls": 17,
-            "iterations": 8,
-            "root": 8
-        },
-        "<class 'Exception'>:left bracket is increased 15 times but sign is still negative, min_sampling_size=16.0 and f(min_sampling_size)=-0.008351100832223892",
-        {
-            "idx": 3,
-            "converged": true,
-            "flag": "converged",
-            "function_calls": 23,
-            "iterations": 10,
-            "root": 13
-        },
-        {
-            "idx": 4,
-            "converged": true,
-            "flag": "converged",
-            "function_calls": 15,
-            "iterations": 7,
-            "root": 10
-        }
-    ],
-    "ih_cached_riemann": [
-        {
-            "idx": 0,
-            "converged": true,
-            "flag": "converged",
-            "function_calls": 17,
-            "iterations": 8,
-            "root": 9
-        },
-        {
-            "idx": 1,
-            "converged": true,
-            "flag": "converged",
-            "function_calls": 19,
-            "iterations": 8,
-            "root": 4
-        },
-        {
-            "idx": 2,
-            "converged": true,
-            "flag": "converged",
-            "function_calls": 23,
+            "function_calls": 22,
             "iterations": 9,
-            "root": 8
-        },
-        "<class 'ValueError'>:f(a) and f(b) must have different signs, but f(2.000000e+00)=4.066997e-02, f(5.000000e+01)=9.317389e-03 ",
-        {
-            "idx": 4,
-            "converged": true,
-            "flag": "converged",
-            "function_calls": 13,
-            "iterations": 6,
-            "root": 11
+            "root": 182
         }
     ]
 }
