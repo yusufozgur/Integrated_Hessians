@@ -7,6 +7,7 @@ import jaxtyping as jx
 from .algorithm.relu_replacer import replace_relu_with_softplus
 from .algorithm.just_hessian import get_hessian as get_hessian
 from .algorithm.strategies.riemann import RiemannIH as RiemannIH
+from .algorithm.strategies.gauss_legendre import GaussQuadratureIH as GaussQuadratureIH
 from ._core import (
     PathIntegralStrategy,
     forward_func_type,

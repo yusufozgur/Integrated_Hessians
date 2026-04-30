@@ -3,1008 +3,1260 @@
         {
             "delta": 0.01766681671142578,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": -0.005335211753845215,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.0018053725361824036,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.0057122111320495605,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.018891900777816772,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
-            "delta": -0.005800783634185791,
+            "delta": -0.005800753831863403,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": -0.00411657989025116,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": -0.0008625686168670654,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": -0.0011095032095909119,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.0012722015380859375,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": -0.0008024871349334717,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.01571553945541382,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
-            "delta": -0.0036241207271814346,
+            "delta": -0.003624120494350791,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
-            "delta": 0.013785600662231445,
+            "delta": 0.013785585761070251,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": -0.0022959113121032715,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.0015863534063100815,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.0012242868542671204,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
-            "delta": -0.0008198097348213196,
+            "delta": -0.0008198078721761703,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.016520902514457703,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.020360946655273438,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
-            "delta": 0.00157821923494339,
+            "delta": 0.0015782229602336884,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
-            "delta": 0.001943307463079691,
+            "delta": 0.0019433079287409782,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.07779145240783691,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": -0.001106560230255127,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.0045043230056762695,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": -0.01254504919052124,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
-            "delta": 0.06942921876907349,
+            "delta": 0.06942927837371826,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.0159299373626709,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
-            "delta": -0.0019890423864126205,
+            "delta": -0.0019890442490577698,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": -0.0018985271453857422,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.010587364435195923,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
-            "delta": -0.0012666629627346992,
+            "delta": -0.001266661798581481,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.004903048276901245,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.02413100004196167,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": -0.0032213330268859863,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.016654878854751587,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": -0.007591605186462402,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
-            "delta": -0.0007359683513641357,
+            "delta": -0.0007359981536865234,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
-            "delta": 0.000495394691824913,
+            "delta": 0.0004953928291797638,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": -0.0024773478507995605,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": -0.0055322349071502686,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.004418551921844482,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": -0.0011527538299560547,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.0029214024543762207,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": -0.001414380967617035,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.026787757873535156,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.00657195970416069,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": -0.0018561482429504395,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
-            "delta": 0.02888616919517517,
+            "delta": 0.028886139392852783,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         },
         {
             "delta": 0.005907773971557617,
             "function_calls": 0,
-            "comptime_seconds": 4.904776
+            "comptime_seconds": 4.89739
         }
     ],
     "ih_naive_riemann_trapezoid": [
         {
             "delta": 0.018357157707214355,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": -0.0007886886596679688,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": 0.005100972950458527,
+            "delta": 0.005100969225168228,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": 0.0059601664543151855,
+            "delta": 0.005960285663604736,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.01873636245727539,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": -0.001530379056930542,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": 0.0014523398131132126,
+            "delta": 0.0014523416757583618,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.001979619264602661,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": 0.0037054680287837982,
+            "delta": 0.003705466166138649,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.001802891492843628,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.0001977384090423584,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.025097131729125977,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": -0.0018816820811480284,
+            "delta": -0.001881681615486741,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.014565348625183105,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": 0.004419207572937012,
+            "delta": 0.004419147968292236,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.004088681191205978,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": 0.004244484007358551,
+            "delta": 0.0042444802820682526,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": -0.002653731033205986,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.023185625672340393,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.02180016040802002,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": 0.0047650523483753204,
+            "delta": 0.004765048623085022,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": 0.005079519934952259,
+            "delta": 0.005079518537968397,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.07400459051132202,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.013266265392303467,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": 0.002575233578681946,
+            "delta": 0.0025752410292625427,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": -0.00128173828125,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": 0.09524089097976685,
+            "delta": 0.09524083137512207,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": 0.02642822265625,
+            "delta": 0.02642834186553955,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": -0.0012187473475933075,
+            "delta": -0.0012187445536255836,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": 0.002767825499176979,
+            "delta": 0.0027678273618221283,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.012045085430145264,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": 0.0012764681596308947,
+            "delta": 0.0012764697894454002,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": 0.006797276437282562,
+            "delta": 0.006797283887863159,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
-            "delta": 0.015236496925354004,
+            "delta": 0.015236467123031616,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.015358537435531616,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.027231931686401367,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.01396322250366211,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.003023117780685425,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.004225710406899452,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.00025334954261779785,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.016045451164245605,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.007829904556274414,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.008997678756713867,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.005905598402023315,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.000660330057144165,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.02023988962173462,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.010430494323372841,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.002176523208618164,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.028956592082977295,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         },
         {
             "delta": 0.006375670433044434,
             "function_calls": 0,
-            "comptime_seconds": 4.594252
+            "comptime_seconds": 4.575538
         }
     ],
     "ih_cached_riemann_midpoint": [
         {
             "delta": 0.01766681671142578,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.005335211753845215,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.001805368810892105,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.0057122111320495605,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.018891870975494385,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
-            "delta": -0.005800783634185791,
+            "delta": -0.005800753831863403,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
-            "delta": -0.004116576164960861,
+            "delta": -0.00411657989025116,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.0008625984191894531,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.0011094994843006134,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.0012722015380859375,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.000802457332611084,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.01571553945541382,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
-            "delta": -0.003624121891334653,
+            "delta": -0.003624120494350791,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.013785600662231445,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.0022959113121032715,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.0015863515436649323,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
-            "delta": 0.0012242868542671204,
+            "delta": 0.001224283128976822,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.0008198097348213196,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
-            "delta": 0.01652093231678009,
+            "delta": 0.016520947217941284,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.020360946655273438,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.0015782266855239868,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
-            "delta": 0.0019433116540312767,
+            "delta": 0.001943310722708702,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
-            "delta": 0.07779145240783691,
+            "delta": 0.07779139280319214,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.001106560230255127,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.0045043230056762695,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.012545078992843628,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
-            "delta": 0.06942915916442871,
+            "delta": 0.06942921876907349,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.0159299373626709,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
-            "delta": -0.0019890498369932175,
+            "delta": -0.0019890470430254936,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.0018985271453857422,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.010587364435195923,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.001266666455194354,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.004903044551610947,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
-            "delta": 0.024131029844284058,
+            "delta": 0.02413100004196167,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.0032213330268859863,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.016654878854751587,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.007591605186462402,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.0007359981536865234,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.0004953965544700623,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.0024773478507995605,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
-            "delta": -0.0055322349071502686,
+            "delta": -0.005532205104827881,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
-            "delta": 0.004418566823005676,
+            "delta": 0.004418551921844482,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.0011527538299560547,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
-            "delta": 0.0029214024543762207,
+            "delta": 0.0029214173555374146,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.001414380967617035,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.026787757873535156,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.006571955978870392,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": -0.0018561482429504395,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
             "delta": 0.028886139392852783,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         },
         {
-            "delta": 0.005907714366912842,
+            "delta": 0.005907773971557617,
             "function_calls": 0,
-            "comptime_seconds": 2.005681
+            "comptime_seconds": 1.971974
         }
     ],
     "ih_cached_riemann_trapezoid": [
         {
             "delta": 0.018357187509536743,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": -0.0007886886596679688,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
-            "delta": 0.00510096549987793,
+            "delta": 0.005100961774587631,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
-            "delta": 0.005960285663604736,
+            "delta": 0.005960226058959961,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.01873639225959778,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
-            "delta": -0.0015303641557693481,
+            "delta": -0.001530379056930542,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.0014523491263389587,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.001979619264602661,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.0037054680287837982,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.0018029212951660156,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
-            "delta": 0.0001977086067199707,
+            "delta": 0.0001977384090423584,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.0250970721244812,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
-            "delta": -0.0018816872034221888,
+            "delta": -0.0018816862720996141,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.014565333724021912,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
-            "delta": 0.004419207572937012,
+            "delta": 0.004419147968292236,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
-            "delta": 0.004088683053851128,
+            "delta": 0.004088681191205978,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.004244484007358551,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": -0.0026537347584962845,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.023185640573501587,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
-            "delta": 0.02180016040802002,
+            "delta": 0.021800130605697632,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.004765056073665619,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
-            "delta": 0.005079516209661961,
+            "delta": 0.005079514347016811,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.07400459051132202,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.013266235589981079,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.002575233578681946,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": -0.00128173828125,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.09524095058441162,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.026428282260894775,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": -0.0012187492102384567,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
-            "delta": 0.0027678310871124268,
+            "delta": 0.002767830155789852,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.012045085430145264,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
-            "delta": 0.0012764635030180216,
+            "delta": 0.0012764639686793089,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.006797268986701965,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.015236496925354004,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.015358507633209229,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.027231931686401367,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.01396322250366211,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.003023117780685425,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.004225717857480049,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.00025334954261779785,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
-            "delta": 0.016045480966567993,
+            "delta": 0.016045451164245605,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.007829904556274414,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.008997678756713867,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.005905598402023315,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.0006603263318538666,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
-            "delta": 0.02023988962173462,
+            "delta": 0.020239949226379395,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
-            "delta": 0.010430488735437393,
+            "delta": 0.010430485010147095,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.002176523208618164,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.028956592082977295,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
         },
         {
             "delta": 0.006375670433044434,
             "function_calls": 0,
-            "comptime_seconds": 1.687097
+            "comptime_seconds": 1.712476
+        }
+    ],
+    "ih_gauss_legendre": [
+        {
+            "delta": 0.023376643657684326,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.004520058631896973,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.0018440857529640198,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.013700544834136963,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.024008214473724365,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.00616145133972168,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.0035088807344436646,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.00019228458404541016,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.00016282498836517334,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.0033662617206573486,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.0015150904655456543,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.02081364393234253,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.004738450050354004,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.009199842810630798,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.004128456115722656,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.0016941707581281662,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.0009782090783119202,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.006070317700505257,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.01188594102859497,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.03213095664978027,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.0015688985586166382,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.0014330102130770683,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.042091190814971924,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.0020963549613952637,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.002432800829410553,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.0020341873168945312,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.05669325590133667,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.01822429895401001,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.002472449094057083,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.0014587324112653732,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.013322174549102783,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.000985973048955202,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.0047516413033008575,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.01565331220626831,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.0007421374320983887,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.005392670631408691,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.0015347599983215332,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.0005303323268890381,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.0006340853869915009,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.0018348991870880127,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.0010202527046203613,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.0037112534046173096,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.0009171962738037109,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.003524184226989746,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.0018264949321746826,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.018811345100402832,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.006719566881656647,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": -0.00048148632049560547,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.017375648021697998,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
+        },
+        {
+            "delta": 0.012709498405456543,
+            "function_calls": 0,
+            "comptime_seconds": 4.223366
         }
     ]
 }

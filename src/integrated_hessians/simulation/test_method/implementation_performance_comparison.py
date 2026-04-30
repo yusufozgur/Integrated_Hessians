@@ -26,7 +26,7 @@ import torch
 from torch import Tensor
 from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
-from integrated_hessians import IntegratedHessians, RiemannIH
+from integrated_hessians import IntegratedHessians, RiemannIH, GaussQuadratureIH
 from integrated_hessians.simulation import SimulatedSequence
 from integrated_hessians.simulation.model import CNNMLP
 from integrated_hessians.simulation.test_method.path_explain_wrapper import (
@@ -97,6 +97,16 @@ def get_implementations(model):
                         riemann_flavor="trapezoid_rule",
                         optimize_for_duplicate_interpolation_values=True,
                     ),
+                ).get_integrated_hessians,
+                target=0,
+            ),
+            "approx_steps": 20,
+        },
+        "ih_gauss_legendre": {
+            "f": functools.partial(
+                IntegratedHessians(
+                    forward_func=model,
+                    path_integral_strategy=GaussQuadratureIH(),
                 ).get_integrated_hessians,
                 target=0,
             ),
