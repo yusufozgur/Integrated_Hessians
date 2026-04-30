@@ -505,6 +505,33 @@ def _(mo, show_hessian):
 
 @app.cell
 def _(
+    fig_genomic_line_height,
+    figs_common_width,
+    get_attributions,
+    interpolation,
+    model,
+    plot_heatmap,
+    show_hessian,
+    test_row: "SimulatedSequence",
+):
+    # - Dimensional reduced Integrated Gradients
+    interpolate_attributions, interpolate_ig_delta = get_attributions(model=model, batched_one_hot_input=interpolation)
+    (
+        plot_heatmap(
+            interpolate_attributions.squeeze(0).sum(dim=1)[None,:].numpy(),
+            cmap="bwr", 
+            title=f"Interpolation on Integrated Gradients first dim summed (Real Positions), delta: {float(interpolate_ig_delta): .5f}",
+            fig_height=fig_genomic_line_height, 
+            fig_width=figs_common_width, 
+            row_labels=[" "],
+            col_labels=list(test_row.nucleotides)
+        )
+    ) if show_hessian.value else None
+    return
+
+
+@app.cell
+def _(
     baseline_to_input_alpha,
     get_hessian,
     get_prediction,
@@ -541,7 +568,7 @@ def _(
         title=f"Hessian of input with prediction {pred_interpolation: .3f}",
     )
     hessian_interaction_plot if show_hessian.value else None
-    return
+    return (interpolation,)
 
 
 @app.cell
