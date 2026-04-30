@@ -1,6 +1,6 @@
 {
     "NAME": "Simulation: Custom Additive and Interactive Effects",
-    "MOTIFS_FILE": "src/integrated_hessians/simulation/motifs/custom_motifs.pfm",
+    "MOTIFS_FILE": "src/integrated_hessians/simulation/configs/custom_motifs.pfm",
     "TRAIN_DATA": "data/custom_additive_and_interactive_effects/expanded_distribution/1M.json",
     "TRAIN_DATA_SIZE": 1E6,
     "TEST_DATA": "data/custom_additive_and_interactive_effects/expanded_distribution/10k_test.json",

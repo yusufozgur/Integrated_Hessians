@@ -1,6 +1,6 @@
 {
     "NAME": "Simple Simulation",
-    "MOTIFS_FILE": "src/integrated_hessians/simulation/motifs/simple_motifs.pfm",
+    "MOTIFS_FILE": "src/integrated_hessians/simulation/configs/simple_motifs.pfm",
     "TRAIN_DATA": "data/simple_simulation/100k.json",
     "TRAIN_DATA_SIZE": 1E5,
     "TEST_DATA": "data/simple_simulation/1k_test.json",

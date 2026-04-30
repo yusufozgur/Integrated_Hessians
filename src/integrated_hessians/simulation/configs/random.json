@@ -1,6 +1,6 @@
 {
     "NAME": "Simulation: Random Additive and Interactive Effects",
-    "MOTIFS_FILE": "src/integrated_hessians/simulation/motifs/random_motifs.pfm",
+    "MOTIFS_FILE": "src/integrated_hessians/simulation/configs/random_motifs.pfm",
     "TRAIN_DATA": "data/randomized_additive_and_interactive_effects/100k.json",
     "OUT_BEST_MODEL": "data/randomized_additive_and_interactive_effects/model_best.pth",
     "OUT_BEST_MODEL_EVAL": "data/randomized_additive_and_interactive_effects/model_best_evaluation.json",
