@@ -1,24 +1,404 @@
 {
     "ih_naive_riemann": [
         {
-            "delta": 0.017666876316070557,
+            "delta": 0.01766684651374817,
             "function_calls": 802
         },
         {
-            "delta": -0.005335181951522827,
-            "function_calls": 1604
+            "delta": -0.005335211753845215,
+            "function_calls": 802
         },
         {
-            "delta": 0.0018053874373435974,
-            "function_calls": 2406
+            "delta": 0.0018053576350212097,
+            "function_calls": 802
         },
         {
-            "delta": 0.005712151527404785,
-            "function_calls": 3208
+            "delta": 0.0057122111320495605,
+            "function_calls": 802
         },
         {
-            "delta": 0.018891841173171997,
-            "function_calls": 4010
+            "delta": 0.018891900777816772,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.005800768733024597,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.00411657989025116,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0008626282215118408,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.001109519973397255,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0012722015380859375,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0008024871349334717,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.01571553945541382,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.00362414657138288,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.013785600662231445,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0022959113121032715,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0015863217413425446,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0012242719531059265,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.000819837674498558,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.016520917415618896,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.020361006259918213,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0015782080590724945,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0019432888366281986,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.07779145240783691,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0011066198348999023,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.004504278302192688,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.012545078992843628,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.06942903995513916,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0159299373626709,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0019890572875738144,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0018985457718372345,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.010587334632873535,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0012666643597185612,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.004903048276901245,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.024130940437316895,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0032213330268859863,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.016654878854751587,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.007591605186462402,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0007359981536865234,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0004953760653734207,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.002477288246154785,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.005532205104827881,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.004418551921844482,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0011527538299560547,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.002921387553215027,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0014143995940685272,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.026787757873535156,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.006571941077709198,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0018561482429504395,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.028886139392852783,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.005907773971557617,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.024815678596496582,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.03454822301864624,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.023206889629364014,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.006438389420509338,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.06056112051010132,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.004498623311519623,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0011876486241817474,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0012900233268737793,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0024513304233551025,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.04391324520111084,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.006506621837615967,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.010031163692474365,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.011948764324188232,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.012139320373535156,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0032449904829263687,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.005239274352788925,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0018752962350845337,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.002472788095474243,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.002795696258544922,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0036543551832437515,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.019394218921661377,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.003928510472178459,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0033096671104431152,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0379105806350708,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0035029053688049316,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0039827413856983185,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0023889243602752686,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.018117308616638184,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0032947510480880737,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.007394671440124512,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.00575043261051178,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.010551631450653076,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.00021290872246026993,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0014677532017230988,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.00046418607234954834,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.000990724191069603,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0024213194847106934,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.02152806520462036,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.007284730672836304,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0004241969436407089,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.021998107433319092,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.02405470609664917,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0010228157043457031,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.07927918434143066,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0045384690165519714,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.004478856921195984,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0005400776863098145,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0016603916883468628,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0032223761081695557,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0003329133614897728,
+            "function_calls": 802
         }
     ],
     "ih_cached_riemann": [
@@ -27,42 +407,1002 @@
             "function_calls": 306
         },
         {
-            "delta": -0.004533201456069946,
-            "function_calls": 612
+            "delta": -0.004533231258392334,
+            "function_calls": 306
         },
         {
-            "delta": 0.005337368696928024,
-            "function_calls": 918
+            "delta": 0.005337342619895935,
+            "function_calls": 306
         },
         {
-            "delta": 0.0241849422454834,
-            "function_calls": 1224
+            "delta": 0.024185121059417725,
+            "function_calls": 306
         },
         {
             "delta": 0.023599088191986084,
-            "function_calls": 1530
+            "function_calls": 306
+        },
+        {
+            "delta": -0.004656955599784851,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.007071495056152344,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.0038089752197265625,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.00923912599682808,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.046967148780822754,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.008727550506591797,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.0030372142791748047,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.0033741374500095844,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.017603397369384766,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.0018915534019470215,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.003531794995069504,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.0009318925440311432,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.011971533298492432,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.030051469802856445,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.028703242540359497,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.0035248994827270508,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.007891497574746609,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.08095258474349976,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.0022127628326416016,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.048278212547302246,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.009584784507751465,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.06948155164718628,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.018568873405456543,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.0033027706667780876,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.003698417916893959,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.00036785006523132324,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.0035092756152153015,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.003939632326364517,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.007344186305999756,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.015782713890075684,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.0025551915168762207,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.01718461513519287,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.00412556529045105,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.0003732070326805115,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.0027361512184143066,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.07735157012939453,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.0038908720016479492,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.016780614852905273,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.004082709550857544,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.016894392669200897,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.01093149185180664,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.008538059890270233,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.025066912174224854,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.026700109243392944,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.005227923393249512,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.12327790260314941,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.023691803216934204,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.020877420902252197,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.003600791096687317,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.1030048131942749,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.001661740243434906,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.0029421672224998474,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.0008851289749145508,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.0052754878997802734,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.05674636363983154,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.0134010910987854,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.008515477180480957,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.03403818607330322,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.06565016508102417,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.003377367742359638,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.015400968492031097,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.0005275160074234009,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.0022067278623580933,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.0025318264961242676,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.012842196971178055,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.0341532826423645,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.000384502112865448,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.02325814962387085,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.04146742820739746,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.02338099479675293,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.0022158194333314896,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.001110374927520752,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.023691266775131226,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.003926653414964676,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.0188523530960083,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.10785764455795288,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.015534400939941406,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.024008916690945625,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.0019738394767045975,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.002921685576438904,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.008091609925031662,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.007242381572723389,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.04038874804973602,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.008818954229354858,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.012744296342134476,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.016548871994018555,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.02370774745941162,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.01391690969467163,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.14081668853759766,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.007593035697937012,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.010918483138084412,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.007532820105552673,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.0008133798837661743,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.004033684730529785,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.01241086795926094,
+            "function_calls": 306
         }
     ],
     "janizeketal": [
         {
-            "delta": 0.06820276379585266,
+            "delta": [
+                -29.049036026000977
+            ],
             "function_calls": 402
         },
         {
-            "delta": 0.017399698495864868,
-            "function_calls": 804
+            "delta": [
+                -29.305709838867188
+            ],
+            "function_calls": 402
         },
         {
-            "delta": 0.009677272289991379,
-            "function_calls": 1206
+            "delta": [
+                -29.508342742919922
+            ],
+            "function_calls": 402
         },
         {
-            "delta": 0.11754274368286133,
-            "function_calls": 1608
+            "delta": [
+                -28.586931228637695
+            ],
+            "function_calls": 402
         },
         {
-            "delta": 0.08693960309028625,
-            "function_calls": 2010
+            "delta": [
+                -29.074769973754883
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.30623435974121
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.533870697021484
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.29457664489746
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.526430130004883
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.21463966369629
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.29667854309082
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -28.809837341308594
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.55759048461914
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.30255126953125
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.03492546081543
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.522926330566406
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.513662338256836
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.5740966796875
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.290889739990234
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.041217803955078
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.51630401611328
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.547348022460938
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -28.792890548706055
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.05902099609375
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.476991653442383
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.301237106323242
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -28.553224563598633
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -28.81995391845703
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.543048858642578
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.537628173828125
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.276809692382812
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.554866790771484
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.508676528930664
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.04247283935547
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.070295333862305
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.063142776489258
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -28.56793785095215
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.288862228393555
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.532703399658203
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.275053024291992
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.160308837890625
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.30071258544922
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.033349990844727
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.309839248657227
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.513744354248047
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.028844833374023
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.512767791748047
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -28.56393814086914
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.04787254333496
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.045608520507812
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.196786880493164
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.051429748535156
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.043298721313477
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.319116592407227
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -28.537233352661133
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.595823287963867
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.51378631591797
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -28.5716495513916
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.28847312927246
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -28.552982330322266
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.271724700927734
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.30405044555664
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.050331115722656
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.003557205200195
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.543027877807617
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.492687225341797
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.30388069152832
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.31177520751953
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.289167404174805
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.53846549987793
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -28.808801651000977
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.57756805419922
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.04638671875
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -28.80504608154297
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.262012481689453
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.524654388427734
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.298240661621094
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.08422088623047
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.53020668029785
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.023956298828125
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.407161712646484
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -28.822107315063477
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.541790008544922
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.525737762451172
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.309371948242188
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.527172088623047
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.285449981689453
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.30257797241211
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.054948806762695
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.572486877441406
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -28.813190460205078
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.03868293762207
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.28745460510254
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -28.529312133789062
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.50518226623535
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.3065185546875
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.318988800048828
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.3095760345459
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.29139518737793
+            ],
+            "function_calls": 402
+        },
+        {
+            "delta": [
+                -29.55838394165039
+            ],
+            "function_calls": 402
         }
     ]
 }
