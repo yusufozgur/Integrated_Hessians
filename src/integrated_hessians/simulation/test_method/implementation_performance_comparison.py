@@ -41,8 +41,8 @@ CONFIGPATH = (
     "src/integrated_hessians/simulation/configs/custom_expanded_distribution.json"
 )
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-BATCH_SIZE = 100
-NUM_OF_ROWS = 100
+BATCH_SIZE = 1  # keep batch size at 1 as otherwise the deltas of the janizek method just are bad, probably due to bad seperation of samples inside the implementation
+NUM_OF_ROWS = 10
 BASELINE_FILL = 0.25
 SAVE_test_deltas_per_impl = (
     "src/integrated_hessians/simulation/test_method/test_deltas_per_impl.json"

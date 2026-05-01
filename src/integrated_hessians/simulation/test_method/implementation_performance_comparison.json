@@ -1,0 +1,128 @@
+{
+    "ih_naive_riemann": [
+        {
+            "delta": 0.017666876316070557,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.005335181951522827,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0018053874373435974,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.00571209192276001,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.018891841173171997,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.005800768733024597,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.004116550087928772,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0008625984191894531,
+            "function_calls": 802
+        },
+        {
+            "delta": -0.0011094734072685242,
+            "function_calls": 802
+        },
+        {
+            "delta": 0.0012722015380859375,
+            "function_calls": 802
+        }
+    ],
+    "ih_cached_riemann": [
+        {
+            "delta": 0.024127542972564697,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.004533201456069946,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.005337364971637726,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.0241849422454834,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.023599088191986084,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.004656925797462463,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.007071448490023613,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.003808915615081787,
+            "function_calls": 306
+        },
+        {
+            "delta": 0.00923917256295681,
+            "function_calls": 306
+        },
+        {
+            "delta": -0.046967148780822754,
+            "function_calls": 306
+        }
+    ],
+    "janizeketal": [
+        {
+            "delta": 0.03776741027832031,
+            "function_calls": 198
+        },
+        {
+            "delta": 0.023942142724990845,
+            "function_calls": 198
+        },
+        {
+            "delta": 0.013004127889871597,
+            "function_calls": 198
+        },
+        {
+            "delta": 0.11657953262329102,
+            "function_calls": 198
+        },
+        {
+            "delta": 0.03513693809509277,
+            "function_calls": 198
+        },
+        {
+            "delta": 0.045272424817085266,
+            "function_calls": 198
+        },
+        {
+            "delta": 0.0011377595365047455,
+            "function_calls": 198
+        },
+        {
+            "delta": 0.03678208589553833,
+            "function_calls": 198
+        },
+        {
+            "delta": 0.0058265067636966705,
+            "function_calls": 198
+        },
+        {
+            "delta": -0.023720920085906982,
+            "function_calls": 198
+        }
+    ]
+}
