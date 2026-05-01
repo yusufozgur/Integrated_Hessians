@@ -15,14 +15,10 @@ Measure
 Dataset: Custom sim with expanded distribution
 """
 
-from ast import Call
-from doctest import UnexpectedException
 import json
 import functools
-from math import inf
-from scipy.optimize import root_scalar, RootResults
 from pathlib import Path
-from typing import Any, Callable
+from typing import Callable
 import jaxtyping as jx
 import torch
 from torch import Tensor
@@ -41,8 +37,6 @@ CONFIGPATH = (
     "src/integrated_hessians/simulation/configs/custom_expanded_distribution.json"
 )
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-TARGET_DELTA = 0.01
-TARGET_DELTA_TOLERANCE = 0.005
 NUM_OF_ROWS = 5
 BASELINE_FILL = 0.25
 SAVE_test_deltas_per_impl = (
@@ -71,9 +65,15 @@ implementations = {
         "f": functools.partial(
             path_explain_wrapper,
         ),
-        "approx_steps": 20,
+        "approx_steps": 20**2,
     },
 }
+
+
+@dataclass
+class PerformanceTest:
+    delta: float
+    function_calls: int
 
 
 def main():
@@ -101,9 +101,12 @@ def main():
     # Run performance comparisons
 
     deltas = {
-        impl_name: get_delta_per_test_row(
-            test_data=test_data, implementation_config=impl_config, model=model
-        )
+        impl_name: [
+            asdict(x)
+            for x in get_delta_per_test_row(
+                test_data=test_data, implementation_config=impl_config, model=model
+            )
+        ]
         for impl_name, impl_config in implementations.items()
     }
 
@@ -113,11 +116,17 @@ def main():
 
 def get_delta_per_test_row(
     implementation_config: dict, test_data: list[SimulatedSequence], model: Callable
-) -> list[float]:
+) -> list[PerformanceTest]:
+    num_of_function_calls = 0
+
+    def model_call_counter(*args, **kwargs):
+        nonlocal num_of_function_calls
+        num_of_function_calls += 1
+        return model(*args, **kwargs)
+
     results = []
     for test_data_idx in tqdm(range(NUM_OF_ROWS)):
         test_row: SimulatedSequence = test_data[test_data_idx]
-        print(test_row)
         input: jx.Float[Tensor, "1 alphabet_length sequence_length"] = (
             torch.from_numpy(test_row.one_hot).unsqueeze(0).type(torch.float).to(DEVICE)
         )
@@ -127,11 +136,13 @@ def get_delta_per_test_row(
             approximation_steps=implementation_config["approx_steps"],
             inputs=input,
             baselines=baseline,
-            model=model,
+            model=model_call_counter,
         )
         ih_delta = float(ih_delta[0])  # [0] to remove the batch dim
 
-        results.append(ih_delta)
+        results.append(
+            PerformanceTest(delta=ih_delta, function_calls=num_of_function_calls)
+        )
     return results
 
 
