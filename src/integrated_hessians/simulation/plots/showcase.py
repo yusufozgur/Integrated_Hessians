@@ -161,6 +161,14 @@ def _(perf_comparison_df, plt):
 
 @app.cell
 def _(perf_comparison_df, plt):
+    plt.scatter(perf_comparison_df["implementation"],perf_comparison_df["comptime_seconds"])
+    plt.yscale('log')
+    plt.title("comptime_seconds")
+    return
+
+
+@app.cell
+def _(perf_comparison_df, plt):
     plt.scatter(perf_comparison_df["implementation"],perf_comparison_df["delta"]/(1/perf_comparison_df["function_calls"]))
     return
 

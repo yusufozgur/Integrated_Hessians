@@ -15,6 +15,7 @@ Measure
 Dataset: Custom sim with expanded distribution
 """
 
+from datetime import datetime
 import json
 import functools
 from os import cpu_count
@@ -44,7 +45,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 1  # keep batch size at 1 as otherwise the deltas of the janizek method just are bad, probably due to bad seperation of samples inside the implementation
 NUM_OF_ROWS = 10
 BASELINE_FILL = 0.25
-SAVE_test_deltas_per_impl = "src/integrated_hessians/simulation/test_method/implementation_performance_comparison.json"
+SAVE_perf_comparison = "src/integrated_hessians/simulation/test_method/implementation_performance_comparison.json"
 
 
 implementations = {
@@ -102,22 +103,23 @@ def main():
     print(f"Config: {config['NAME']}")
 
     # Run performance comparisons
-
-    deltas = {
-        impl_name: [
-            asdict(x)
-            for x in get_delta_per_test_row(
-                test_data=test_data,
-                implementation_config=impl_config,
-                model=model,
-                config=config,
-            )
+    perf_comparisons = dict()
+    for impl_name, impl_config in implementations.items():
+        timer_start = datetime.now()
+        test_results: list[PerformanceTest] = get_delta_per_test_row(
+            test_data=test_data,
+            implementation_config=impl_config,
+            model=model,
+            config=config,
+        )
+        timer_elapsed = (datetime.now() - timer_start).total_seconds()
+        test_results_ls_dict = [
+            asdict(x) | {"comptime_seconds": timer_elapsed} for x in test_results
         ]
-        for impl_name, impl_config in implementations.items()
-    }
+        perf_comparisons[impl_name] = test_results_ls_dict
 
-    with open(SAVE_test_deltas_per_impl, "w") as f:
-        json.dump(deltas, f, indent=4)
+    with open(SAVE_perf_comparison, "w") as f:
+        json.dump(perf_comparisons, f, indent=4)
 
 
 def get_delta_per_test_row(
