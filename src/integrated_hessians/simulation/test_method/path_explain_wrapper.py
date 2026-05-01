@@ -45,4 +45,7 @@ def path_explain_wrapper(
     exp_ih_reshaped = exp_ih.reshape(batch_size, seqlen, 4, seqlen, 4)
     exp_ih_reshaped.shape
 
+    # remove the last dim of size 1 as the performance comparison code expects it like that
+    exp_ih_delta = exp_ih_delta.squeeze(-1)
+
     return exp_ih_reshaped, exp_ih_delta

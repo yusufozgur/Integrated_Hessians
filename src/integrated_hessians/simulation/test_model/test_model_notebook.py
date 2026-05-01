@@ -837,8 +837,7 @@ def _(
     baseline_fill,
     model,
     one_hot: "jx.Float[Tensor, \"1 alphabet_length sequence_length\"]",
-    one_hot_batched,
-    plot_epistasis_subsetted,
+    plot_interaction_subsetted,
     sampling_steps_janizeketal,
     show_integrated_hessian_janizeketal,
     subset_onehot_hessian,
@@ -855,7 +854,7 @@ def _(
 
         exp = PathExplainerTorch(exp_reshaper)
 
-        exp_input = one_hot_batched.reshape(1, SEQLEN * 4)
+        exp_input = one_hot.reshape(1, SEQLEN * 4)
         exp_baseline = torch.full_like(exp_input, baseline_fill)
         exp_baseline.shape
 
@@ -870,18 +869,18 @@ def _(
         )
 
         exp_ih_delta = (
-            model(one_hot_batched)
-            - model(torch.full_like(one_hot_batched, baseline_fill))
+            model(one_hot)
+            - model(torch.full_like(one_hot, baseline_fill))
             - exp_ih.sum()
         )
 
         exp_ih_reshaped = exp_ih.reshape(1, SEQLEN, 4, SEQLEN, 4)
         exp_ih_reshaped.shape
 
-        exp_ih_interaction_plot = plot_epistasis_subsetted(
+        exp_ih_interaction_plot = plot_interaction_subsetted(
             hessian_onehot_subsetted=subset_onehot_hessian(
                 calculated_hessian=exp_ih_reshaped.detach().squeeze(0),
-                one_hot_mask=torch.tensor(one_hot),
+                one_hot_mask=torch.tensor(one_hot).squeeze(0),
             ).numpy(),
             title=f"Integrated hessians via path explain. delta: {exp_ih_delta}",
         )

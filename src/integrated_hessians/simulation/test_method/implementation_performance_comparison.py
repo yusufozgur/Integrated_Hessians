@@ -44,9 +44,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 1  # keep batch size at 1 as otherwise the deltas of the janizek method just are bad, probably due to bad seperation of samples inside the implementation
 NUM_OF_ROWS = 10
 BASELINE_FILL = 0.25
-SAVE_test_deltas_per_impl = (
-    "src/integrated_hessians/simulation/test_method/test_deltas_per_impl.json"
-)
+SAVE_test_deltas_per_impl = "src/integrated_hessians/simulation/test_method/implementation_performance_comparison.json"
 
 
 implementations = {
@@ -70,7 +68,7 @@ implementations = {
         "f": functools.partial(
             path_explain_wrapper,
         ),
-        "approx_steps": 20**2,
+        "approx_steps": 200,
     },
 }
 
